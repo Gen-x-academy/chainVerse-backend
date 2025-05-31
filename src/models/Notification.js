@@ -21,7 +21,7 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ["info", "success", "warning", "error"],
+    enum: ["info", "success", "warning", "error", "challenge_received", "challenge_result", "reward_earned"],
     default: "info",
   },
   read: {
@@ -33,6 +33,10 @@ const notificationSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
     index: true,
+  },
+  metadata: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {},
   },
   createdAt: {
     type: Date,

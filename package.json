@@ -18,8 +18,9 @@
 
 		"test:watch": "jest --watch",
 
-		"test:coverage": "jest --coverage"
+		"test:coverage": "jest --coverage",
 
+		"email:worker": "node src/utils/emailWorker.js"
 	},
 
 	"repository": {
@@ -53,6 +54,8 @@
 		"bcryptjs": "^3.0.2",
 
 		"body-parser": "^1.20.3",
+
+		"bullmq": "^5.53.1",
 
 		"canvas": "^3.1.0",
 
