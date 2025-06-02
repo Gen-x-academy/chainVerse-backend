@@ -1,11 +1,14 @@
 {
   "include": ["src/**/*"],
   "compilerOptions": {
-    "target": "es6",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+     "target": "ES2017",
     "module": "commonjs",
     "rootDir": "src",
     "outDir": "dist",
     "strict": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+     "strictPropertyInitialization": false
   }
 }

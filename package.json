@@ -21,6 +21,7 @@
 		"test:coverage": "jest --coverage",
 
 		"email:worker": "node src/utils/emailWorker.js"
+
 	},
 
 	"repository": {
@@ -44,6 +45,14 @@
 	"homepage": "https://github.com/Gen-x-academy/chainVerse-backend#readme",
 
 	"dependencies": {
+
+		"@nestjs/common": "^11.1.2",
+
+		"@nestjs/core": "^11.1.2",
+
+		"@nestjs/testing": "^11.1.2",
+
+		"@nestjs/typeorm": "^11.0.0",
 
 		"adm-zip": "^0.5.16",
 
@@ -119,6 +128,8 @@
 
 		"swagger-ui-express": "^5.0.1",
 
+		"typeorm": "^0.3.24",
+
 		"uuid": "^11.1.0",
 
 		"winston": "^3.17.0"
@@ -128,6 +139,8 @@
 	"keywords": [],
 
 	"devDependencies": {
+
+		"@types/jest": "^29.5.14",
 
 		"@types/supertest": "^6.0.3",
 
