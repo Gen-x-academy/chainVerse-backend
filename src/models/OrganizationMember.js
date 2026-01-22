@@ -9,7 +9,7 @@ const OrganizationMemberSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: false // Optional initially, will be set when user account is created
   },
   email: {
     type: String,
@@ -54,5 +54,8 @@ OrganizationMemberSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();
 });
+
+// Create unique index on email + organizationId to prevent duplicate members
+OrganizationMemberSchema.index({ email: 1, organizationId: 1 }, { unique: true });
 
 module.exports = mongoose.model('OrganizationMember', OrganizationMemberSchema);
