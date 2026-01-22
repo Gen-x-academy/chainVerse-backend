@@ -52,13 +52,14 @@ exports.authenticate = async (req, res, next) => {
 		}
 
 		// Check cache first
-		let user = userCache.get(decoded.id);
+		const userId = decoded.id || decoded.sub || decoded._id;
+		let user = userCache.get(userId);
 		if (!user) {
-			user = await User.findById(decoded.id).select('+role -password').lean();
+			user = await User.findById(userId).select('+role').lean();
 			if (!user) {
 				return handleError(res, 401, 'User not found');
 			}
-			userCache.set(decoded.id, user);
+			userCache.set(userId, user);
 		}
 
 		// Attach user to request

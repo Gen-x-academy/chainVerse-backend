@@ -65,13 +65,13 @@ exports.registerUser = async (req, res) => {
 
 		// Generate JWT token
 		const token = jwt.sign(
-			{ id: user._id, email: user.email },
+			{ _id: user._id, email: user.email },
 			process.env.JWT_SECRET,
 			{ expiresIn: '7d' }
 		);
 
 		// Trigger email verification
-		await sendEmail(email, user._id, 'ChainVerse: Verify Your Email');
+		// await sendEmail(email, user._id, 'ChainVerse: Verify Your Email');
 
 		res.status(201).json({
 			success: true,
@@ -100,10 +100,8 @@ exports.registerUser = async (req, res) => {
  */
 exports.getProfile = async (req, res) => {
 	try {
-		console.log(req.user);
 		// Get user details excluding password
-		const user = await User.findById(req.user.id).select('-password');
-		console.log(user, 'confused here');
+		const user = await User.findById(req.user._id).select('-password');
 
 		if (!user) {
 			return res
@@ -126,7 +124,7 @@ exports.getProfile = async (req, res) => {
 };
 
 exports.verifyEmail = async (req, res) => {
-	const userId = req.user.id;
+	const userId = req.user._id;
 
 	try {
 		const user = await User.findById(userId);
@@ -204,18 +202,18 @@ exports.updateProfile = async (req, res) => {
 
 		// Update user profile
 		const updatedUser = await User.findByIdAndUpdate(
-			req.user.id,
+			req.user._id,
 			{ $set: updateFields },
 			{ new: true, runValidators: true }
 		).select('-password');
 
 		// Trigger email verification if email was changed
 		if (updateFields.email) {
-			verificationLink = `${process.env.BASE_URL}/organization/profile/verify-email/${req.user.id}`;
+			verificationLink = `${process.env.BASE_URL}/organization/profile/verify-email/${req.user._id}`;
 			let message = `Click the link below to verify your email <br /> <a href="${verificationLink}">Verify Email</a>`;
 			await sendEmail(
 				updateFields.email,
-				req.user.id,
+				req.user._id,
 				'ChainVerse: Email Update Verification',
 				message
 			);
@@ -257,7 +255,7 @@ exports.changePassword = async (req, res) => {
 		}
 
 		// Get user with password
-		const user = await User.findById(req.user.id);
+		const user = await User.findById(req.user._id);
 		if (!user) {
 			return res.status(404).json({
 				success: false,
@@ -318,7 +316,7 @@ exports.uploadProfileImage = async (req, res) => {
 		}
 
 		// Get user
-		const user = await User.findById(req.user.id);
+		const user = await User.findById(req.user._id);
 		if (!user) {
 			// Remove uploaded file if user not found
 			fs.unlinkSync(req.file.path);

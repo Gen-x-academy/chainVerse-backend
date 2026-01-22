@@ -16,7 +16,7 @@ const {
 const { mintNft } = require('../controllers/nftController');
 
 
-router.post('/courses', isAdmin.ensureAdmin, courseController.createCourse);
+router.post('/courses', auth.authenticate, isAdmin.ensureAdmin, courseController.createCourse);
 router.post('/:id/complete', auth.authenticate, completeCourse);
 router.get('/:id/certificate', auth.authenticate, getCertificate);
 router.post('/:id/mint-nft', auth.authenticate, mintNft);

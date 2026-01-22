@@ -2,17 +2,50 @@ const express = require('express');
 const router = express.Router();
 const challengeController = require('../controllers/challengeController');
 const authMiddleware = require('../middlewares/authMiddleware');
+const challengeSecurity = require('../middlewares/challengeSecurityMiddleware');
 
+// Apply authentication to all routes
 router.use(authMiddleware);
 
-router.post('/:challengeId/submit', challengeController.submitAnswers);
+// Submit answers route with comprehensive security
+router.post(
+	'/:challengeId/submit',
+	challengeSecurity.auditChallengeAccess,
+	challengeSecurity.challengeRateLimit,
+	challengeSecurity.validateChallengeAccess,
+	challengeSecurity.preventLateSubmission,
+	challengeSecurity.validateSubmissionData,
+	challengeController.submitAnswers
+);
 
-router.get('/:challengeId/result', challengeController.getChallengeResult);
+// Get challenge result
+router.get(
+	'/:challengeId/result',
+	challengeSecurity.auditChallengeAccess,
+	challengeSecurity.validateChallengeAccess,
+	challengeController.getChallengeResult
+);
 
-router.get('/history', challengeController.getChallengeHistory);
+// Get challenge history (no specific challenge validation needed)
+router.get(
+	'/history',
+	challengeSecurity.challengeRateLimit,
+	challengeController.getChallengeHistory
+);
 
-router.get('/leaderboard', challengeController.getLeaderboard);
+// Get leaderboard (public data)
+router.get(
+	'/leaderboard',
+	challengeSecurity.challengeRateLimit,
+	challengeController.getLeaderboard
+);
 
-router.post('/:challengeId/evaluate', challengeController.evaluateChallenge);
+// Manual evaluation (admin only)
+router.post(
+	'/:challengeId/evaluate',
+	challengeSecurity.auditChallengeAccess,
+	challengeSecurity.validateChallengeAccess,
+	challengeController.evaluateChallenge
+);
 
 module.exports = router;

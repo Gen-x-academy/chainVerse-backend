@@ -2,6 +2,7 @@ const ChallengeEvaluationService = require('../services/ChallengeEvaluationServi
 const Challenge = require('../models/Challenge');
 const ChallengeSubmission = require('../models/ChallengeSubmission');
 const ChallengeResult = require('../models/ChallengeResult');
+const mongoose = require('mongoose');
 
 exports.submitAnswers = async (req, res) => {
 	try {
@@ -9,42 +10,125 @@ exports.submitAnswers = async (req, res) => {
 		const { answers, totalTime } = req.body;
 		const playerId = req.user._id;
 
+		// Enhanced validation
+		if (!challengeId || !mongoose.Types.ObjectId.isValid(challengeId)) {
+			return res.status(400).json({
+				message: 'Invalid challenge ID format',
+				code: 'INVALID_CHALLENGE_ID',
+			});
+		}
+
+		if (!Array.isArray(answers) || answers.length === 0) {
+			return res.status(400).json({
+				message: 'Answers must be a non-empty array',
+				code: 'INVALID_ANSWERS_FORMAT',
+			});
+		}
+
+		if (typeof totalTime !== 'number' || totalTime < 0) {
+			return res.status(400).json({
+				message: 'Total time must be a positive number',
+				code: 'INVALID_TIME_FORMAT',
+			});
+		}
+
 		const challenge = await Challenge.findById(challengeId);
 		if (!challenge) {
-			return res.status(404).json({ message: 'Challenge not found' });
+			return res.status(404).json({
+				message: 'Challenge not found',
+				code: 'CHALLENGE_NOT_FOUND',
+			});
 		}
 
-		if (
-			challenge.playerOneId.toString() !== playerId.toString() &&
-			challenge.playerTwoId.toString() !== playerId.toString()
-		) {
-			return res
-				.status(403)
-				.json({ message: 'Not authorized for this challenge' });
+		// Enhanced access control
+		const isPlayerOne =
+			challenge.playerOneId.toString() === playerId.toString();
+		const isPlayerTwo =
+			challenge.playerTwoId.toString() === playerId.toString();
+
+		if (!isPlayerOne && !isPlayerTwo) {
+			return res.status(403).json({
+				message: 'Access denied. You are not a participant in this challenge.',
+				code: 'ACCESS_DENIED',
+			});
 		}
 
+		// Check challenge state
 		if (challenge.status === 'completed') {
-			return res.status(400).json({ message: 'Challenge already completed' });
+			return res.status(400).json({
+				message: 'Challenge has already been completed',
+				code: 'CHALLENGE_COMPLETED',
+			});
 		}
 
+		if (challenge.status === 'expired') {
+			return res.status(400).json({
+				message: 'Challenge has expired',
+				code: 'CHALLENGE_EXPIRED',
+			});
+		}
+
+		// Check for existing submission
 		const existingSubmission = await ChallengeSubmission.findOne({
 			challengeId,
 			playerId,
 		});
 
 		if (existingSubmission) {
-			return res.status(400).json({ message: 'Answers already submitted' });
+			return res.status(400).json({
+				message: 'You have already submitted answers for this challenge',
+				code: 'ALREADY_SUBMITTED',
+			});
 		}
 
+		// Validate answers against challenge questions
+		const validationResult =
+			await ChallengeEvaluationService.validateSubmissionData({
+				answers,
+				totalTime,
+				playerId,
+			});
+
+		if (!validationResult) {
+			return res.status(400).json({
+				message: 'Submission validation failed',
+				code: 'VALIDATION_FAILED',
+			});
+		}
+
+		// Validate answers match challenge questions
+		if (answers.length !== challenge.questions.length) {
+			return res.status(400).json({
+				message: `Expected ${challenge.questions.length} answers, received ${answers.length}`,
+				code: 'ANSWER_COUNT_MISMATCH',
+			});
+		}
+
+		// Check time limit compliance
+		const maxTime = challenge.timeLimit || 300000; // 5 minutes default
+		if (totalTime > maxTime) {
+			return res.status(400).json({
+				message: 'Submission exceeds time limit',
+				code: 'TIME_LIMIT_EXCEEDED',
+			});
+		}
+
+		// Create submission with additional security metadata
 		const submission = new ChallengeSubmission({
 			challengeId,
 			playerId,
 			answers,
 			totalTime,
+			submissionMetadata: {
+				ipAddress: req.ip,
+				userAgent: req.get('User-Agent'),
+				timestamp: new Date(),
+			},
 		});
 
 		await submission.save();
 
+		// Update challenge status if this is the first submission
 		if (challenge.status === 'pending') {
 			await Challenge.findByIdAndUpdate(challengeId, {
 				status: 'in_progress',
@@ -57,6 +141,7 @@ exports.submitAnswers = async (req, res) => {
 		});
 
 		if (totalSubmissions === 2) {
+			// Both players have submitted - trigger evaluation
 			setTimeout(async () => {
 				try {
 					await ChallengeEvaluationService.evaluateChallenge(challengeId);
@@ -68,16 +153,23 @@ exports.submitAnswers = async (req, res) => {
 			res.status(200).json({
 				message: 'Answers submitted successfully. Evaluation in progress...',
 				bothPlayersSubmitted: true,
+				submissionId: submission._id,
+				evaluationEstimatedTime: '30-60 seconds',
 			});
 		} else {
 			res.status(200).json({
 				message: 'Answers submitted successfully. Waiting for opponent...',
 				bothPlayersSubmitted: false,
+				submissionId: submission._id,
+				waitingFor: isPlayerOne ? 'Player Two' : 'Player One',
 			});
 		}
 	} catch (error) {
 		console.error('Error submitting answers:', error);
-		res.status(500).json({ message: 'Error submitting answers' });
+		res.status(500).json({
+			message: 'Internal server error while submitting answers',
+			code: 'SUBMISSION_ERROR',
+		});
 	}
 };
 

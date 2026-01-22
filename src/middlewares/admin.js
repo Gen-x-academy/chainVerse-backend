@@ -3,11 +3,11 @@ const User = require('../models/User');
 exports.ensureAdmin = async (req, res, next) => {
   try {
     // Assumes req.user is already set by earlier auth middleware (e.g., passport)
-    if (!req.user || !req.user.id) {
+    if (!req.user || !req.user._id) {
       return res.status(401).json({ msg: 'Unauthorized: No user info found' });
     }
 
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user._id);
 
     if (!user) {
       return res.status(404).json({ msg: 'User not found' });

@@ -11,15 +11,43 @@ const ChallengeSubmissionSchema = new mongoose.Schema({
 		ref: 'Student',
 		required: true,
 	},
-	answers: [{ questionId: String, selectedOption: String }],
-	totalTime: Number,
-	submittedAt: { type: Date, default: Date.now },
+	answers: [
+		{
+			questionId: {
+				type: String,
+				required: true,
+			},
+			selectedOption: {
+				type: String,
+				required: true,
+			},
+		},
+	],
+	totalTime: {
+		type: Number,
+		required: true,
+		min: 0,
+	},
+	submittedAt: {
+		type: Date,
+		default: Date.now,
+	},
+	submissionMetadata: {
+		ipAddress: String,
+		userAgent: String,
+		timestamp: Date,
+	},
 });
 
+// Compound index to ensure one submission per player per challenge
 ChallengeSubmissionSchema.index(
 	{ challengeId: 1, playerId: 1 },
 	{ unique: true }
 );
+
+// Additional indexes for performance
+ChallengeSubmissionSchema.index({ challengeId: 1, submittedAt: -1 });
+ChallengeSubmissionSchema.index({ playerId: 1, submittedAt: -1 });
 
 module.exports = mongoose.model(
 	'ChallengeSubmission',

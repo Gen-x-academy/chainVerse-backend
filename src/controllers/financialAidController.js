@@ -11,7 +11,7 @@ exports.applyForFinancialAid = async (req, res) => {
 		}
 
 		const { courseId, reason, incomeStatus } = req.body;
-		const userId = req.user.id;
+		const userId = req.user._id;
 
 		// Check if course exists
 		const course = await Course.findById(courseId);
@@ -59,7 +59,7 @@ exports.applyForFinancialAid = async (req, res) => {
 // Get user's own applications
 exports.getMyApplications = async (req, res) => {
 	try {
-		const userId = req.user.id;
+		const userId = req.user._id;
 		const { status } = req.query;
 
 		// Build query filters

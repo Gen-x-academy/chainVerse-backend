@@ -52,8 +52,8 @@ router.post(
 			title,
 			description,
 			questions,
-			createdBy: req.user.id,
-			updatedBy: req.user.id,
+			createdBy: req.user._id,
+			updatedBy: req.user._id,
 		});
 
 		await quiz.save();
@@ -208,7 +208,7 @@ router.put(
 	validateQuizBusinessRules,
 	asyncHandler(async (req, res) => {
 		const { quizId } = req.params;
-		const updateData = { ...req.body, updatedBy: req.user.id };
+		const updateData = { ...req.body, updatedBy: req.user._id };
 
 		const quiz = await Quiz.findOne({ _id: quizId, isActive: true });
 
@@ -285,7 +285,7 @@ router.delete(
 		} else {
 			// Soft delete
 			quiz.isActive = false;
-			quiz.updatedBy = req.user.id;
+			quiz.updatedBy = req.user._id;
 			await quiz.save();
 
 			res.json({
@@ -337,7 +337,7 @@ router.delete(
 		}
 
 		quiz.questions.splice(questionIndex, 1);
-		quiz.updatedBy = req.user.id;
+		quiz.updatedBy = req.user._id;
 		await quiz.save();
 
 		res.json({
@@ -405,7 +405,7 @@ router.post(
 		};
 
 		quiz.questions.push(newQuestion);
-		quiz.updatedBy = req.user.id;
+		quiz.updatedBy = req.user._id;
 		await quiz.save();
 
 		res.status(201).json({
