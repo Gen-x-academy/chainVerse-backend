@@ -21,7 +21,8 @@ describe('Recommendation Rules (Pure Functions)', () => {
         { level: 'beginner' },
         { level: 'beginner' },
         { level: 'beginner' },
-        { level: 'intermediate' },
+        { level: 'beginner' },
+        { level: 'beginner' },
       ],
       allCourses: [{ _id: 'C', title: 'Intermediate Path', level: 'intermediate' }],
     });

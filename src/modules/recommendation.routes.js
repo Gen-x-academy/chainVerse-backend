@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { authMiddleware } = require("../../middlewares/authMiddleware");
+const auth = require("../middlewares/auth");
 const { getNextCourses } = require("./recommendation.controller");
 
 /**
@@ -19,6 +19,6 @@ const { getNextCourses } = require("./recommendation.controller");
  *       500:
  *         description: Server error
  */
-router.get("/next-courses", authMiddleware, getNextCourses);
+router.get("/next-courses", auth.authenticate, getNextCourses);
 
 module.exports = router;

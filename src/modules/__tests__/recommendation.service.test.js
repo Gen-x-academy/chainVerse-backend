@@ -1,10 +1,10 @@
-jest.mock("../../../models/course");
-jest.mock("../../../models/enrollment");
-jest.mock("../../../models/ChallengeResult");
+jest.mock("../../models/course");
+jest.mock("../../models/enrollment");
+jest.mock("../../models/ChallengeResult");
 
-const Course = require("../../../models/course");
-const Enrollment = require("../../../models/enrollment");
-const ChallengeResult = require("../../../models/ChallengeResult");
+const Course = require("../../models/course");
+const Enrollment = require("../../models/enrollment");
+const ChallengeResult = require("../../models/ChallengeResult");
 
 const { getNextCourseRecommendations } = require("../recommendation.service");
 
@@ -16,16 +16,18 @@ describe("Recommendation Service – Rule Application", () => {
   });
 
   it("applies NEXT_COURSE_SEQUENCE rule", async () => {
-    Enrollment.find.mockReturnValue({
-      populate: jest.fn().mockResolvedValue([
-        {
-          course: {
-            _id: "courseA",
-            title: "Intro to Web3",
-            level: "beginner",
-          },
+    const mockEnrollmentData = [
+      {
+        courseId: {
+          _id: "courseA",
+          title: "Intro to Web3",
+          level: "intermediate",
         },
-      ]),
+      },
+    ];
+
+    Enrollment.find.mockReturnValue({
+      populate: jest.fn().mockResolvedValue(mockEnrollmentData),
     });
 
     Course.find.mockResolvedValue([
@@ -56,7 +58,7 @@ describe("Recommendation Service – Rule Application", () => {
     Enrollment.find.mockReturnValue({
       populate: jest.fn().mockResolvedValue([
         {
-          course: { _id: "courseA", level: "beginner" },
+          courseId: { _id: "courseA", level: "beginner" },
         },
       ]),
     });
@@ -82,12 +84,58 @@ describe("Recommendation Service – Rule Application", () => {
   });
 
   it("returns empty array when no rules apply", async () => {
-    Enrollment.find.mockResolvedValue([]);
+    Enrollment.find.mockReturnValue({
+      populate: jest.fn().mockResolvedValue([]),
+    });
     Course.find.mockResolvedValue([]);
     ChallengeResult.find.mockResolvedValue([]);
 
     const recommendations = await getNextCourseRecommendations(userId);
 
     expect(recommendations).toEqual([]);
+  });
+
+  it("applies BEGINNER_TO_INTERMEDIATE rule", async () => {
+    Enrollment.find.mockReturnValue({
+      populate: jest.fn().mockResolvedValue([
+        {
+          courseId: { _id: "courseA", title: "Basics 1", level: "beginner" },
+        },
+        {
+          courseId: { _id: "courseB", title: "Basics 2", level: "beginner" },
+        },
+        {
+          courseId: { _id: "courseC", title: "Basics 3", level: "beginner" },
+        },
+        {
+          courseId: { _id: "courseD", title: "Basics 4", level: "beginner" },
+        },
+        {
+          courseId: { _id: "courseE", title: "Basics 5", level: "beginner" },
+        },
+      ]),
+    });
+
+    Course.find.mockResolvedValue([
+      {
+        _id: "courseZ",
+        title: "Advanced Path",
+        level: "intermediate",
+      },
+    ]);
+
+    ChallengeResult.find.mockResolvedValue([]);
+
+    const recommendations = await getNextCourseRecommendations(userId);
+
+    expect(recommendations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          courseId: "courseZ",
+          title: "Advanced Path",
+          reason: expect.stringContaining("ready to move to an intermediate"),
+        }),
+      ]),
+    );
   });
 });

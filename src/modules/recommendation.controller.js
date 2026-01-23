@@ -3,7 +3,7 @@ const { recommendationResponseSchema } = require('./recommendation.dto');
 
 exports.getNextCourses = async (req, res, next) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user._id || req.user.id;
 
     const recommendations = await getNextCourseRecommendations(userId);
 
