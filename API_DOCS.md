@@ -4,9 +4,191 @@
 - [Authentication](#authentication)
 - [Courses](#courses)
 - [Students](#students)
+- [Student Account Settings](#student-account-settings)
 - [Tutor Authentication](./src/docs/tutorAuth.md)
 - [Tutor Performance Reports](#tutor-performance-reports)
 - [Gamification System](#gamification-system)
+
+## Student Account Settings
+
+### Get Account Details
+`GET /student/account`
+
+Retrieve the logged-in student's account details. **Student access only.**
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Response:**
+```json
+{
+    "success": true,
+    "data": {
+        "id": "user_id",
+        "fullName": "John Doe",
+        "email": "john@example.com",
+        "phoneNumber": "+1234567890",
+        "profileImage": "/uploads/profile-images/profile-1234567890.jpg",
+        "isEmailVerified": true,
+        "createdAt": "2024-01-15T10:30:00Z",
+        "updatedAt": "2024-01-15T10:30:00Z"
+    }
+}
+```
+
+### Update Profile
+`PUT /student/account/update`
+
+Update the student's profile information. **Student access only.**
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Request Body:**
+```json
+{
+    "fullName": "John Updated",
+    "email": "johnupdated@example.com",
+    "phoneNumber": "+9876543210"
+}
+```
+
+**Validation Rules:**
+- `fullName`: 2-50 characters, letters, spaces, hyphens, and apostrophes only
+- `email`: Valid email format (must be unique)
+- `phoneNumber`: 10-20 characters, valid phone number format
+
+**Response:**
+```json
+{
+    "success": true,
+    "message": "Profile updated successfully",
+    "data": {
+        "id": "user_id",
+        "fullName": "John Updated",
+        "email": "johnupdated@example.com",
+        "phoneNumber": "+9876543210",
+        "profileImage": "/uploads/profile-images/profile-1234567890.jpg",
+        "isEmailVerified": false,
+        "updatedAt": "2024-01-15T11:00:00Z"
+    },
+    "token": "new_jwt_token_if_email_updated"
+}
+```
+
+**Note:** When email is updated, `isEmailVerified` is set to `false` and a verification email is sent.
+
+### Change Password
+`PUT /student/account/change-password`
+
+Change the student's password. **Student access only.**
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Request Body:**
+```json
+{
+    "currentPassword": "oldPassword123",
+    "newPassword": "NewPassword123!"
+}
+```
+
+**Validation Rules:**
+- `currentPassword`: Required, minimum 6 characters
+- `newPassword`: Required, minimum 8 characters, must contain:
+  - At least one uppercase letter
+  - At least one lowercase letter
+  - At least one number
+  - At least one special character (@$!%*?&)
+
+**Response:**
+```json
+{
+    "success": true,
+    "message": "Password changed successfully"
+}
+```
+
+**Rate Limiting:** 3 attempts per 15 minutes per IP address.
+
+### Upload Profile Image
+`POST /student/account/upload-profile-image`
+
+Upload or update the student's profile picture. **Student access only.**
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+- `Content-Type: multipart/form-data`
+
+**Request Body:**
+- `profileImage`: Image file (required)
+
+**File Requirements:**
+- **Format:** JPEG, JPG, PNG, GIF, WebP
+- **Size:** Maximum 5MB
+- **Type:** Image files only
+
+**Response:**
+```json
+{
+    "success": true,
+    "message": "Profile image uploaded successfully",
+    "data": {
+        "profileImage": "/uploads/profile-images/profile-1234567890-1234567890.jpg"
+    }
+}
+```
+
+**Rate Limiting:** 5 uploads per 5 minutes per IP address.
+
+## Error Responses
+
+All endpoints return appropriate HTTP status codes and error messages:
+
+```json
+{
+    "success": false,
+    "message": "Error description",
+    "errors": [
+        {
+            "field": "fieldName",
+            "message": "Field validation error"
+        }
+    ]
+}
+```
+
+**Common HTTP Status Codes:**
+- `200` - Success
+- `400` - Bad Request (validation errors)
+- `401` - Unauthorized (no token or invalid token)
+- `403` - Forbidden (insufficient permissions)
+- `404` - Not Found (user not found)
+- `429` - Too Many Requests (rate limited)
+- `500` - Internal Server Error
+
+## Security Features
+
+### Authentication
+- All endpoints require JWT authentication
+- Tokens are validated on each request
+- User role verification for student-only access
+
+### Rate Limiting
+- Password changes: 3 attempts per 15 minutes
+- Profile updates: 10 attempts per 10 minutes  
+- Profile image uploads: 5 attempts per 5 minutes
+
+### Data Validation
+- Input sanitization and validation on all endpoints
+- Password strength requirements
+- File type and size restrictions for uploads
+
+### Email Verification
+- Email updates require verification
+- Verification emails sent automatically
+- Account marked as unverified until email confirmed
 
 ## Gamification System
 
