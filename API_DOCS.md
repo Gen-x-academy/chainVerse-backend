@@ -5,6 +5,7 @@
 - [Courses](#courses)
 - [Students](#students)
 - [Student Account Settings](#student-account-settings)
+- [Certificate Name Change Requests](#certificate-name-change-requests)
 - [Tutor Authentication](./src/docs/tutorAuth.md)
 - [Tutor Performance Reports](#tutor-performance-reports)
 - [Gamification System](#gamification-system)
@@ -189,6 +190,134 @@ All endpoints return appropriate HTTP status codes and error messages:
 - Email updates require verification
 - Verification emails sent automatically
 - Account marked as unverified until email confirmed
+
+## Certificate Name Change Requests
+
+### Submit Name Change Request
+`POST /certificates/name-change/request`
+
+Submit a request to change the name on certificates. **Verified students only.**
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Request Body (multipart/form-data):**
+```json
+{
+    "newFullName": "John Michael Doe",
+    "reason": "Legal name change after marriage ceremony",
+    "certificateId": "certificate_id_optional",
+    "supportingDocument": "file (optional, PDF/JPG/PNG, max 5MB)"
+}
+```
+
+**Response:**
+```json
+{
+    "success": true,
+    "message": "Name change request submitted successfully",
+    "data": {
+        "requestId": "request_id",
+        "newFullName": "John Michael Doe",
+        "status": "Pending",
+        "requestedDate": "2024-01-15T10:30:00Z"
+    }
+}
+```
+
+**Error Responses:**
+- `400 Bad Request`: Validation error (invalid name format, reason too short)
+- `401 Unauthorized`: No authentication token provided
+- `403 Forbidden`: Only verified student accounts can submit requests
+- `429 Too Many Requests`: Rate limit exceeded
+- `500 Internal Server Error`: Server error
+
+### Get My Name Change Requests
+`GET /certificates/name-change/my-requests`
+
+Retrieve all name change requests submitted by the authenticated student. **Verified students only.**
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Query Parameters:**
+- `status`: (optional) Filter by status - `Pending`, `Approved`, or `Rejected`
+
+**Response:**
+```json
+{
+    "success": true,
+    "count": 2,
+    "data": [
+        {
+            "_id": "request_id",
+            "studentId": "user_id",
+            "certificateId": "certificate_id",
+            "newFullName": "John Michael Doe",
+            "reason": "Legal name change after marriage",
+            "supportingDocumentUrl": "https://...",
+            "status": "Pending",
+            "requestedDate": "2024-01-15T10:30:00Z",
+            "createdAt": "2024-01-15T10:30:00Z",
+            "updatedAt": "2024-01-15T10:30:00Z"
+        }
+    ]
+}
+```
+
+**Error Responses:**
+- `400 Bad Request`: Invalid status filter value
+- `401 Unauthorized`: No authentication token provided
+- `403 Forbidden`: Only verified student accounts can access this endpoint
+- `500 Internal Server Error`: Server error
+
+### Get Name Change Request by ID
+`GET /certificates/name-change/request/:requestId`
+
+Retrieve a specific name change request by its ID. **Verified students only.**
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Path Parameters:**
+- `requestId`: The ID of the name change request
+
+**Response:**
+```json
+{
+    "success": true,
+    "data": {
+        "_id": "request_id",
+        "studentId": "user_id",
+        "certificateId": "certificate_id",
+        "newFullName": "John Michael Doe",
+        "reason": "Legal name change after marriage ceremony",
+        "supportingDocumentUrl": "https://...",
+        "status": "Pending",
+        "requestedDate": "2024-01-15T10:30:00Z",
+        "reviewedDate": null,
+        "reviewedBy": null,
+        "adminNotes": null,
+        "createdAt": "2024-01-15T10:30:00Z",
+        "updatedAt": "2024-01-15T10:30:00Z"
+    }
+}
+```
+
+**Error Responses:**
+- `401 Unauthorized`: No authentication token provided
+- `403 Forbidden`: Only verified student accounts can access this endpoint
+- `404 Not Found`: Request not found or does not belong to the authenticated user
+- `500 Internal Server Error`: Server error
+
+**Validation Rules:**
+- `newFullName`: 2-100 characters, letters, spaces, hyphens, and apostrophes only
+- `reason`: 10-500 characters, required
+- `supportingDocument`: Optional, PDF/JPG/JPEG/PNG only, max 5MB
+
+**Rate Limiting:**
+- Certificate name change request submissions are rate-limited to prevent abuse
+- Default: 10 requests per hour per user (configurable)
 
 ## Gamification System
 
