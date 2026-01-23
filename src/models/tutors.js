@@ -25,6 +25,12 @@ const TutorSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  phoneNumber: {
+    type: String
+  },
+  profileImage: {
+    type: String
+  },
   bio: {
     type: String,
     maxlength: [1000, 'Bio cannot be more than 1000 characters']
@@ -73,10 +79,10 @@ const TutorSchema = new mongoose.Schema({
 });
 
 // Pre-save hook to hash password
-TutorSchema.pre('save', async function(next) {
+TutorSchema.pre('save', async function (next) {
   // Only hash the password if it's modified or new
   if (!this.isModified('password')) return next();
-  
+
   try {
     const salt = await bcrypt.genSalt(12);
     this.password = await bcrypt.hash(this.password, salt);
@@ -87,7 +93,7 @@ TutorSchema.pre('save', async function(next) {
 });
 
 // Method to compare passwords
-TutorSchema.methods.comparePassword = async function(candidatePassword) {
+TutorSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
