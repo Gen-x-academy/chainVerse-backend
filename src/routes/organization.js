@@ -7,6 +7,7 @@ const organizationController = require('../controllers/organizationController');
 
 const { uploadProfileImage } = require('../config/multerConfig');
 const userOrganizationController = require('../controllers/userOrganizationController');
+const organizationMemberRoutes = require('./organizationMemberRoutes');
 
 // @route POST /organization/subscribe
 // @desc Allows an organization to purchase a subscription based on available plans.
@@ -86,6 +87,9 @@ router.post(
 	uploadProfileImage.single('profileImage'),
 	userOrganizationController.uploadProfileImage
 );
+
+// Organization member management routes
+router.use('/', organizationMemberRoutes);
 
 module.exports = router;
 
