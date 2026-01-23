@@ -10,7 +10,7 @@ const authRoutes = require('./authRoute');
 const courseRoutes = require('./courseRoute');
 const rateLimitRoutes = require('./rateLimitRoutes');
 const courseUpdateRoutes = require('./courseUpdateRoutes');
-const recommendationRoutes = require('./recommendationRoutes');
+const recommendationRoutes = require('../modules/recommendation.routes');
 
 const router = express.Router();
 
@@ -26,5 +26,6 @@ router.use('/courses', courseRoutes);
 router.use('/rate-limit', rateLimitRoutes);
 router.use('/', courseUpdateRoutes);
 router.use('/recommendation', recommendationRoutes);
+
 
 module.exports = router;
