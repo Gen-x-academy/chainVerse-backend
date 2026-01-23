@@ -1,51 +1,56 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middlewares/auth');
-const adminMiddleware = require('../middlewares/admin');
+const organizationAdmin = require('../middlewares/organizationAdmin');
 const organizationMemberController = require('../controllers/organizationMemberController');
 
 // @route   POST /organization/member/add
-// @desc    Add new organization member
-// @access  Admin
+// @desc    Add new organization member (creates user account and sends welcome email with credentials)
+// @access  Organization Admin
 router.post(
   '/member/add',
-  [auth, adminMiddleware],
+  auth.authenticate,
+  organizationAdmin.ensureOrganizationAdmin,
   organizationMemberController.addMember
 );
 
 // @route   GET /organization/members
 // @desc    Get all organization members
-// @access  Admin
+// @access  Organization Admin
 router.get(
   '/members',
-  [auth, adminMiddleware],
+  auth.authenticate,
+  organizationAdmin.ensureOrganizationAdmin,
   organizationMemberController.getAllMembers
 );
 
 // @route   GET /organization/member/:id
 // @desc    Get single member details
-// @access  Admin
+// @access  Organization Admin
 router.get(
   '/member/:id',
-  [auth, adminMiddleware],
+  auth.authenticate,
+  organizationAdmin.ensureOrganizationAdmin,
   organizationMemberController.getMemberById
 );
 
 // @route   PUT /organization/member/:id/update-role
 // @desc    Update member role
-// @access  Admin
+// @access  Organization Admin
 router.put(
   '/member/:id/update-role',
-  [auth, adminMiddleware],
+  auth.authenticate,
+  organizationAdmin.ensureOrganizationAdmin,
   organizationMemberController.updateMemberRole
 );
 
 // @route   DELETE /organization/member/:id/remove
-// @desc    Remove organization member
-// @access  Admin
+// @desc    Remove organization member (sends removal notification email)
+// @access  Organization Admin
 router.delete(
   '/member/:id/remove',
-  [auth, adminMiddleware],
+  auth.authenticate,
+  organizationAdmin.ensureOrganizationAdmin,
   organizationMemberController.removeMember
 );
 
