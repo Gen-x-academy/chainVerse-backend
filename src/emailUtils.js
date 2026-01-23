@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const jwt = require('jsonwebtoken');
 
 // Create a reusable transporter object using the default SMTP transport
 const transporter = nodemailer.createTransport({
@@ -51,7 +52,7 @@ const createTransporter = () => {
 };
 
 // Send email function
-exports.sendEmailTutorCourseAlert = async (to, subject, html, text = null) => {
+const sendEmailTutorCourseAlert = async (to, subject, html, text = null) => {
 	try {
 		if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
 			console.warn('SMTP credentials not configured. Email not sent.');
@@ -78,7 +79,7 @@ exports.sendEmailTutorCourseAlert = async (to, subject, html, text = null) => {
 };
 
 // Send bulk emails
-exports.sendBulkEmailTutorCourseAlert = async (
+const sendBulkEmailTutorCourseAlert = async (
 	recipients,
 	subject,
 	html,
@@ -108,8 +109,45 @@ exports.sendBulkEmailTutorCourseAlert = async (
 	}
 };
 
+// Send verification email
+const sendVerificationEmail = async (email, userId) => {
+	try {
+		const verificationToken = jwt.sign(
+			{ userId, email },
+			process.env.JWT_SECRET || 'fallback_secret',
+			{ expiresIn: '24h' }
+		);
+
+		const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify-email?token=${verificationToken}`;
+
+		const mailOptions = {
+			from: `"ChainVerse Academy" <${process.env.EMAIL_USER}>`,
+			to: email,
+			subject: 'Verify Your Email Address',
+			html: `
+				<div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
+					<h2 style="color: #333; text-align: center;">Welcome to ChainVerse Academy!</h2>
+					<p>Thank you for joining our platform. Please verify your email address to complete your registration.</p>
+					<div style="text-align: center; margin: 30px 0;">
+						<a href="${verificationUrl}" style="background-color: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">Verify Email</a>
+					</div>
+					<p style="color: #666; font-size: 14px;">This link will expire in 24 hours.</p>
+					<p style="color: #666; font-size: 14px;">If you didn't create an account, you can safely ignore this email.</p>
+				</div>
+			`,
+		};
+
+		await transporter.sendMail(mailOptions);
+		console.log(`Verification email sent to ${email}`);
+	} catch (error) {
+		console.error('Error sending verification email:', error);
+		throw error;
+	}
+};
+
 module.exports = {
 	sendCertificateEmail,
 	sendEmailTutorCourseAlert,
 	sendBulkEmailTutorCourseAlert,
+	sendVerificationEmail,
 };
