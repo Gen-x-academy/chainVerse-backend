@@ -40,7 +40,7 @@ exports.clearTestDB = async () => {
  * Create a test user with specified role
  */
 exports.createTestUser = async (userData = {}) => {
-  const User = require('../src/models/User');
+  const User = require('../models/User');
   const defaultUser = {
     email: 'test@example.com',
     password: 'password123',
