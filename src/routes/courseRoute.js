@@ -8,6 +8,7 @@ const {
 
 const courseController = require('../controllers/courseController');
 const adminCourseController = require('../controllers/courseController'); // New admin controller
+const courseModeratorController = require('../controllers/courseModeratorController');
 const { authMiddleware, roleMiddleware } = require('../middlewares/auth');
 const {
 	completeCourse,
@@ -82,6 +83,44 @@ router.post(
 	auth.authenticate,
 	auth.hasRole(['admin']),
 	adminCourseController.createCourse
+);
+
+// Course Moderator Routes
+router.post(
+	'/moderator/assign',
+	auth.authenticate,
+	auth.hasRole(['admin']),
+	courseModeratorController.assignModerator
+);
+
+router.get(
+	'/moderator/courses',
+	auth.authenticate,
+	courseModeratorController.getAssignedCourses
+);
+
+router.get(
+	'/moderator/activity',
+	auth.authenticate,
+	courseModeratorController.getCourseActivity
+);
+
+router.post(
+	'/moderator/report-issue',
+	auth.authenticate,
+	courseModeratorController.reportIssue
+);
+
+router.get(
+	'/moderator/reports',
+	auth.authenticate,
+	courseModeratorController.getReports
+);
+
+router.post(
+	'/moderator/respond',
+	auth.authenticate,
+	courseModeratorController.respondToConcern
 );
 
 module.exports = router;

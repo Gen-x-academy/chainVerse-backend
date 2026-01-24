@@ -20,6 +20,12 @@ const authLimiter = rateLimit({
   message: 'Too many authentication attempts, please try again after 15 minutes'
 });
 
+const passwordChangeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 3, // limit each IP to 3 requests per windowMs
+  message: 'Too many password change attempts, please try again after 15 minutes'
+});
+
 // Tutor application routes
 // router.post('/tutor/apply', applyLimiter, tutorController.submitTutorApplication);
 router.get('/admin/tutor-applications', tutorAuth.authenticateTutor, tutorAuth.tutorRoleCheck, tutorController.getAllTutors);
@@ -63,16 +69,29 @@ router.get('/admin/tutor-applications/:id', tutorAuth.authenticateTutor, tutorAu
 // router.post('/tutor/refresh-token', tutorController.refreshToken);
 
 // Protected tutor routes
-// router.get('/tutor/profile', tutorAuth.authenticateTutor, tutorAuth.tutorRoleCheck, tutorController.getProfile);
-// router.put('/tutor/profile', 
-//   tutorAuth.authenticateTutor, 
-//   tutorAuth.tutorRoleCheck,
-//   tutorValidator.validateProfileUpdate, 
-//   tutorValidator.validateResults, 
-//   tutorController.updateProfile
-// );
+router.get('/tutor/account', tutorAuth.authenticateTutor, tutorAuth.tutorRoleCheck, tutorController.getProfile);
+router.put('/tutor/account/update',
+  tutorAuth.authenticateTutor,
+  tutorAuth.tutorRoleCheck,
+  tutorValidator.validateProfileUpdate,
+  tutorValidator.validateResults,
+  tutorController.updateProfile
+);
+router.put('/tutor/account/change-password',
+  tutorAuth.authenticateTutor,
+  tutorAuth.tutorRoleCheck,
+  passwordChangeLimiter,
+  tutorValidator.validateChangePassword,
+  tutorValidator.validateResults,
+  tutorController.changePassword
+);
+router.post('/tutor/account/upload-profile-image',
+  tutorAuth.authenticateTutor,
+  tutorAuth.tutorRoleCheck,
+  tutorController.uploadProfileImage
+);
 
-// router.get('/tutor/courses/reports', tutorAuth.authenticateTutor, tutorAuth.tutorRoleCheck, tutorReportController.getTutorCoursesReport);
+router.get('/tutor/courses/reports', tutorAuth.authenticateTutor, tutorAuth.tutorRoleCheck, tutorReportController.getTutorCoursesReport);
 // router.get('/tutor/courses/:courseId/reports', tutorAuth.authenticateTutor, tutorAuth.tutorRoleCheck, tutorReportController.getCourseReport);
 // router.get('/tutor/leaderboard', tutorAuth.authenticateTutor, tutorAuth.tutorRoleCheck, tutorReportController.getTutorRankings);
 
