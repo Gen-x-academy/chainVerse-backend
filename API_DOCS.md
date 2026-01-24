@@ -9,6 +9,7 @@
 - [Tutor Authentication](./src/docs/tutorAuth.md)
 - [Tutor Performance Reports](#tutor-performance-reports)
 - [Gamification System](#gamification-system)
+- [Tutor Account Management](#tutor-account-management)
 
 ## Course Moderators
 
@@ -406,7 +407,7 @@ Award points to a student for completing educational activities. **Tutor access 
 \`\`\`
 
 **Response:**
-\`\`\`json
+```json
 {
     "status": "success",
     "message": "Points added successfully",
@@ -417,7 +418,7 @@ Award points to a student for completing educational activities. **Tutor access 
         "description": "Completed JavaScript Basics"
     }
 }
-\`\`\`
+```
 
 ### Get Student Points
 `GET /students/:id/points`
@@ -428,7 +429,7 @@ Retrieve points and achievements for a specific student. Students can only view 
 - `id`: Student ID
 
 **Response:**
-\`\`\`json
+```json
 {
     "status": "success",
     "data": {
@@ -457,7 +458,7 @@ Retrieve points and achievements for a specific student. Students can only view 
         "lastUpdated": "2024-01-15T10:30:00Z"
     }
 }
-\`\`\`
+```
 
 ### Get Leaderboard
 `GET /students/leaderboard`
@@ -469,7 +470,7 @@ Retrieve the student leaderboard ranked by total points.
 - `page`: (optional) Page number (default: 1)
 
 **Response:**
-\`\`\`json
+```json
 {
     "status": "success",
     "data": {
@@ -493,7 +494,7 @@ Retrieve the student leaderboard ranked by total points.
         }
     }
 }
-\`\`\`
+```
 
 ### Get Student Rank
 `GET /students/:id/rank`
@@ -504,7 +505,7 @@ Get the current rank of a specific student.
 - `id`: Student ID
 
 **Response:**
-\`\`\`json
+```json
 {
     "status": "success",
     "data": {
@@ -513,7 +514,7 @@ Get the current rank of a specific student.
         "rank": 15
     }
 }
-\`\`\`
+```
 
 ## Badge Management
 
@@ -523,7 +524,7 @@ Get the current rank of a specific student.
 Create a new achievement badge. **Admin access only.**
 
 **Request Body:**
-\`\`\`json
+```json
 {
     "name": "Smart Contract Expert",
     "description": "Master blockchain development",
@@ -537,7 +538,7 @@ Create a new achievement badge. **Admin access only.**
     "pointsReward": 200,
     "rarity": "epic"
 }
-\`\`\`
+```
 
 ### Get All Badges
 `GET /badges`
@@ -558,7 +559,7 @@ Retrieve all badges earned by a specific student.
 - `studentId`: Student ID
 
 **Response:**
-\`\`\`json
+```json
 {
     "status": "success",
     "data": [
@@ -578,7 +579,7 @@ Retrieve all badges earned by a specific student.
         }
     ]
 }
-\`\`\`
+```
 
 ## Point Values
 
@@ -608,7 +609,7 @@ Retrieve performance reports for all courses owned by the tutor.
 - `interval`: (optional) Filter by time interval (weekly, monthly, quarterly, yearly)
 
 **Response:**
-\`\`\`json
+```json
 {
     "courses": [
         {
@@ -621,7 +622,7 @@ Retrieve performance reports for all courses owned by the tutor.
         }
     ]
 }
-\`\`\`
+```
 
 ### Get Specific Course Report
 `GET /tutor/reports/courses/:id`
@@ -635,7 +636,7 @@ Retrieve detailed performance report for a specific course.
 - `format`: (optional) Response format ('json' or 'csv')
 
 **Response (JSON):**
-\`\`\`json
+```json
 {
     "title": "Course Title",
     "description": "Course Description",
@@ -645,7 +646,7 @@ Retrieve detailed performance report for a specific course.
     "completionRate": 75.5,
     "revenue": 7999.20
 }
-\`\`\`
+```
 
 **Response (CSV):**
 Downloads a CSV file with the following fields:
@@ -667,7 +668,7 @@ Retrieve a leaderboard based on selected metrics.
 - `limit`: (optional) Number of results to return (default: 10)
 
 **Response:**
-\`\`\`json
+```json
 {
     "leaderboard": [
         {
@@ -677,3 +678,92 @@ Retrieve a leaderboard based on selected metrics.
         }
     ]
 }
+```
+
+## Tutor Account Management
+
+### Get Account Details
+`GET /tutor/account`
+
+Retrieve details of the logged-in tutor.
+
+**Response:**
+```json
+{
+    "success": true,
+    "tutor": {
+        "id": "tutor_id",
+        "fullName": "Jane Doe",
+        "email": "jane@example.com",
+        "phoneNumber": "+1234567890",
+        "web3Expertise": "Smart Contracts, DeFi",
+        "bio": "Experienced blockchain developer...",
+        "profileImage": "https://example.com/profile.jpg",
+        "role": "tutor",
+        "verified": true,
+        "createdAt": "2024-01-01T00:00:00.000Z"
+    }
+}
+```
+
+### Update Profile
+`PUT /tutor/account/update`
+
+Update general profile information.
+
+**Request Body:**
+```json
+{
+    "fullName": "Jane Smith",
+    "phoneNumber": "+0987654321",
+    "bio": "New bio update...",
+    "web3Expertise": "Solidity Expert"
+}
+```
+
+**Response:**
+```json
+{
+    "success": true,
+    "message": "Profile updated successfully",
+    "tutor": { ... }
+}
+```
+
+### Change Password
+`PUT /tutor/account/change-password`
+
+Allows tutors to change their password.
+
+**Request Body:**
+```json
+{
+    "currentPassword": "OldPassword123!",
+    "newPassword": "NewPassword456!"
+}
+```
+
+**Response:**
+```json
+{
+    "success": true,
+    "message": "Password changed successfully"
+}
+```
+
+### Upload Profile Image
+`POST /tutor/account/upload-profile-image`
+
+Upload or update the tutor's profile picture.
+
+**Request Body:**
+- `profileImage`: File (multipart/form-data)
+
+**Response:**
+```json
+{
+    "success": true,
+    "message": "Profile image uploaded successfully",
+    "imageUrl": "https://cloud-storage.com/tutor_id/profile.jpg"
+}
+```
