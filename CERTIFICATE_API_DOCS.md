@@ -19,7 +19,7 @@ Download tokens are JWT-based tokens that provide time-limited access to certifi
 
 ---
 
-## 1. Get My Certificates
+### Get My Certificates
 
 `GET /api/certificates/my-certificates`
 
@@ -28,9 +28,7 @@ Retrieve all certificates for the authenticated student with filtering and pagin
 **Authentication:** Required (Bearer token)
 
 **Headers:**
-```
-Authorization: Bearer <jwt_token>
-```
+- `Authorization: Bearer <jwt_token>` (required)
 
 **Query Parameters:**
 - `courseId` (optional): Filter by specific course ID (MongoDB ObjectId)
@@ -106,7 +104,7 @@ curl -X GET "http://localhost:3002/api/certificates/my-certificates?page=1&limit
 
 ---
 
-## 2. Get Single Certificate
+### Get Single Certificate
 
 `GET /api/certificates/:certificateId`
 
@@ -115,9 +113,7 @@ Retrieve details of a specific certificate with ownership verification.
 **Authentication:** Required (Bearer token)
 
 **Headers:**
-```
-Authorization: Bearer <jwt_token>
-```
+- `Authorization: Bearer <jwt_token>` (required)
 
 **Path Parameters:**
 - `certificateId` (required): Certificate ID (MongoDB ObjectId)
@@ -194,7 +190,7 @@ curl -X GET "http://localhost:3002/api/certificates/507f1f77bcf86cd799439011" \
 
 ---
 
-## 3. Download All Certificates (ZIP)
+### Download All Certificates (ZIP)
 
 `GET /api/certificates/my-certificates/download-all`
 
@@ -203,9 +199,7 @@ Download all active certificates for the authenticated student as a single ZIP f
 **Authentication:** Required (Bearer token)
 
 **Headers:**
-```
-Authorization: Bearer <jwt_token>
-```
+- `Authorization: Bearer <jwt_token>` (required)
 
 **cURL Example:**
 ```bash
@@ -252,7 +246,7 @@ certificates_507f1f77bcf86cd799439012_1706182800.zip
 
 ---
 
-## 4. Download Single Certificate
+### Download Single Certificate
 
 `GET /api/certificates/download/:certificateId`
 
@@ -332,7 +326,7 @@ curl -X GET "http://localhost:3002/api/certificates/download/507f1f77bcf86cd7994
 
 ---
 
-## 5. Verify Certificate Ownership
+### Verify Certificate Ownership
 
 `GET /api/certificates/:certificateId/verify-ownership`
 
@@ -341,9 +335,7 @@ Check if the authenticated student owns a specific certificate.
 **Authentication:** Required (Bearer token)
 
 **Headers:**
-```
-Authorization: Bearer <jwt_token>
-```
+- `Authorization: Bearer <jwt_token>` (required)
 
 **Path Parameters:**
 - `certificateId` (required): Certificate ID (MongoDB ObjectId)
