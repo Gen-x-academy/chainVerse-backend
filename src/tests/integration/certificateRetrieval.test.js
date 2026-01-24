@@ -22,7 +22,7 @@ const generateToken = (userId) => {
 };
 
 beforeAll(async () => {
-	await mongoose.connect(process.env.MONGO_URI_TEST || 'mongodb://localhost:27017/chainverse-test');
+	await mongoose.connect(process.env.MONGODB_TEST_URI || 'mongodb://localhost:27017/chainverse-test');
 });
 
 beforeEach(async () => {
