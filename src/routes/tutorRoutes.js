@@ -20,6 +20,12 @@ const authLimiter = rateLimit({
   message: 'Too many authentication attempts, please try again after 15 minutes'
 });
 
+const passwordChangeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 3, // limit each IP to 3 requests per windowMs
+  message: 'Too many password change attempts, please try again after 15 minutes'
+});
+
 // Tutor application routes
 // router.post('/tutor/apply', applyLimiter, tutorController.submitTutorApplication);
 router.get('/admin/tutor-applications', tutorAuth.authenticateTutor, tutorAuth.tutorRoleCheck, tutorController.getAllTutors);
@@ -74,6 +80,7 @@ router.put('/tutor/account/update',
 router.put('/tutor/account/change-password',
   tutorAuth.authenticateTutor,
   tutorAuth.tutorRoleCheck,
+  passwordChangeLimiter,
   tutorValidator.validateChangePassword,
   tutorValidator.validateResults,
   tutorController.changePassword
