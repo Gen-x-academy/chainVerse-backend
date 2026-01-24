@@ -6,12 +6,13 @@ const certificateRoutes = require("./certificateRoutes");
 const reportAbuseRoutes = require("./reportAbuseRoute");
 const pointsRoutes = require("./pointsRoutes");
 const notificationRoutes = require("./notifications");
-const authRoutes = require('./authRoute');
-const courseRoutes = require('./courseRoute');
-const rateLimitRoutes = require('./rateLimitRoutes');
-const courseUpdateRoutes = require('./courseUpdateRoutes');
-const recommendationRoutes = require('../modules/recommendation.routes');
-const studentCourseRoutes = require('./studentCourseRoutes');
+const authRoutes = require("./authRoute");
+const courseRoutes = require("./courseRoute");
+const rateLimitRoutes = require("./rateLimitRoutes");
+const courseUpdateRoutes = require("./courseUpdateRoutes");
+const recommendationRoutes = require("../modules/recommendation.routes");
+const studentCourseRoutes = require("./studentCourseRoutes");
+const libraryRoutes = require("./libraryRoutes");
 
 const router = express.Router();
 
@@ -22,11 +23,12 @@ router.use("/certificates", certificateRoutes);
 router.use("/reports/abuse", reportAbuseRoutes);
 router.use("/notifications", notificationRoutes);
 router.use("/", pointsRoutes);
-router.use('/auth', authRoutes);
-router.use('/courses', courseRoutes);
-router.use('/rate-limit', rateLimitRoutes);
-router.use('/', courseUpdateRoutes);
-router.use('/recommendation', recommendationRoutes);
-router.use('/', studentCourseRoutes);
+router.use("/auth", authRoutes);
+router.use("/courses", courseRoutes);
+router.use("/rate-limit", rateLimitRoutes);
+router.use("/", courseUpdateRoutes);
+router.use("/recommendation", recommendationRoutes);
+router.use("/", studentCourseRoutes);
+router.use("/", libraryRoutes);
 
 module.exports = router;
