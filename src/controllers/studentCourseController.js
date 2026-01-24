@@ -1,0 +1,351 @@
+const mongoose = require('mongoose');
+const Course = require('../models/course');
+const Student = require('../models/student');
+const Enrollment = require('../models/enrollment');
+const User = require('../models/User');
+const { createStudent } = require('../utils/createStudent');
+const CryptoPaymentService = require('../utils/cryptoPaymentService');
+
+// Utility function for error handling
+const handleError = (res, statusCode, message) => {
+    return res.status(statusCode).json({
+        success: false,
+        message,
+    });
+};
+
+// Utility function for success response
+const handleSuccess = (res, statusCode, message, data = null) => {
+    return res.status(statusCode).json({
+        success: true,
+        message,
+        data,
+    });
+};
+
+// GET /student/learning: Fetch all courses associated with the student
+exports.getStudentLearning = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        // Ensure student record exists
+        let student = await Student.findById(userId);
+        if (!student) {
+            student = await createStudent(userId, req.user.email);
+        }
+
+        // Get courses where the student is enrolled
+        const enrolledCourses = await Course.find({
+            _id: { $in: student.enrolledCourses || [] }
+        }).populate('tutor', 'name email');
+
+        return handleSuccess(res, 200, 'Student learning courses retrieved successfully', {
+            courses: enrolledCourses,
+            totalCourses: enrolledCourses.length,
+        });
+    } catch (error) {
+        console.error('Error retrieving student learning courses:', error);
+        return handleError(res, 500, 'Internal server error');
+    }
+};
+
+// GET /student/learning/:id: Fetch details for a single student course by its ID
+exports.getStudentLearningById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user._id;
+
+        // Ensure student record exists
+        let student = await Student.findById(userId);
+        if (!student) {
+            student = await createStudent(userId, req.user.email);
+        }
+
+        // Check if the course is in the student's enrolled courses
+        const isEnrolled = student.enrolledCourses && student.enrolledCourses.includes(id);
+        if (!isEnrolled) {
+            return handleError(res, 403, 'Access denied. Course not enrolled by student');
+        }
+
+        // Get the specific course
+        const course = await Course.findById(id)
+            .populate('tutor', 'name email')
+            .populate('enrollments.student', 'name email');
+
+        if (!course) {
+            return handleError(res, 404, 'Course not found');
+        }
+
+        return handleSuccess(res, 200, 'Course details retrieved successfully', course);
+    } catch (error) {
+        console.error('Error retrieving student learning course by ID:', error);
+        return handleError(res, 500, 'Internal server error');
+    }
+};
+
+// GET /student/all/course: Fetch all available courses
+exports.getAllCourses = async (req, res) => {
+    try {
+        const { page = 1, limit = 10, category, level } = req.query;
+
+        // Build query for published courses
+        let query = { 
+            isPublished: true, 
+            status: 'published' 
+        };
+
+        if (category) query.category = category;
+        if (level) query.level = level;
+
+        const courses = await Course.find(query)
+            .populate('tutor', 'name email')
+            .sort({ createdAt: -1 })
+            .limit(limit * 1)
+            .skip((page - 1) * limit)
+            .lean();
+
+        const total = await Course.countDocuments(query);
+
+        return handleSuccess(res, 200, 'All available courses retrieved successfully', {
+            courses,
+            currentPage: parseInt(page),
+            totalPages: Math.ceil(total / limit),
+            totalCourses: total,
+        });
+    } catch (error) {
+        console.error('Error retrieving all courses:', error);
+        return handleError(res, 500, 'Internal server error');
+    }
+};
+
+// GET /student/search: Search for a course based on a search term
+exports.searchCourses = async (req, res) => {
+    try {
+        const { searchTerm } = req.query;
+        const { page = 1, limit = 10 } = req.query;
+
+        if (!searchTerm) {
+            return handleError(res, 400, 'Search term is required');
+        }
+
+        // Build query for published courses matching the search term
+        const query = {
+            isPublished: true,
+            status: 'published',
+            $or: [
+                { title: { $regex: searchTerm, $options: 'i' } },
+                { description: { $regex: searchTerm, $options: 'i' } },
+                { tags: { $in: [new RegExp(searchTerm, 'i')] } }
+            ]
+        };
+
+        const courses = await Course.find(query)
+            .populate('tutor', 'name email')
+            .sort({ createdAt: -1 })
+            .limit(limit * 1)
+            .skip((page - 1) * limit)
+            .lean();
+
+        const total = await Course.countDocuments(query);
+
+        return handleSuccess(res, 200, 'Courses search results retrieved successfully', {
+            courses,
+            currentPage: parseInt(page),
+            totalPages: Math.ceil(total / limit),
+            totalCourses: total,
+            searchTerm
+        });
+    } catch (error) {
+        console.error('Error searching courses:', error);
+        return handleError(res, 500, 'Internal server error');
+    }
+};
+
+// POST /courses/:id/purchase: Purchase a course using crypto payment
+exports.purchaseCourse = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user._id;
+        const { transactionHash, cryptoCurrency, amount } = req.body;
+
+        // Validate course ID format
+        if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+            return handleError(res, 400, 'Invalid Course ID format');
+        }
+
+        // Get the course
+        const course = await Course.findById(id);
+        if (!course) {
+            return handleError(res, 404, 'Course not found');
+        }
+
+        if (!course.isPublished || course.status !== 'published') {
+            return handleError(res, 400, 'Course is not available for purchase');
+        }
+
+        // Validate required payment parameters
+        if (!transactionHash || !cryptoCurrency || !amount) {
+            return handleError(res, 400, 'Transaction hash, crypto currency, and amount are required');
+        }
+
+        // Ensure student record exists
+        let student = await Student.findById(userId);
+        if (!student) {
+            student = await createStudent(userId, req.user.email);
+        }
+
+        // Check if already enrolled
+        if (student.enrolledCourses && student.enrolledCourses.includes(id)) {
+            return handleError(res, 400, 'Course already purchased');
+        }
+
+        // Verify the crypto payment on the blockchain
+        const paymentVerification = await CryptoPaymentService.processCryptoPayment(
+            id,
+            userId,
+            amount,
+            cryptoCurrency,
+            transactionHash
+        );
+
+        if (!paymentVerification.success) {
+            return handleError(res, 400, `Payment verification failed: ${paymentVerification.error}`);
+        }
+
+        // Add course to student's enrolled courses
+        await Student.updateOne(
+            { _id: userId },
+            { $addToSet: { enrolledCourses: id } }
+        );
+
+        // Add student to course's enrollments
+        await Course.updateOne(
+            { _id: id },
+            { 
+                $push: { 
+                    enrollments: { 
+                        student: userId,
+                        enrolledAt: new Date()
+                    } 
+                },
+                $inc: { totalEnrollments: 1 }
+            }
+        );
+
+        // Create enrollment record
+        await Enrollment.create({
+            courseId: id,
+            studentId: userId,
+            completed: false
+        });
+
+        // Populate the updated course data for response
+        const updatedCourse = await Course.findById(id).populate('tutor', 'name email');
+
+        return handleSuccess(res, 200, 'Course purchased successfully', {
+            course: updatedCourse,
+            payment: paymentVerification,
+            message: 'Payment processed successfully and course enrolled'
+        });
+    } catch (error) {
+        console.error('Error purchasing course:', error);
+        return handleError(res, 500, 'Internal server error during purchase');
+    }
+};
+
+// POST /courses/:id/transfer: Transfer course ownership through a smart contract
+exports.transferCourseOwnership = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user._id;
+        const { recipientEmail, transactionHash } = req.body;
+
+        // Validate inputs
+        if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+            return handleError(res, 400, 'Invalid Course ID format');
+        }
+
+        if (!recipientEmail) {
+            return handleError(res, 400, 'Recipient email is required');
+        }
+
+        // Get the course
+        const course = await Course.findById(id);
+        if (!course) {
+            return handleError(res, 404, 'Course not found');
+        }
+
+        // Ensure student record exists
+        let student = await Student.findById(userId);
+        if (!student) {
+            student = await createStudent(userId, req.user.email);
+        }
+
+        // Check if student owns the course (is enrolled)
+        const isEnrolled = student.enrolledCourses && student.enrolledCourses.includes(id);
+        if (!isEnrolled) {
+            return handleError(res, 403, 'Access denied. You do not own this course');
+        }
+
+        // Find recipient by email
+        const recipientUser = await User.findOne({ email: recipientEmail });
+        if (!recipientUser) {
+            return handleError(res, 404, 'Recipient not found');
+        }
+
+        // Ensure recipient has a student record
+        let recipientStudent = await Student.findById(recipientUser._id);
+        if (!recipientStudent) {
+            recipientStudent = await createStudent(recipientUser._id, recipientEmail);
+        }
+
+        // In a real implementation, this would involve:
+        // 1. Creating a smart contract transaction for course transfer
+        // 2. Validating the transfer on the blockchain
+        // 3. Updating course ownership records
+        
+        // For simulation purposes, we'll update the enrollment records:
+        
+        // Remove course from sender's enrolled courses
+        await Student.updateOne(
+            { _id: userId },
+            { $pull: { enrolledCourses: id } }
+        );
+
+        // Add course to recipient's enrolled courses
+        await Student.updateOne(
+            { _id: recipientUser._id },
+            { $addToSet: { enrolledCourses: id } }
+        );
+
+        // Update course enrollment - remove sender and add recipient
+        await Course.updateOne(
+            { _id: id },
+            {
+                $pull: { enrollments: { student: userId } },
+                $push: { 
+                    enrollments: { 
+                        student: recipientUser._id,
+                        enrolledAt: new Date()
+                    } 
+                }
+            }
+        );
+
+        // Update enrollment records
+        await Enrollment.updateOne(
+            { courseId: id, studentId: userId },
+            { $set: { studentId: recipientUser._id } }
+        );
+
+        return handleSuccess(res, 200, 'Course ownership transferred successfully', {
+            courseId: id,
+            from: req.user.email,
+            to: recipientEmail,
+            message: 'Course transfer completed successfully'
+        });
+    } catch (error) {
+        console.error('Error transferring course ownership:', error);
+        return handleError(res, 500, 'Internal server error during transfer');
+    }
+};
