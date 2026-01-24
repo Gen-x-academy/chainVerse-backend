@@ -127,13 +127,13 @@ exports.getMyCertificates = async (req, res) => {
 			limit: req.query.limit,
 		};
 
-		const result = await certificateRetrievalService.getMyCertificates(
+		const certificates = await certificateRetrievalService.getMyCertificates(
 			studentId,
 			filters,
 			pagination
 		);
 
-		return res.status(200).json(result);
+		return res.status(200).json(certificates);
 	} catch (error) {
 		logger.error(`Error in getMyCertificates: ${error.message}`);
 		return res.status(500).json({
@@ -149,11 +149,11 @@ exports.downloadAllCertificates = async (req, res) => {
 	try {
 		const studentId = req.user._id || req.user.id;
 
-		const result = await certificateRetrievalService.getCertificateFilesForDownload(
+		const files = await certificateRetrievalService.getCertificateFilesForDownload(
 			studentId
 		);
 
-		if (!result.success || result.data.length === 0) {
+		if (!files.success || files.data.length === 0) {
 			return res.status(404).json({
 				success: false,
 				message: 'No certificates found for download',
@@ -161,7 +161,7 @@ exports.downloadAllCertificates = async (req, res) => {
 		}
 
 		const zipPath = await zipGenerator.getTempZipPath(studentId);
-		await zipGenerator.createCertificateZip(result.data, zipPath);
+		await zipGenerator.createCertificateZip(files.data, zipPath);
 
 		const filename = `certificates_${studentId}_${Date.now()}.zip`;
 		await zipGenerator.streamZipToResponse(zipPath, res, filename);
@@ -325,12 +325,12 @@ exports.getSingleCertificate = async (req, res) => {
 		const certificateId = req.params.certificateId || req.params.id;
 		const studentId = req.user._id || req.user.id;
 
-		const result = await certificateRetrievalService.getSingleCertificate(
+		const certificate = await certificateRetrievalService.getSingleCertificate(
 			certificateId,
 			studentId
 		);
 
-		return res.status(200).json(result);
+		return res.status(200).json(certificate);
 	} catch (error) {
 		logger.error(`Error in getSingleCertificate: ${error.message}`);
 
@@ -386,13 +386,13 @@ exports.downloadSingleCertificate = async (req, res) => {
 			});
 		}
 
-		const result = await certificateRetrievalService.getSingleCertificate(
+		const certificate = await certificateRetrievalService.getSingleCertificate(
 			decoded.certificateId,
 			studentId
 		);
 
-		if (result.data.certificateUrl) {
-			return res.redirect(result.data.certificateUrl);
+		if (certificate.data.certificateUrl) {
+			return res.redirect(certificate.data.certificateUrl);
 		}
 
 		return res.status(200).json({

@@ -55,7 +55,6 @@ const createCertificateZip = async (certificateFiles, outputPath) => {
 		});
 
 		output.on('close', () => {
-			logger.info(`ZIP created: ${archive.pointer()} bytes`);
 			resolve(outputPath);
 		});
 
@@ -85,7 +84,6 @@ const cleanupTempFile = async (filePath) => {
 	try {
 		await access(filePath);
 		await unlink(filePath);
-		logger.info(`Cleaned up temp file: ${filePath}`);
 	} catch (error) {
 		if (error.code !== 'ENOENT') {
 			logger.error(`Cleanup failed: ${error.message}`);

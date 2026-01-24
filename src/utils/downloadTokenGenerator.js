@@ -7,7 +7,6 @@ const generateNonce = () => {
 	return crypto.randomBytes(16).toString('hex');
 };
 
-// Generate token for single certificate download (default: 1 hour)
 const generateDownloadToken = (certificateId, studentId, expiresIn = 3600) => {
 	if (!certificateId || !studentId) {
 		throw new Error('Certificate ID and Student ID are required');
@@ -24,7 +23,6 @@ const generateDownloadToken = (certificateId, studentId, expiresIn = 3600) => {
 	return jwt.sign(payload, JWT_SECRET, { expiresIn });
 };
 
-// Verify single certificate download token
 const verifyDownloadToken = (token) => {
 	if (!token) {
 		throw new Error('Token is required');
@@ -49,7 +47,6 @@ const verifyDownloadToken = (token) => {
 	}
 };
 
-// Generate token for bulk download (default: 2 hours)
 const generateBulkDownloadToken = (studentId, certificateCount, expiresIn = 7200) => {
 	if (!studentId) {
 		throw new Error('Student ID is required');
@@ -65,7 +62,6 @@ const generateBulkDownloadToken = (studentId, certificateCount, expiresIn = 7200
 
 	return jwt.sign(payload, JWT_SECRET, { expiresIn });
 };
-// Verify bulk download token
 
 const verifyBulkDownloadToken = (token) => {
 	if (!token) {
@@ -84,13 +80,9 @@ const verifyBulkDownloadToken = (token) => {
 		if (error.name === 'TokenExpiredError') {
 			throw new Error('Download token has expired');
 		}
-		if (error.name === 'JsonWebTokenError') {
-			throw new Error('Invalid download token');
-		}
-		throw error;
+		throw new Error('Invalid download token');
 	}
 };
-// Extract token from query params, headers, or Bearer token
 
 const extractTokenFromRequest = (req) => {
 	if (req.query && req.query.token) {
