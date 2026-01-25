@@ -7,4 +7,6 @@ const createStudent = async (studentId, studentMail) => {
   });
   student = await student.save();
   return student;
-}
+};
+
+module.exports = { createStudent };
