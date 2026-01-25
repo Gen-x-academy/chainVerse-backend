@@ -3,11 +3,207 @@
 ## Table of Contents
 - [Authentication](#authentication)
 - [Courses](#courses)
+- [Course Moderators](#course-moderators)
 - [Students](#students)
 - [Student Account Settings](#student-account-settings)
 - [Tutor Authentication](./src/docs/tutorAuth.md)
 - [Tutor Performance Reports](#tutor-performance-reports)
 - [Gamification System](#gamification-system)
+- [Tutor Account Management](#tutor-account-management)
+
+## Course Moderators
+
+Course Moderators are responsible for monitoring course activity, assisting students, and reporting issues to maintain course quality.
+
+### Assign Course Moderator
+`POST /course/moderator/assign`
+
+Assign a moderator to monitor and support a specific course. **Admin access only.**
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Request Body:**
+```json
+{
+  "courseId": "course_id",
+  "moderatorId": "moderator_user_id"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Moderator assigned successfully",
+  "data": {
+    "courseId": "course_id",
+    "moderatorId": "moderator_user_id",
+    "assignedBy": "admin_user_id",
+    "assignedAt": "2024-01-15T10:30:00Z",
+    "isActive": true
+  }
+}
+```
+
+### Get Assigned Courses
+`GET /course/moderator/courses`
+
+Retrieve all courses assigned to a specific moderator.
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Query Parameters:**
+- `moderatorId`: The ID of the moderator (required)
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Assigned courses retrieved successfully",
+  "data": {
+    "courses": [
+      {
+        "title": "Course Title",
+        "description": "Course Description",
+        "category": "Category",
+        "level": "Beginner"
+      }
+    ],
+    "total": 1
+  }
+}
+```
+
+### Monitor Course Activity
+`GET /course/moderator/activity`
+
+Retrieve activity data for a specific course, including enrollment and progress metrics.
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Query Parameters:**
+- `courseId`: The ID of the course (required)
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Course activity retrieved successfully",
+  "data": {
+    "courseTitle": "Course Title",
+    "totalEnrollments": 50,
+    "activeStudents": 30,
+    "completedStudents": 15,
+    "averageProgress": 65.5,
+    "averageRating": 4.2,
+    "totalRatings": 25
+  }
+}
+```
+
+### Report Course Issue
+`POST /course/moderator/report-issue`
+
+Report an issue with a course for review and escalation.
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Request Body:**
+```json
+{
+  "courseId": "course_id",
+  "issueType": "Content Issue",
+  "description": "Detailed description of the issue"
+}
+```
+
+**Issue Types:** Content Issue, Technical Issue, Student Concern, Other
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Issue reported successfully",
+  "data": {
+    "courseId": "course_id",
+    "reportedBy": "moderator_user_id",
+    "issueType": "Content Issue",
+    "description": "Detailed description",
+    "status": "pending",
+    "createdAt": "2024-01-15T10:30:00Z"
+  }
+}
+```
+
+### Get Course Reports
+`GET /course/moderator/reports`
+
+Retrieve all moderator-submitted reports, optionally filtered by course.
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Query Parameters:**
+- `courseId`: Filter reports by course (optional)
+- `page`: Page number (default: 1)
+- `limit`: Number of reports per page (default: 10)
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Reports retrieved successfully",
+  "data": {
+    "reports": [
+      {
+        "courseId": {
+          "title": "Course Title"
+        },
+        "reportedBy": {
+          "name": "Moderator Name",
+          "email": "moderator@example.com"
+        },
+        "issueType": "Technical Issue",
+        "description": "Issue description",
+        "status": "pending",
+        "createdAt": "2024-01-15T10:30:00Z"
+      }
+    ],
+    "currentPage": 1,
+    "totalPages": 1,
+    "totalReports": 1
+  }
+}
+```
+
+### Respond to Student Concern
+`POST /course/moderator/respond`
+
+Send a response to a student's concern regarding a course.
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Request Body:**
+```json
+{
+  "courseId": "course_id",
+  "studentId": "student_user_id",
+  "message": "Response message to the student"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Response sent successfully"
+}
+```
 
 ## Student Account Settings
 
@@ -211,7 +407,7 @@ Award points to a student for completing educational activities. **Tutor access 
 \`\`\`
 
 **Response:**
-\`\`\`json
+```json
 {
     "status": "success",
     "message": "Points added successfully",
@@ -222,7 +418,7 @@ Award points to a student for completing educational activities. **Tutor access 
         "description": "Completed JavaScript Basics"
     }
 }
-\`\`\`
+```
 
 ### Get Student Points
 `GET /students/:id/points`
@@ -233,7 +429,7 @@ Retrieve points and achievements for a specific student. Students can only view 
 - `id`: Student ID
 
 **Response:**
-\`\`\`json
+```json
 {
     "status": "success",
     "data": {
@@ -262,7 +458,7 @@ Retrieve points and achievements for a specific student. Students can only view 
         "lastUpdated": "2024-01-15T10:30:00Z"
     }
 }
-\`\`\`
+```
 
 ### Get Leaderboard
 `GET /students/leaderboard`
@@ -274,7 +470,7 @@ Retrieve the student leaderboard ranked by total points.
 - `page`: (optional) Page number (default: 1)
 
 **Response:**
-\`\`\`json
+```json
 {
     "status": "success",
     "data": {
@@ -298,7 +494,7 @@ Retrieve the student leaderboard ranked by total points.
         }
     }
 }
-\`\`\`
+```
 
 ### Get Student Rank
 `GET /students/:id/rank`
@@ -309,7 +505,7 @@ Get the current rank of a specific student.
 - `id`: Student ID
 
 **Response:**
-\`\`\`json
+```json
 {
     "status": "success",
     "data": {
@@ -318,7 +514,7 @@ Get the current rank of a specific student.
         "rank": 15
     }
 }
-\`\`\`
+```
 
 ## Badge Management
 
@@ -328,7 +524,7 @@ Get the current rank of a specific student.
 Create a new achievement badge. **Admin access only.**
 
 **Request Body:**
-\`\`\`json
+```json
 {
     "name": "Smart Contract Expert",
     "description": "Master blockchain development",
@@ -342,7 +538,7 @@ Create a new achievement badge. **Admin access only.**
     "pointsReward": 200,
     "rarity": "epic"
 }
-\`\`\`
+```
 
 ### Get All Badges
 `GET /badges`
@@ -363,7 +559,7 @@ Retrieve all badges earned by a specific student.
 - `studentId`: Student ID
 
 **Response:**
-\`\`\`json
+```json
 {
     "status": "success",
     "data": [
@@ -383,7 +579,7 @@ Retrieve all badges earned by a specific student.
         }
     ]
 }
-\`\`\`
+```
 
 ## Point Values
 
@@ -413,7 +609,7 @@ Retrieve performance reports for all courses owned by the tutor.
 - `interval`: (optional) Filter by time interval (weekly, monthly, quarterly, yearly)
 
 **Response:**
-\`\`\`json
+```json
 {
     "courses": [
         {
@@ -426,7 +622,7 @@ Retrieve performance reports for all courses owned by the tutor.
         }
     ]
 }
-\`\`\`
+```
 
 ### Get Specific Course Report
 `GET /tutor/reports/courses/:id`
@@ -440,7 +636,7 @@ Retrieve detailed performance report for a specific course.
 - `format`: (optional) Response format ('json' or 'csv')
 
 **Response (JSON):**
-\`\`\`json
+```json
 {
     "title": "Course Title",
     "description": "Course Description",
@@ -450,7 +646,7 @@ Retrieve detailed performance report for a specific course.
     "completionRate": 75.5,
     "revenue": 7999.20
 }
-\`\`\`
+```
 
 **Response (CSV):**
 Downloads a CSV file with the following fields:
@@ -472,7 +668,7 @@ Retrieve a leaderboard based on selected metrics.
 - `limit`: (optional) Number of results to return (default: 10)
 
 **Response:**
-\`\`\`json
+```json
 {
     "leaderboard": [
         {
@@ -482,3 +678,92 @@ Retrieve a leaderboard based on selected metrics.
         }
     ]
 }
+```
+
+## Tutor Account Management
+
+### Get Account Details
+`GET /tutor/account`
+
+Retrieve details of the logged-in tutor.
+
+**Response:**
+```json
+{
+    "success": true,
+    "tutor": {
+        "id": "tutor_id",
+        "fullName": "Jane Doe",
+        "email": "jane@example.com",
+        "phoneNumber": "+1234567890",
+        "web3Expertise": "Smart Contracts, DeFi",
+        "bio": "Experienced blockchain developer...",
+        "profileImage": "https://example.com/profile.jpg",
+        "role": "tutor",
+        "verified": true,
+        "createdAt": "2024-01-01T00:00:00.000Z"
+    }
+}
+```
+
+### Update Profile
+`PUT /tutor/account/update`
+
+Update general profile information.
+
+**Request Body:**
+```json
+{
+    "fullName": "Jane Smith",
+    "phoneNumber": "+0987654321",
+    "bio": "New bio update...",
+    "web3Expertise": "Solidity Expert"
+}
+```
+
+**Response:**
+```json
+{
+    "success": true,
+    "message": "Profile updated successfully",
+    "tutor": { ... }
+}
+```
+
+### Change Password
+`PUT /tutor/account/change-password`
+
+Allows tutors to change their password.
+
+**Request Body:**
+```json
+{
+    "currentPassword": "OldPassword123!",
+    "newPassword": "NewPassword456!"
+}
+```
+
+**Response:**
+```json
+{
+    "success": true,
+    "message": "Password changed successfully"
+}
+```
+
+### Upload Profile Image
+`POST /tutor/account/upload-profile-image`
+
+Upload or update the tutor's profile picture.
+
+**Request Body:**
+- `profileImage`: File (multipart/form-data)
+
+**Response:**
+```json
+{
+    "success": true,
+    "message": "Profile image uploaded successfully",
+    "imageUrl": "https://cloud-storage.com/tutor_id/profile.jpg"
+}
+```
