@@ -44,6 +44,13 @@ const UserSchema = new mongoose.Schema({
     default: "student",
   },
 
+  // Saved courses (references to Course documents)
+  savedCourses: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Course",
+    },
+  ],
   twoFASecret: {
     type: String,
   },
