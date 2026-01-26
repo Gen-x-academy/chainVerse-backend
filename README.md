@@ -36,6 +36,7 @@ chainVerse-backend
 │  │  ├─ faqController.js
 │  │  ├─ financialAidController.js
 │  │  ├─ guestCartController.js
+│  │  ├─ leaderboardController.js
 │  │  ├─ loginLogController.js
 │  │  ├─ nftController.js
 │  │  ├─ notificationController.js
@@ -124,6 +125,7 @@ chainVerse-backend
 │  │  ├─ financialAidRoute.js
 │  │  ├─ guestCartRoute.js
 │  │  ├─ index.js
+│  │  ├─ leaderboardRoutes.js
 │  │  ├─ loginLogRoute.js
 │  │  ├─ nftRoute.js
 │  │  ├─ notificationRoutes.js
@@ -161,6 +163,7 @@ chainVerse-backend
 │  │  │  ├─ certificateRoutes.test.js
 │  │  │  ├─ gamification.test.js
 │  │  │  ├─ guestCart.test.js
+│  │  │  ├─ leaderboard.test.js
 │  │  │  ├─ sessionTest.js
 │  │  │  ├─ studentReports.test.js
 │  │  │  └─ tutorAuth.test.js
