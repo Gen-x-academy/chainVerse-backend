@@ -13,6 +13,7 @@ const courseUpdateRoutes = require('./courseUpdateRoutes');
 const recommendationRoutes = require('../modules/recommendation.routes');
 const studentCourseRoutes = require('./studentCourseRoutes');
 const bookRoutes = require('./bookRoutes');
+const libraryBooksRoutes = require('./libraryBooksRoutes');
 
 const router = express.Router();
 
@@ -30,5 +31,6 @@ router.use('/', courseUpdateRoutes);
 router.use('/recommendation', recommendationRoutes);
 router.use('/', studentCourseRoutes);
 router.use('/books', bookRoutes);
+router.use('/library', libraryBooksRoutes);
 
 module.exports = router;
