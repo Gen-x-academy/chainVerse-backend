@@ -68,6 +68,38 @@ const CourseSchema = new mongoose.Schema({
         type: Number,
         required: true,
       },
+      recommendedBooks: [
+        {
+          book: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Book",
+          },
+          required: {
+            type: Boolean,
+            default: false,
+          },
+          priority: {
+            type: Number,
+            default: 0,
+          },
+        },
+      ],
+    },
+  ],
+  recommendedBooks: [
+    {
+      book: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Book",
+      },
+      required: {
+        type: Boolean,
+        default: false,
+      },
+      priority: {
+        type: Number,
+        default: 0,
+      },
     },
   ],
   enrollments: [

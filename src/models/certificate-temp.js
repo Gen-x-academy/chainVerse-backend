@@ -5,4 +5,4 @@ const certificateSchema = new mongoose.Schema({
   issuedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Tutor" }
 });
 
-module.exports = mongoose.model("Certificate", certificateSchema);
+module.exports = mongoose.models.CertificateTemp || mongoose.model("CertificateTemp", certificateSchema);
