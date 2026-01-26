@@ -42,4 +42,7 @@ BookSchema.pre("save", function (next) {
   next();
 });
 
+BookSchema.index({ title: "text", author: "text", description: "text" });
+BookSchema.index({ category: 1, isActive: 1 });
+
 module.exports = mongoose.model("Book", BookSchema);
