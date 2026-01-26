@@ -1,25 +1,19 @@
-const Borrow = require("../models/borrow");
-
+const Borrow = require("../models/Borrow");
 const LibraryService = require("../services/libraryService");
 
 const createBorrow = async (userId, courseId, durationDays = 14) => {
-  const borrowedAt = new Date();
-
-  const expiresAt = new Date(borrowedAt);
-
-  expiresAt.setDate(expiresAt.getDate() + durationDays);
+  const borrowDate = new Date();
+  const expiryDate = new Date(borrowDate);
+  expiryDate.setDate(expiryDate.getDate() + durationDays);
 
   const borrow = await Borrow.create({
     userId,
-
-    courseId,
-
-    borrowedAt,
-
-    expiresAt,
-
+    resourceId: courseId,
+    resourceType: "course",
+    resourceTitle: "Course",
+    borrowDate,
+    expiryDate,
     status: "active",
-
     progress: 0,
   });
 
@@ -39,12 +33,10 @@ const updateBorrowProgress = async (borrowId, progress) => {
 
   if (borrow.progress === 100) {
     borrow.status = "completed";
-
-    borrow.returnedAt = new Date();
+    borrow.returnDate = new Date();
   }
 
   await borrow.save();
-
   LibraryService.clearUserCache(borrow.userId);
 
   return borrow;
@@ -56,10 +48,8 @@ const updateExpiredBorrows = async () => {
   const result = await Borrow.updateMany(
     {
       status: "active",
-
-      expiresAt: { $lt: now },
+      expiryDate: { $lt: now },
     },
-
     {
       $set: { status: "expired" },
     },
@@ -70,8 +60,6 @@ const updateExpiredBorrows = async () => {
 
 module.exports = {
   createBorrow,
-
   updateBorrowProgress,
-
   updateExpiredBorrows,
 };

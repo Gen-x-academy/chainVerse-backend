@@ -15,6 +15,7 @@ const {
 	getCertificate,
 } = require('../controllers/certificateController');
 const { mintNft } = require('../controllers/nftController');
+const bookController = require('../controllers/bookController');
 
 
 router.post('/courses', auth.authenticate, isAdmin.ensureAdmin, courseController.createCourse);
@@ -121,6 +122,20 @@ router.post(
 	'/moderator/respond',
 	auth.authenticate,
 	courseModeratorController.respondToConcern
+);
+
+// Book Assignment Routes
+router.get(
+	'/:id/books',
+	auth.authenticate,
+	bookController.getCourseBooks
+);
+
+router.post(
+	'/:id/books',
+	auth.authenticate,
+	auth.hasRole(['admin', 'tutor']),
+	bookController.assignBookToCourse
 );
 
 module.exports = router;

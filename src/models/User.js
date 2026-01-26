@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
 
 const UserSchema = new mongoose.Schema({
   email: {
@@ -39,11 +39,18 @@ const UserSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['student', 'tutor', 'admin', 'moderator'],
+    enum: ["student", "tutor", "admin", "moderator"],
     required: true,
-    default: 'student',
+    default: "student",
   },
 
+  // Saved courses (references to Course documents)
+  savedCourses: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Course",
+    },
+  ],
   twoFASecret: {
     type: String,
   },
@@ -62,28 +69,28 @@ const UserSchema = new mongoose.Schema({
 });
 
 // Update the updatedAt field on save
-UserSchema.pre('save', function (next) {
-	this.updatedAt = Date.now();
-	next();
+UserSchema.pre("save", function (next) {
+  this.updatedAt = Date.now();
+  next();
 });
 
-UserSchema.pre('save', async function (next) {
-	if (!this.isNew && !this.isModified('password')) {
-		return next();
-	}
+UserSchema.pre("save", async function (next) {
+  if (!this.isNew && !this.isModified("password")) {
+    return next();
+  }
 
-	try {
-		const salt = await bcrypt.genSalt(10);
-		this.password = await bcrypt.hash(this.password, salt);
-		next();
-	} catch (error) {
-		next(error);
-	}
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
 // Method to compare passwords
 UserSchema.methods.comparePassword = async function (candidatePassword) {
-	return await bcrypt.compare(candidatePassword, this.password);
+  return await bcrypt.compare(candidatePassword, this.password);
 };
 
-module.exports = mongoose.model('User', UserSchema);
+module.exports = mongoose.model("User", UserSchema);

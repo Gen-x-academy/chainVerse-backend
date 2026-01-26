@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const Borrow = require("../models/borrow");
+const Borrow = require("../models/Borrow");
 const User = require("../models/User");
 const Course = require("../models/course");
 const { createBorrow } = require("../utils/borrowHelper");
@@ -18,8 +18,8 @@ const seedBorrows = async () => {
       process.exit(0);
     }
 
-    await Borrow.deleteMany({});
-    console.log("Cleared existing borrows");
+    await Borrow.deleteMany({ resourceType: "course" });
+    console.log("Cleared existing course borrows");
 
     const borrowPromises = [];
 
@@ -33,11 +33,13 @@ const seedBorrows = async () => {
         borrowPromises.push(
           Borrow.create({
             userId: student._id,
-            courseId: courses[idx + 1]._id,
-            borrowedAt: new Date(
+            resourceId: courses[idx + 1]._id,
+            resourceType: "course",
+            resourceTitle: courses[idx + 1].title,
+            borrowDate: new Date(
               expiredDate.getTime() - 14 * 24 * 60 * 60 * 1000,
             ),
-            expiresAt: expiredDate,
+            expiryDate: expiredDate,
             status: "expired",
             progress: 45,
           }),
@@ -48,10 +50,12 @@ const seedBorrows = async () => {
         borrowPromises.push(
           Borrow.create({
             userId: student._id,
-            courseId: courses[idx + 2]._id,
-            borrowedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-            expiresAt: new Date(Date.now() - 16 * 24 * 60 * 60 * 1000),
-            returnedAt: new Date(Date.now() - 16 * 24 * 60 * 60 * 1000),
+            resourceId: courses[idx + 2]._id,
+            resourceType: "course",
+            resourceTitle: courses[idx + 2].title,
+            borrowDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+            expiryDate: new Date(Date.now() - 16 * 24 * 60 * 60 * 1000),
+            returnDate: new Date(Date.now() - 16 * 24 * 60 * 60 * 1000),
             status: "completed",
             progress: 100,
           }),

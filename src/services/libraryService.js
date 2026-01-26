@@ -1,7 +1,4 @@
-const Borrow = require("../models/borrow");
-
-const Course = require("../models/course");
-
+const Borrow = require("../models/Borrow");
 const NodeCache = require("node-cache");
 
 const libraryCache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
@@ -9,7 +6,6 @@ const libraryCache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
 class LibraryService {
   static async getUserLibrary(userId) {
     const cacheKey = `library_${userId}`;
-
     const cached = libraryCache.get(cacheKey);
 
     if (cached) {
@@ -18,65 +14,55 @@ class LibraryService {
 
     const now = new Date();
 
-    const borrows = await Borrow.find({ userId })
-
+    const borrows = await Borrow.find({
+      userId,
+      resourceType: "course",
+    })
       .populate({
-        path: "courseId",
-
+        path: "resourceId",
         select: "title description thumbnail tutor duration level",
-
         populate: {
           path: "tutor",
-
           select: "fullName email",
         },
       })
-
       .lean();
 
     const active = [];
-
     const expired = [];
-
     const history = [];
 
     borrows.forEach((borrow) => {
-      if (!borrow.courseId) return;
+      if (!borrow.resourceId) return;
 
       const item = {
         borrowId: borrow._id,
-
-        course: borrow.courseId,
-
-        borrowedAt: borrow.borrowedAt,
-
-        expiresAt: borrow.expiresAt,
-
-        progress: borrow.progress,
-
+        course: borrow.resourceId,
+        borrowedAt: borrow.borrowDate,
+        expiresAt: borrow.expiryDate,
+        progress: borrow.progress || 0,
         status: borrow.status,
       };
 
-      if (borrow.status === "active" && borrow.expiresAt > now) {
-        item.remainingSeconds = Math.floor((borrow.expiresAt - now) / 1000);
-
+      if (borrow.status === "active" && borrow.expiryDate > now) {
+        item.remainingSeconds = Math.floor((borrow.expiryDate - now) / 1000);
         active.push(item);
-      } else if (borrow.status === "active" && borrow.expiresAt <= now) {
+      } else if (
+        (borrow.status === "active" || borrow.status === "expired") &&
+        borrow.expiryDate <= now
+      ) {
         item.remainingSeconds = 0;
-
         expired.push(item);
       } else if (
         borrow.status === "returned" ||
         borrow.status === "completed"
       ) {
-        item.returnedAt = borrow.returnedAt;
-
+        item.returnedAt = borrow.returnDate;
         history.push(item);
       }
     });
 
     const result = { active, expired, history };
-
     libraryCache.set(cacheKey, result);
 
     return result;
@@ -94,9 +80,7 @@ class LibraryService {
     }
 
     borrow.status = "returned";
-
-    borrow.returnedAt = new Date();
-
+    borrow.returnDate = new Date();
     await borrow.save();
 
     libraryCache.del(`library_${userId}`);
