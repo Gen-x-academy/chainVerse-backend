@@ -71,6 +71,15 @@ borrowSchema.index({ expiryDate: 1, status: 1 });
 borrowSchema.index({ userId: 1, resourceId: 1, status: 1 });
 borrowSchema.index({ userId: 1, expiryDate: 1 });
 
+
+borrowSchema.index(
+  { userId: 1, resourceId: 1, status: 1 },
+  { 
+    unique: true,
+    partialFilterExpression: { status: "active" },
+    name: "one_active_borrow_per_user_resource"
+  }
+);
 // Virtual for checking if borrow is expired
 borrowSchema.virtual("isExpired").get(function () {
   return this.status === "active" && new Date() > this.expiryDate;
@@ -100,3 +109,5 @@ borrowSchema.methods.getRemainingSeconds = function () {
 };
 
 module.exports = mongoose.model("Borrow", borrowSchema);
+
+

@@ -34,6 +34,7 @@ const studentCartRoutes = require("./src/routes/studentCartRoutes");
 const studentAccountRoutes = require("./src/routes/studentAccountRoutes");
 const borrowRoutes = require("./src/routes/borrowRoutes");
 const notificationRoutes = require("./src/routes/notifications");
+const bookReviewRoutes = require("./src/routes/bookReviewRoutes");
 // const setupSwaggerDocs = require('./swagger');
 
 const dbConnection = require("./src/config/database/connection");
@@ -90,6 +91,7 @@ app.use("/api", studentCartRoutes);
 app.use("/student", studentAccountRoutes);
 app.use("/api/borrows", borrowRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/books", bookReviewRoutes);
 // app.use('/api/cart', cartRoutes);
 
 // --- Add Quiz routes (RESTful path, e.g. /api/quizzes) ---

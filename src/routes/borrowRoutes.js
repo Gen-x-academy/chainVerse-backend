@@ -1,8 +1,42 @@
 const express = require("express");
 const router = express.Router();
 const borrowController = require("../controllers/borrowController");
-const { authenticate } = require("../middlewares/authMiddleware");
+const { authMiddleware } = require("../middlewares/authMiddleware"); 
 
+console.log("Borrow controller loaded from:", borrowController);
+
+// routes/borrowRoutes.js
+console.log("Borrow controller path:", require.resolve("../controllers/borrowController"));
+
+
+
+// ===== BOOK-SPECIFIC ROUTES (NEW) =====
+/**
+ * @swagger
+ * /api/library/books/{bookId}/borrow:
+ *   post:
+ *     summary: Borrow a specific book
+ *     tags: [Library]
+ */
+router.post("/library/books/:bookId/borrow", authMiddleware, borrowController.borrowBook);
+
+/**
+ * @swagger
+ * /api/library/books/{bookId}/return:
+ *   post:
+ *     summary: Return a specific book
+ *     tags: [Library]
+ */
+router.post("/library/books/:bookId/return", authMiddleware, borrowController.returnBook);
+
+/* @swagger
+ * /api/library/books/{bookId}/access:
+ *   get:
+ *     summary: Access/read a borrowed book (protected)
+ *     tags: [Library]
+ */
+router.get("/library/books/:bookId/access", authMiddleware, borrowController.accessBook);
+//router.post("/library/books/:bookId/borrow", authMiddleware, borrowController.borrowBook);
 /**
  * @swagger
  * /api/borrows:
@@ -33,7 +67,9 @@ const { authenticate } = require("../middlewares/authMiddleware");
  *                 type: number
  *                 default: 14
  */
-router.post("/", authenticate, borrowController.createBorrow);
+
+console.log("Borrow controller is",borrowController)
+router.post("/", authMiddleware, borrowController.createBorrow);
 
 /**
  * @swagger
@@ -44,7 +80,7 @@ router.post("/", authenticate, borrowController.createBorrow);
  *     security:
  *       - BearerAuth: []
  */
-router.get("/", authenticate, borrowController.getUserBorrows);
+router.get("/", authMiddleware, borrowController.getUserBorrows);
 
 /**
  * @swagger
@@ -55,7 +91,7 @@ router.get("/", authenticate, borrowController.getUserBorrows);
  *     security:
  *       - BearerAuth: []
  */
-router.get("/stats", authenticate, borrowController.getBorrowStats);
+router.get("/stats", authMiddleware, borrowController.getBorrowStats);
 
 /**
  * @swagger
@@ -66,7 +102,7 @@ router.get("/stats", authenticate, borrowController.getBorrowStats);
  *     security:
  *       - BearerAuth: []
  */
-router.patch("/:id/return", authenticate, borrowController.returnBorrow);
+router.patch("/:id/return", authMiddleware, borrowController.returnBorrow);
 
 /**
  * @swagger
@@ -77,6 +113,6 @@ router.patch("/:id/return", authenticate, borrowController.returnBorrow);
  *     security:
  *       - BearerAuth: []
  */
-router.patch("/:id/renew", authenticate, borrowController.renewBorrow);
+router.patch("/:id/renew", authMiddleware, borrowController.renewBorrow);
 
 module.exports = router;

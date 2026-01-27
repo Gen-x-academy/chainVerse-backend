@@ -14,6 +14,15 @@ const recommendationRoutes = require("../modules/recommendation.routes");
 const studentCourseRoutes = require("./studentCourseRoutes");
 const bookRoutes = require("./bookRoutes");
 const libraryRoutes = require("./libraryRoutes");
+const authRoutes = require('./authRoute');
+const courseRoutes = require('./courseRoute');
+const rateLimitRoutes = require('./rateLimitRoutes');
+const courseUpdateRoutes = require('./courseUpdateRoutes');
+const recommendationRoutes = require('../modules/recommendation.routes');
+const studentCourseRoutes = require('./studentCourseRoutes');
+const bookRoutes = require('./bookRoutes');
+const leaderboardRoutes = require('./leaderboardRoutes');
+const libraryBooksRoutes = require('./libraryBooksRoutes');
 
 const router = express.Router();
 
@@ -32,5 +41,14 @@ router.use("/recommendation", recommendationRoutes);
 router.use("/", studentCourseRoutes);
 router.use("/books", bookRoutes);
 router.use("/", libraryRoutes);
+router.use('/auth', authRoutes);
+router.use('/courses', courseRoutes);
+router.use('/rate-limit', rateLimitRoutes);
+router.use('/', courseUpdateRoutes);
+router.use('/recommendation', recommendationRoutes);
+router.use('/', studentCourseRoutes);
+router.use('/books', bookRoutes);
+router.use('/leaderboard', leaderboardRoutes);
+router.use('/library', libraryBooksRoutes);
 
 module.exports = router;

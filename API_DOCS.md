@@ -9,7 +9,9 @@
 - [Tutor Authentication](./src/docs/tutorAuth.md)
 - [Tutor Performance Reports](#tutor-performance-reports)
 - [Gamification System](#gamification-system)
+- [Challenge Leaderboards](#challenge-leaderboards)
 - [Tutor Account Management](#tutor-account-management)
+- [Library (E-Library Books)](#library-e-library-books)
 
 ## Course Moderators
 
@@ -516,6 +518,57 @@ Get the current rank of a specific student.
 }
 ```
 
+## Challenge Leaderboards
+
+### Get Course Leaderboard
+`GET /api/leaderboard/course/:id`
+
+Retrieve the leaderboard for a specific course based on Head-to-Head challenge performance.
+
+**Path Parameters:**
+- `id`: Course ID
+
+**Query Parameters:**
+- `timeFrame`: (optional) Time filter: `all-time` (default), `weekly`, `monthly`
+- `sortBy`: (optional) Sort criteria: `winRate` (default), `points`, `participation`
+- `limit`: (optional) Number of results (default: 10)
+- `page`: (optional) Page number (default: 1)
+
+**Response:**
+```json
+{
+    "success": true,
+    "count": 10,
+    "data": [
+        {
+            "_id": "student_id",
+            "totalGames": 15,
+            "wins": 12,
+            "totalPoints": 150,
+            "winRate": 80,
+            "averagePoints": 10,
+            "fullName": "Student Name",
+            "avatar": "profile_image_url",
+            "rank": 1
+        }
+    ]
+}
+```
+
+### Get Topic Leaderboard
+`GET /api/leaderboard/topic/:id`
+
+Retrieve the leaderboard for a specific topic (module).
+
+**Path Parameters:**
+- `id`: Module ID
+
+**Query Parameters:**
+- Same as Course Leaderboard.
+
+**Response:**
+- Same structure as Course Leaderboard.
+
 ## Badge Management
 
 ### Create Badge
@@ -767,3 +820,61 @@ Upload or update the tutor's profile picture.
     "imageUrl": "https://cloud-storage.com/tutor_id/profile.jpg"
 }
 ```
+
+## Library (E-Library Books)
+
+### Browse / Search / Filter Books (Public)
+`GET /api/library/books`
+
+Retrieve books from the e-library with full-text search, filters, sorting, and pagination. **Public access** (only non-sensitive fields are returned).
+
+**Headers:**
+- None
+
+**Query Parameters:**
+- `search`: Full-text search query (searches `title`, `author`, `description`, `tags`, `category`)
+- `title`: Filter by title (case-insensitive)
+- `author`: Filter by author (case-insensitive)
+- `category`: Filter by category
+- `tags`: Comma-separated tags (OR semantics). Example: `tags=defi,stellar`
+- `topic`: Alias for a single tag (combined with `tags` using OR)
+- `courseId`: Limit results to books recommended by the given course, then apply the other filters (intersection)
+- `sort`: `recent` | `popular` | `relevance` (default: `relevance` when `search` is present, otherwise `recent`)
+- `page`: Page number (default: 1)
+- `limit`: Page size (default: 10, max: 100)
+
+**Response:**
+```json
+{
+    "success": true,
+    "message": "Books retrieved successfully",
+    "data": {
+        "books": [
+            {
+                "_id": "book_id",
+                "title": "Stellar DeFi Handbook",
+                "author": "Alice",
+                "description": "Book description",
+                "coverImage": "https://example.com/cover.png",
+                "link": "https://example.com/read",
+                "isbn": "978-0000000000",
+                "tags": ["stellar", "defi"],
+                "category": "defi",
+                "createdAt": "2024-01-15T10:30:00.000Z",
+                "borrowCount": 42
+            }
+        ],
+        "currentPage": 1,
+        "totalPages": 5,
+        "totalBooks": 50
+    }
+}
+```
+
+**Note:** `borrowCount` is included only when `sort=popular`.
+
+**Examples:**
+- `GET /api/library/books`
+- `GET /api/library/books?search=stellar`
+- `GET /api/library/books?category=defi&sort=popular`
+- `GET /api/library/books?courseId=<courseId>&tags=defi,web3&sort=recent&page=1&limit=20`
