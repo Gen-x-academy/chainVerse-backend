@@ -52,6 +52,8 @@ BookSchema.pre("save", function (next) {
   next();
 });
 
+BookSchema.index({ title: "text", author: "text", description: "text" });
+BookSchema.index({ category: 1, isActive: 1 });
 // Full-text search index (title/author/tags/category/description)
 BookSchema.index({
   title: "text",

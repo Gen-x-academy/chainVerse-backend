@@ -12,15 +12,16 @@ const courseModeratorController = require('../controllers/courseModeratorControl
 const { authMiddleware, roleMiddleware } = require('../middlewares/auth');
 const {
 	completeCourse,
-	getCertificate,
+	getCertificateById,
 } = require('../controllers/certificateController');
 const { mintNft } = require('../controllers/nftController');
 const bookController = require('../controllers/bookController');
 
+//console.log("adminCourseController:", adminCourseController);
 
 router.post('/courses', auth.authenticate, isAdmin.ensureAdmin, courseController.createCourse);
 router.post('/:id/complete', auth.authenticate, completeCourse);
-router.get('/:id/certificate', auth.authenticate, getCertificate);
+router.get('/:id/certificate', auth.authenticate, getCertificateById);
 router.post('/:id/mint-nft', auth.authenticate, mintNft);
 //router.get('/courses/public', publicRateLimitMiddleware, courseController.getPublicCourses);
 
