@@ -9,6 +9,7 @@
 - [Tutor Authentication](./src/docs/tutorAuth.md)
 - [Tutor Performance Reports](#tutor-performance-reports)
 - [Gamification System](#gamification-system)
+- [Challenge Leaderboards](#challenge-leaderboards)
 - [Tutor Account Management](#tutor-account-management)
 - [Library (E-Library Books)](#library-e-library-books)
 
@@ -516,6 +517,57 @@ Get the current rank of a specific student.
     }
 }
 ```
+
+## Challenge Leaderboards
+
+### Get Course Leaderboard
+`GET /api/leaderboard/course/:id`
+
+Retrieve the leaderboard for a specific course based on Head-to-Head challenge performance.
+
+**Path Parameters:**
+- `id`: Course ID
+
+**Query Parameters:**
+- `timeFrame`: (optional) Time filter: `all-time` (default), `weekly`, `monthly`
+- `sortBy`: (optional) Sort criteria: `winRate` (default), `points`, `participation`
+- `limit`: (optional) Number of results (default: 10)
+- `page`: (optional) Page number (default: 1)
+
+**Response:**
+```json
+{
+    "success": true,
+    "count": 10,
+    "data": [
+        {
+            "_id": "student_id",
+            "totalGames": 15,
+            "wins": 12,
+            "totalPoints": 150,
+            "winRate": 80,
+            "averagePoints": 10,
+            "fullName": "Student Name",
+            "avatar": "profile_image_url",
+            "rank": 1
+        }
+    ]
+}
+```
+
+### Get Topic Leaderboard
+`GET /api/leaderboard/topic/:id`
+
+Retrieve the leaderboard for a specific topic (module).
+
+**Path Parameters:**
+- `id`: Module ID
+
+**Query Parameters:**
+- Same as Course Leaderboard.
+
+**Response:**
+- Same structure as Course Leaderboard.
 
 ## Badge Management
 
