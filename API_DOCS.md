@@ -11,6 +11,7 @@
 - [Gamification System](#gamification-system)
 - [Challenge Leaderboards](#challenge-leaderboards)
 - [Tutor Account Management](#tutor-account-management)
+- [Library (E-Library Books)](#library-e-library-books)
 
 ## Course Moderators
 
@@ -819,3 +820,61 @@ Upload or update the tutor's profile picture.
     "imageUrl": "https://cloud-storage.com/tutor_id/profile.jpg"
 }
 ```
+
+## Library (E-Library Books)
+
+### Browse / Search / Filter Books (Public)
+`GET /api/library/books`
+
+Retrieve books from the e-library with full-text search, filters, sorting, and pagination. **Public access** (only non-sensitive fields are returned).
+
+**Headers:**
+- None
+
+**Query Parameters:**
+- `search`: Full-text search query (searches `title`, `author`, `description`, `tags`, `category`)
+- `title`: Filter by title (case-insensitive)
+- `author`: Filter by author (case-insensitive)
+- `category`: Filter by category
+- `tags`: Comma-separated tags (OR semantics). Example: `tags=defi,stellar`
+- `topic`: Alias for a single tag (combined with `tags` using OR)
+- `courseId`: Limit results to books recommended by the given course, then apply the other filters (intersection)
+- `sort`: `recent` | `popular` | `relevance` (default: `relevance` when `search` is present, otherwise `recent`)
+- `page`: Page number (default: 1)
+- `limit`: Page size (default: 10, max: 100)
+
+**Response:**
+```json
+{
+    "success": true,
+    "message": "Books retrieved successfully",
+    "data": {
+        "books": [
+            {
+                "_id": "book_id",
+                "title": "Stellar DeFi Handbook",
+                "author": "Alice",
+                "description": "Book description",
+                "coverImage": "https://example.com/cover.png",
+                "link": "https://example.com/read",
+                "isbn": "978-0000000000",
+                "tags": ["stellar", "defi"],
+                "category": "defi",
+                "createdAt": "2024-01-15T10:30:00.000Z",
+                "borrowCount": 42
+            }
+        ],
+        "currentPage": 1,
+        "totalPages": 5,
+        "totalBooks": 50
+    }
+}
+```
+
+**Note:** `borrowCount` is included only when `sort=popular`.
+
+**Examples:**
+- `GET /api/library/books`
+- `GET /api/library/books?search=stellar`
+- `GET /api/library/books?category=defi&sort=popular`
+- `GET /api/library/books?courseId=<courseId>&tags=defi,web3&sort=recent&page=1&limit=20`

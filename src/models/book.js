@@ -11,6 +11,16 @@ const BookSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
+  category: {
+    type: String,
+    trim: true,
+    index: true,
+  },
+  tags: {
+    type: [String],
+    default: [],
+    index: true,
+  },
   description: {
     type: String,
     trim: true,
@@ -40,6 +50,17 @@ const BookSchema = new mongoose.Schema({
 BookSchema.pre("save", function (next) {
   this.updatedAt = Date.now();
   next();
+});
+
+BookSchema.index({ title: "text", author: "text", description: "text" });
+BookSchema.index({ category: 1, isActive: 1 });
+// Full-text search index (title/author/tags/category/description)
+BookSchema.index({
+  title: "text",
+  author: "text",
+  description: "text",
+  tags: "text",
+  category: "text",
 });
 
 module.exports = mongoose.model("Book", BookSchema);
