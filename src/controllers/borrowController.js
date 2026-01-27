@@ -2,15 +2,15 @@ console.log("=== BORROW CONTROLLER STARTING ===");
 
 const Borrow = require("../models/Borrow");
 const notificationService = require("../utils/notificationService");
+const libraryAnalyticsService = require("../services/libraryAnalyticsService");
 const mongoose = require("mongoose");
 
 console.log("Dependencies loaded");
 
-// Create a simple controller object with all methods
 const borrowController = {
   // ===== NEW BOOK-SPECIFIC METHODS =====
-  
-  borrowBook: async function(req, res) {
+
+  borrowBook: async function (req, res) {
     console.log("borrowBook method called");
     try {
       const { bookId } = req.params;
@@ -48,13 +48,13 @@ const borrowController = {
           data: {
             expiryDate: existingBorrow.expiryDate,
             daysRemaining: Math.ceil(
-              (existingBorrow.expiryDate - new Date()) / (1000 * 60 * 60 * 24)
+              (existingBorrow.expiryDate - new Date()) / (1000 * 60 * 60 * 24),
             ),
           },
         });
       }
 
-      // Check availability (soft-lock mechanism)
+      // Check availability
       if (book.availableCopies <= 0) {
         return res.status(400).json({
           success: false,
@@ -72,34 +72,51 @@ const borrowController = {
 
       try {
         // Create borrow record
-        const [borrow] = await Borrow.create([{
-          userId,
-          resourceId: bookId,
-          resourceType: "book",
-          resourceTitle: book.title,
-          borrowDate: new Date(),
-          expiryDate,
-          status: "active",
-          metadata: {
-            author: book.author,
-            isbn: book.isbn,
-            borrowDurationDays,
-          },
-        }], { session });
+        const [borrow] = await Borrow.create(
+          [
+            {
+              userId,
+              resourceId: bookId,
+              resourceType: "book",
+              resourceTitle: book.title,
+              borrowDate: new Date(),
+              expiryDate,
+              status: "active",
+              metadata: {
+                author: book.author,
+                isbn: book.isbn,
+                borrowDurationDays,
+              },
+            },
+          ],
+          { session },
+        );
 
-        // Decrease available copies (soft-lock)
+        // Decrease available copies
         book.availableCopies -= 1;
         await book.save({ session });
 
         await session.commitTransaction();
         console.log("Book borrowed:", borrow._id);
 
+        // Track event for analytics
+        await libraryAnalyticsService.trackEvent({
+          userId,
+          action: "BORROW",
+          resourceId: bookId,
+          resourceType: "book",
+          metadata: {
+            bookTitle: book.title,
+            borrowDurationDays,
+          },
+        });
+
         // Send notification
         if (notificationService?.createNotification) {
           try {
             await notificationService.createNotification({
               userId,
-              title: "📚 Book Borrowed Successfully",
+              title: "Book Borrowed Successfully",
               message: `You have borrowed "${book.title}". Due back on ${expiryDate.toLocaleDateString()}.`,
               type: "success",
               metadata: {
@@ -134,8 +151,8 @@ const borrowController = {
       }
     } catch (error) {
       console.error("Borrow book error:", error);
-      
-      // Handle duplicate key error (just in case)
+
+      // Handle duplicate key error
       if (error.code === 11000) {
         return res.status(400).json({
           success: false,
@@ -146,12 +163,13 @@ const borrowController = {
       res.status(500).json({
         success: false,
         message: "Failed to borrow book",
-        error: process.env.NODE_ENV === "development" ? error.message : undefined,
+        error:
+          process.env.NODE_ENV === "development" ? error.message : undefined,
       });
     }
   },
 
-  returnBook: async function(req, res) {
+  returnBook: async function (req, res) {
     console.log("returnBook method called");
     try {
       const { bookId } = req.params;
@@ -182,22 +200,34 @@ const borrowController = {
         borrow.returnDate = new Date();
         await borrow.save({ session });
 
-        // Increase available copies (release soft-lock)
+        // Increase available copies
         await Book.findByIdAndUpdate(
           bookId,
           { $inc: { availableCopies: 1 } },
-          { session }
+          { session },
         );
 
         await session.commitTransaction();
         console.log("Book returned:", borrow._id);
+
+        // Track event for analytics
+        await libraryAnalyticsService.trackEvent({
+          userId,
+          action: "RETURN",
+          resourceId: bookId,
+          resourceType: "book",
+          metadata: {
+            borrowId: borrow._id,
+            resourceTitle: borrow.resourceTitle,
+          },
+        });
 
         // Send notification
         if (notificationService?.createNotification) {
           try {
             await notificationService.createNotification({
               userId,
-              title: "✅ Book Returned",
+              title: "Book Returned",
               message: `You have successfully returned "${borrow.resourceTitle}".`,
               type: "success",
               metadata: {
@@ -238,7 +268,7 @@ const borrowController = {
     }
   },
 
-  accessBook: async function(req, res) {
+  accessBook: async function (req, res) {
     console.log("accessBook method called");
     try {
       const { bookId } = req.params;
@@ -250,13 +280,14 @@ const borrowController = {
         resourceId: bookId,
         resourceType: "book",
         status: "active",
-        expiryDate: { $gte: new Date() }, // Not expired
+        expiryDate: { $gte: new Date() },
       });
 
       if (!activeBorrow) {
         return res.status(403).json({
           success: false,
-          message: "You don't have active access to this book. Please borrow it first.",
+          message:
+            "You don't have active access to this book. Please borrow it first.",
         });
       }
 
@@ -279,12 +310,12 @@ const borrowController = {
             author: book.author,
             description: book.description,
             coverImage: book.coverImage,
-            fileUrl: book.fileUrl, // Digital book file URL
+            fileUrl: book.fileUrl,
           },
           access: {
             expiryDate: activeBorrow.expiryDate,
             daysRemaining: Math.ceil(
-              (activeBorrow.expiryDate - new Date()) / (1000 * 60 * 60 * 24)
+              (activeBorrow.expiryDate - new Date()) / (1000 * 60 * 60 * 24),
             ),
             hoursRemaining: activeBorrow.getHoursRemaining(),
           },
@@ -299,9 +330,7 @@ const borrowController = {
     }
   },
 
-  // ... rest of your existing methods (createBorrow, getUserBorrows, etc.)
-
-  createBorrow: async function(req, res) {
+  createBorrow: async function (req, res) {
     console.log("createBorrow method called");
     try {
       const {
@@ -345,12 +374,24 @@ const borrowController = {
 
       console.log("Borrow created:", borrow._id);
 
+      // Track event for analytics
+      await libraryAnalyticsService.trackEvent({
+        userId,
+        action: "BORROW",
+        resourceId,
+        resourceType,
+        metadata: {
+          resourceTitle,
+          borrowDurationDays,
+        },
+      });
+
       // Try to send notification if service exists
       if (notificationService && notificationService.createNotification) {
         try {
           await notificationService.createNotification({
             userId,
-            title: "📚 Borrow Successful",
+            title: "Borrow Successful",
             message: `You have successfully borrowed "${resourceTitle}". Due back on ${expiryDate.toLocaleDateString()}.`,
             type: "success",
             metadata: {
@@ -377,12 +418,13 @@ const borrowController = {
       res.status(500).json({
         success: false,
         message: "Failed to borrow resource",
-        error: process.env.NODE_ENV === "development" ? error.message : undefined,
+        error:
+          process.env.NODE_ENV === "development" ? error.message : undefined,
       });
     }
   },
 
-  getUserBorrows: async function(req, res) {
+  getUserBorrows: async function (req, res) {
     console.log("getUserBorrows method called");
     try {
       const userId = req.user._id;
@@ -393,7 +435,7 @@ const borrowController = {
       const skip = (page - 1) * limit;
 
       const query = { userId };
-      if (status && status !== 'all') {
+      if (status && status !== "all") {
         query.status = status;
       }
 
@@ -427,7 +469,7 @@ const borrowController = {
     }
   },
 
-  getBorrowStats: async function(req, res) {
+  getBorrowStats: async function (req, res) {
     console.log("getBorrowStats method called");
     try {
       const userId = req.user._id;
@@ -467,7 +509,7 @@ const borrowController = {
     }
   },
 
-  returnBorrow: async function(req, res) {
+  returnBorrow: async function (req, res) {
     console.log("returnBorrow method called");
     try {
       const { id } = req.params;
@@ -491,12 +533,24 @@ const borrowController = {
         });
       }
 
+      // Track event for analytics
+      await libraryAnalyticsService.trackEvent({
+        userId,
+        action: "RETURN",
+        resourceId: borrow.resourceId,
+        resourceType: borrow.resourceType,
+        metadata: {
+          borrowId: borrow._id,
+          resourceTitle: borrow.resourceTitle,
+        },
+      });
+
       // Try to send notification if service exists
       if (notificationService && notificationService.createNotification) {
         try {
           await notificationService.createNotification({
             userId,
-            title: "✅ Resource Returned",
+            title: "Resource Returned",
             message: `You have successfully returned "${borrow.resourceTitle}".`,
             type: "success",
             metadata: {
@@ -526,7 +580,7 @@ const borrowController = {
     }
   },
 
-  renewBorrow: async function(req, res) {
+  renewBorrow: async function (req, res) {
     console.log("renewBorrow method called");
     try {
       const { id } = req.params;
@@ -553,7 +607,7 @@ const borrowController = {
       newExpiryDate.setDate(newExpiryDate.getDate() + extensionDays);
 
       borrow.expiryDate = newExpiryDate;
-      borrow.reminderSent = false; // Reset reminder flag
+      borrow.reminderSent = false;
       await borrow.save();
 
       // Try to send notification if service exists
@@ -595,11 +649,10 @@ const borrowController = {
 
 // Bind all methods to preserve context
 const boundController = {
-
-   borrowBook: borrowController.borrowBook.bind(borrowController),
+  borrowBook: borrowController.borrowBook.bind(borrowController),
   returnBook: borrowController.returnBook.bind(borrowController),
   accessBook: borrowController.accessBook.bind(borrowController),
-  
+
   createBorrow: borrowController.createBorrow.bind(borrowController),
   getUserBorrows: borrowController.getUserBorrows.bind(borrowController),
   getBorrowStats: borrowController.getBorrowStats.bind(borrowController),

@@ -1,7 +1,7 @@
 const LibraryService = require("../services/libraryService");
 
 const { updateBorrowProgress } = require("../utils/borrowHelper");
-
+const libraryAnalyticsService = require("../services/libraryAnalyticsService");
 const logger = require("../utils/logger");
 
 const handleError = (res, statusCode, message) => {
@@ -44,6 +44,18 @@ exports.returnBorrow = async (req, res) => {
 
     const borrow = await LibraryService.returnBorrow(userId, borrowId);
 
+    // Track event for analytics
+    await libraryAnalyticsService.trackEvent({
+      userId,
+      action: "RETURN",
+      resourceId: borrow.resourceId,
+      resourceType: borrow.resourceType,
+      metadata: {
+        borrowId: borrow._id,
+        resourceTitle: borrow.resourceTitle,
+      },
+    });
+
     return handleSuccess(res, 200, "Course returned successfully", {
       borrowId: borrow._id,
 
@@ -77,6 +89,19 @@ exports.updateProgress = async (req, res) => {
     }
 
     const borrow = await updateBorrowProgress(borrowId, progress);
+
+    // Track event for analytics
+    await libraryAnalyticsService.trackEvent({
+      userId: borrow.userId,
+      action: progress === 100 ? "COMPLETE" : "PROGRESS_UPDATE",
+      resourceId: borrow.resourceId,
+      resourceType: borrow.resourceType,
+      value: progress,
+      metadata: {
+        borrowId: borrow._id,
+        resourceTitle: borrow.resourceTitle,
+      },
+    });
 
     return handleSuccess(res, 200, "Progress updated successfully", {
       borrowId: borrow._id,
