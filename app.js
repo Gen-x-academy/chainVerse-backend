@@ -26,21 +26,28 @@ const adminFinancialAidRoutes = require("./src/routes/adminFinancialAidRoutes");
 const nftRoutes = require("./src/routes/nftRoute");
 const careerRoutes = require("./src/routes/careerRoutes");
 const { initScheduler } = require("./src/services/reportScheduler");
+const borrowScheduler = require("./src/scheduler/borrowScheduler");
 const studyGroupRoutes = require("./src/routes/studyGroupRoutes");
 const sessionRoutes = require("./src/routes/sessionRoute");
 const guestCartRoutes = require("./src/routes/guestCartRoute");
 const studentCartRoutes = require("./src/routes/studentCartRoutes");
 const adminAccountRoutes = require("./src/routes/adminAccountRoutes");
+const studentAccountRoutes = require("./src/routes/studentAccountRoutes");
+const borrowRoutes = require("./src/routes/borrowRoutes");
+const notificationRoutes = require("./src/routes/notifications");
+const bookReviewRoutes = require("./src/routes/bookReviewRoutes");
 // const setupSwaggerDocs = require('./swagger');
 
 const dbConnection = require("./src/config/database/connection");
 const router = require("./src/routes/index");
-// const quizRoutes = require("./src/routes/quizRoute");
+const quizRoutes = require("./src/routes/quizRoute");
 // const cartRoutes = require('./routes/cartRoutes');
 
 const app = express();
 dotEnv.config();
-dbConnection();
+if (process.env.NODE_ENV !== "test") {
+  dbConnection();
+}
 
 // Middlewares
 app.use(cors());
@@ -85,10 +92,14 @@ app.use("/api", nftRoutes);
 app.use("/api", careerRoutes);
 app.use("/api", guestCartRoutes);
 app.use("/api", studentCartRoutes);
+app.use("/student", studentAccountRoutes);
+app.use("/api/borrows", borrowRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/books", bookReviewRoutes);
 // app.use('/api/cart', cartRoutes);
 
 // --- Add Quiz routes (RESTful path, e.g. /api/quizzes) ---
-// app.use('/api/quizzes', quizRoutes);
+app.use("/api/quizzes", quizRoutes);
 
 app.get("/", (req, res) => {
   res.send("Welcome to ChainVerse Academy");
@@ -115,5 +126,8 @@ app.use((error, req, res, next) => {
 
 // Initialize report scheduler
 initScheduler();
+
+// Initialize borrow scheduler
+borrowScheduler.init();
 
 module.exports = app;

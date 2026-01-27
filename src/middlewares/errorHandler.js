@@ -6,25 +6,27 @@
  * @param   {function} next - Next middleware
  */
 const handleMulterErrors = (err, req, res, next) => {
-  if (err.code === 'LIMIT_FILE_SIZE') {
+  if (err.code === "LIMIT_FILE_SIZE") {
     return res.status(400).json({
       success: false,
-      message: 'File size cannot exceed 2MB'
+      message: "File size cannot exceed 2MB",
     });
   }
 
-  if (err.message.includes('Only .jpeg, .jpg, .png and .webp files are allowed')) {
+  if (
+    err.message.includes("Only .jpeg, .jpg, .png and .webp files are allowed")
+  ) {
     return res.status(400).json({
       success: false,
-      message: 'Only .jpeg, .jpg, .png and .webp files are allowed'
+      message: "Only .jpeg, .jpg, .png and .webp files are allowed",
     });
   }
 
   // For other Multer errors
-  if (err.name === 'MulterError') {
+  if (err.name === "MulterError") {
     return res.status(400).json({
       success: false,
-      message: err.message
+      message: err.message,
     });
   }
 
@@ -32,4 +34,13 @@ const handleMulterErrors = (err, req, res, next) => {
   next(err);
 };
 
-module.exports = { handleMulterErrors };
+/**
+ * @desc    Async handler wrapper to catch async errors
+ * @param   {function} fn - Async function to wrap
+ * @returns {function} Wrapped function
+ */
+const asyncHandler = (fn) => (req, res, next) => {
+  Promise.resolve(fn(req, res, next)).catch(next);
+};
+
+module.exports = { handleMulterErrors, asyncHandler };
