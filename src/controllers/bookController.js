@@ -74,7 +74,7 @@ exports.getBookById = async (req, res) => {
 // POST /books - Create new book
 exports.createBook = async (req, res) => {
     try {
-        const { title, author, description, coverImage, link, isbn } = req.body;
+        const { title, author, description, coverImage, link, isbn, category, tags } = req.body;
 
         if (!title || !author) {
             return handleError(res, 400, 'Title and author are required');
@@ -83,6 +83,8 @@ exports.createBook = async (req, res) => {
         const book = await Book.create({
             title,
             author,
+            category,
+            tags,
             description,
             coverImage,
             link,
