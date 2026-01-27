@@ -39,12 +39,14 @@ const bookReviewRoutes = require("./src/routes/bookReviewRoutes");
 
 const dbConnection = require("./src/config/database/connection");
 const router = require("./src/routes/index");
-// const quizRoutes = require("./src/routes/quizRoute");
+const quizRoutes = require("./src/routes/quizRoute");
 // const cartRoutes = require('./routes/cartRoutes');
 
 const app = express();
 dotEnv.config();
-dbConnection();
+if (process.env.NODE_ENV !== "test") {
+  dbConnection();
+}
 
 // Middlewares
 app.use(cors());
@@ -95,7 +97,7 @@ app.use("/api/books", bookReviewRoutes);
 // app.use('/api/cart', cartRoutes);
 
 // --- Add Quiz routes (RESTful path, e.g. /api/quizzes) ---
-// app.use('/api/quizzes', quizRoutes);
+app.use("/api/quizzes", quizRoutes);
 
 app.get("/", (req, res) => {
   res.send("Welcome to ChainVerse Academy");
