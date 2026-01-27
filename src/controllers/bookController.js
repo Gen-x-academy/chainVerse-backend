@@ -91,6 +91,28 @@ exports.createBook = async (req, res) => {
 
     if (!title || !author) {
       return handleError(res, 400, "Title and author are required");
+    try {
+        const { title, author, description, coverImage, link, isbn, category, tags } = req.body;
+
+        if (!title || !author) {
+            return handleError(res, 400, 'Title and author are required');
+        }
+
+        const book = await Book.create({
+            title,
+            author,
+            category,
+            tags,
+            description,
+            coverImage,
+            link,
+            isbn,
+        });
+
+        return handleSuccess(res, 201, 'Book created successfully', book);
+    } catch (error) {
+        console.error('Error creating book:', error);
+        return handleError(res, 500, 'Internal server error');
     }
 
     const book = await Book.create({
