@@ -9,6 +9,7 @@
 - [Course Moderators](#course-moderators)
 - [Students](#students)
 - [Student Account Settings](#student-account-settings)
+- [Student Courses](#student-courses)
 - [Certificate Name Change Requests](#certificate-name-change-requests)
 - [Tutor Authentication](./src/docs/tutorAuth.md)
 - [Tutor Performance Reports](#tutor-performance-reports)
@@ -16,6 +17,241 @@
 - [Challenge Leaderboards](#challenge-leaderboards)
 - [Tutor Account Management](#tutor-account-management)
 - [Library (E-Library Books)](#library-e-library-books)
+
+## Student Courses
+
+Student course endpoints handle course enrollment, learning management, and crypto-based purchases/transfers.
+
+### Get Student Learning Courses
+`GET /api/student/learning`
+
+Fetch all courses the authenticated student is enrolled in.
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Query Parameters:**
+- `page` (optional): Page number for pagination (default: 1)
+- `limit` (optional): Number of items per page (default: 10, max: 100)
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Student learning courses retrieved successfully",
+  "data": {
+    "courses": [
+      {
+        "_id": "course_id",
+        "title": "Web3 Fundamentals",
+        "description": "Learn the basics of Web3 development",
+        "tutor": {
+          "name": "John Doe",
+          "email": "tutor@example.com"
+        },
+        "category": "Blockchain",
+        "level": "Beginner",
+        "price": 100
+      }
+    ],
+    "totalCourses": 1
+  }
+}
+```
+
+---
+
+### Get Student Learning Course by ID
+`GET /api/student/learning/:id`
+
+Fetch details for a specific enrolled course.
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**URL Parameters:**
+- `id`: The course ID (MongoDB ObjectId)
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Course details retrieved successfully",
+  "data": {
+    "_id": "course_id",
+    "title": "Web3 Fundamentals",
+    "description": "Learn the basics of Web3 development",
+    "tutor": {
+      "name": "John Doe",
+      "email": "tutor@example.com"
+    },
+    "videos": [...],
+    "enrollments": [...]
+  }
+}
+```
+
+**Error Responses:**
+- `403 Forbidden`: Course not enrolled by student
+- `404 Not Found`: Course not found
+
+---
+
+### Get All Available Courses
+`GET /api/student/all/course`
+
+Fetch all published courses available for enrollment.
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Query Parameters:**
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 10)
+- `category` (optional): Filter by category
+- `level` (optional): Filter by level (Beginner, Intermediate, Advanced)
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "All available courses retrieved successfully",
+  "data": {
+    "courses": [...],
+    "currentPage": 1,
+    "totalPages": 5,
+    "totalCourses": 50
+  }
+}
+```
+
+---
+
+### Search Courses
+`GET /api/student/search`
+
+Search for courses by title, description, or tags.
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Query Parameters:**
+- `searchTerm` (required): Search query (2-100 characters)
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 10)
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Courses search results retrieved successfully",
+  "data": {
+    "courses": [...],
+    "currentPage": 1,
+    "totalPages": 2,
+    "totalCourses": 15,
+    "searchTerm": "blockchain"
+  }
+}
+```
+
+**Error Responses:**
+- `400 Bad Request`: Search term is required or invalid
+
+---
+
+### Purchase Course (Crypto Payment)
+`POST /api/courses/:id/purchase`
+
+Purchase a course using cryptocurrency payment.
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**URL Parameters:**
+- `id`: The course ID to purchase
+
+**Request Body:**
+```json
+{
+  "transactionHash": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+  "cryptoCurrency": "ETH",
+  "amount": 0.05
+}
+```
+
+**Supported Cryptocurrencies:** ETH, BTC, MATIC, BNB, SOL
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Course purchased successfully",
+  "data": {
+    "course": {
+      "_id": "course_id",
+      "title": "Web3 Fundamentals",
+      ...
+    },
+    "payment": {
+      "success": true,
+      "transactionId": "0x...",
+      "verified": true,
+      "amount": 0.05,
+      "currency": "ETH",
+      "timestamp": "2026-01-25T10:30:00Z",
+      "message": "Payment verified and confirmed on blockchain"
+    },
+    "message": "Payment processed successfully and course enrolled"
+  }
+}
+```
+
+**Error Responses:**
+- `400 Bad Request`: Invalid input, course already purchased, or course not available
+- `404 Not Found`: Course not found
+
+---
+
+### Transfer Course Ownership
+`POST /api/courses/:id/transfer`
+
+Transfer course ownership to another user via smart contract.
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**URL Parameters:**
+- `id`: The course ID to transfer
+
+**Request Body:**
+```json
+{
+  "recipientEmail": "recipient@example.com",
+  "transactionHash": "0x..." // Optional
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Course ownership transferred successfully",
+  "data": {
+    "courseId": "course_id",
+    "from": "sender@example.com",
+    "to": "recipient@example.com",
+    "message": "Course transfer completed successfully"
+  }
+}
+```
+
+**Error Responses:**
+- `400 Bad Request`: Missing or invalid recipient email
+- `403 Forbidden`: You do not own this course
+- `404 Not Found`: Course or recipient not found
+
+---
 
 ## Course Moderators
 
