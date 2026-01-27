@@ -37,7 +37,7 @@ const borrowSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["active", "returned", "expired", "overdue"],
+      enum: ["active", "returned", "expired", "overdue", "completed"],
       default: "active",
       index: true,
     },
@@ -48,6 +48,12 @@ const borrowSchema = new mongoose.Schema(
     autoReturned: {
       type: Boolean,
       default: false,
+    },
+    progress: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
     },
     metadata: {
       type: mongoose.Schema.Types.Mixed,
@@ -63,6 +69,7 @@ const borrowSchema = new mongoose.Schema(
 borrowSchema.index({ userId: 1, status: 1 });
 borrowSchema.index({ expiryDate: 1, status: 1 });
 borrowSchema.index({ userId: 1, resourceId: 1, status: 1 });
+borrowSchema.index({ userId: 1, expiryDate: 1 });
 
 
 borrowSchema.index(
@@ -92,6 +99,13 @@ borrowSchema.methods.shouldSendReminder = function () {
 borrowSchema.methods.getHoursRemaining = function () {
   const hoursRemaining = (this.expiryDate - new Date()) / (1000 * 60 * 60);
   return Math.max(0, Math.ceil(hoursRemaining));
+};
+
+// Method to get remaining time in seconds (for library dashboard countdown)
+borrowSchema.methods.getRemainingSeconds = function () {
+  const now = new Date();
+  const remaining = this.expiryDate - now;
+  return Math.max(0, Math.floor(remaining / 1000));
 };
 
 module.exports = mongoose.model("Borrow", borrowSchema);

@@ -26,6 +26,7 @@ const adminFinancialAidRoutes = require("./src/routes/adminFinancialAidRoutes");
 const nftRoutes = require("./src/routes/nftRoute");
 const careerRoutes = require("./src/routes/careerRoutes");
 const { initScheduler } = require("./src/services/reportScheduler");
+const borrowScheduler = require("./src/scheduler/borrowScheduler");
 const studyGroupRoutes = require("./src/routes/studyGroupRoutes");
 const sessionRoutes = require("./src/routes/sessionRoute");
 const guestCartRoutes = require("./src/routes/guestCartRoute");
@@ -121,5 +122,8 @@ app.use((error, req, res, next) => {
 
 // Initialize report scheduler
 initScheduler();
+
+// Initialize borrow scheduler
+borrowScheduler.init();
 
 module.exports = app;

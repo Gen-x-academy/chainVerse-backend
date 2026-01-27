@@ -1,6 +1,8 @@
 const cron = require("node-cron");
 const Borrow = require("../models/Borrow");
 const notificationService = require("../utils/notificationService");
+const { updateExpiredBorrows } = require("../utils/borrowHelper");
+const logger = require("../utils/logger");
 
 class BorrowScheduler {
   constructor() {
@@ -18,6 +20,9 @@ class BorrowScheduler {
 
     // Check for expired borrows every 30 minutes
     this.scheduleExpiredBorrowsCheck();
+
+    // Update expired borrows status every hour (for library dashboard)
+    this.scheduleLibraryExpiredUpdate();
 
     console.log("✅ Borrow scheduler initialized");
   }
@@ -125,6 +130,24 @@ class BorrowScheduler {
 
     this.jobs.push(job);
     console.log("📅 Scheduled: Expired borrows check (every 30 minutes)");
+  }
+
+  /**
+   * Update expired borrows status for library dashboard
+   * Runs every hour
+   */
+  scheduleLibraryExpiredUpdate() {
+    const job = cron.schedule("0 * * * *", async () => {
+      try {
+        const count = await updateExpiredBorrows();
+        logger.info(`Library scheduler: Updated ${count} expired borrows`);
+      } catch (error) {
+        logger.error(`Library scheduler error: ${error.message}`);
+      }
+    });
+
+    this.jobs.push(job);
+    logger.info("📅 Scheduled: Library expired update (every hour)");
   }
 
   /**
