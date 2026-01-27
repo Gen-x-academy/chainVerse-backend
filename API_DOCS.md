@@ -3,6 +3,7 @@
 ## Table of Contents
 
 - [Authentication](#authentication)
+- [Admin Account](#admin-account)
 - [Courses](#courses)
 - [Quizzes](#quizzes)
 - [Course Moderators](#course-moderators)
@@ -1159,73 +1160,85 @@ Retrieve a leaderboard based on selected metrics.
 }
 ]
 }
-```
 
-## Tutor Account Management
+## Admin Account
 
 ### Get Account Details
-`GET /tutor/account`
 
-Retrieve details of the logged-in tutor.
+`GET /admin/account`
+
+Retrieve the profile details of the currently logged-in admin or moderator.
 
 **Response:**
+
 ```json
 {
-    "success": true,
-    "tutor": {
-        "id": "tutor_id",
-        "fullName": "Jane Doe",
-        "email": "jane@example.com",
-        "phoneNumber": "+1234567890",
-        "web3Expertise": "Smart Contracts, DeFi",
-        "bio": "Experienced blockchain developer...",
-        "profileImage": "https://example.com/profile.jpg",
-        "role": "tutor",
-        "verified": true,
-        "createdAt": "2024-01-01T00:00:00.000Z"
-    }
+  "success": true,
+  "data": {
+    "_id": "64c9f1...",
+    "fullName": "Admin User",
+    "email": "admin@chainverse.com",
+    "phoneNumber": "1234567890",
+    "role": "admin",
+    "profileImage": "[https://bucket-url.com/profile.png](https://bucket-url.com/profile.png)",
+    "createdAt": "2024-01-01T10:00:00.000Z"
+  }
 }
 ```
 
 ### Update Profile
-`PUT /tutor/account/update`
 
-Update general profile information.
+`PUT /admin/account/update`
+
+Update profile information. Requires email uniqueness check.
 
 **Request Body:**
-```json
+
+```JSON
+
 {
-    "fullName": "Jane Smith",
-    "phoneNumber": "+0987654321",
-    "bio": "New bio update...",
-    "web3Expertise": "Solidity Expert"
+    "fullName": "Updated Name",
+    "email": "new-email@chainverse.com",
+    "phoneNumber": "0987654321"
 }
 ```
 
 **Response:**
-```json
+
+```JSON
+
 {
     "success": true,
     "message": "Profile updated successfully",
-    "tutor": { ... }
+    "data": {
+        "_id": "64c9f1...",
+        "fullName": "Updated Name",
+        "email": "new-email@chainverse.com",
+        ...
+    }
 }
 ```
 
 ### Change Password
-`PUT /tutor/account/change-password`
 
-Allows tutors to change their password.
+**PUT /admin/account/change-password**
+
+Change the account password. Requires verification of the current password. Rate Limit: 5 attempts per hour.
 
 **Request Body:**
-```json
+
+```JSON
+
 {
-    "currentPassword": "OldPassword123!",
-    "newPassword": "NewPassword456!"
+    "currentPassword": "oldPassword123",
+    "newPassword": "NewStrongPassword1@"
 }
 ```
 
 **Response:**
-```json
+
+```JSON
+
 {
     "success": true,
     "message": "Password changed successfully"
@@ -1233,19 +1246,25 @@ Allows tutors to change their password.
 ```
 
 ### Upload Profile Image
-`POST /tutor/account/upload-profile-image`
 
-Upload or update the tutor's profile picture.
+**POST /admin/account/upload-profile-image**
+
+Upload a new profile image. Supported formats: JPG, PNG.
 
 **Request Body:**
-- `profileImage`: File (multipart/form-data)
+
+profileImage: (File) The image file to upload.
 
 **Response:**
-```json
+
+```JSON
+
 {
     "success": true,
     "message": "Profile image uploaded successfully",
-    "imageUrl": "https://cloud-storage.com/tutor_id/profile.jpg"
+    "data": {
+        "profileImage": "[https://s3-bucket-url.com/uploads/profile-123.png](https://s3-bucket-url.com/uploads/profile-123.png)"
+    }
 }
 ```
 
