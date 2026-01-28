@@ -34,7 +34,7 @@ const CourseSchema = new mongoose.Schema({
     },
   ],
   duration: {
-    type: Number, 
+    type: Number,
     required: false,
   },
   level: {
@@ -47,7 +47,7 @@ const CourseSchema = new mongoose.Schema({
     default: 0,
   },
   thumbnail: {
-    type: String, 
+    type: String,
     required: false,
   },
   videos: [
@@ -61,7 +61,7 @@ const CourseSchema = new mongoose.Schema({
         required: true,
       },
       duration: {
-        type: Number, /
+        type: Number,
         required: false,
       },
       order: {

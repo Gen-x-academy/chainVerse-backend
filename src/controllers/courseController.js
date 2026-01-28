@@ -453,17 +453,3 @@ exports.getPublicCourseById = async (req, res) => {
     return handleError(res, 500, "Internal server error");
   }
 };
-
-// module.exports = {
-// 	getAllCourses,
-// 	getCourseById,
-// 	createCourse,
-// 	reviewCourse,
-// 	publishCourse,
-// 	unpublishCourse,
-// 	deleteCourse,
-// 	updateCourse,
-// 	getCourseEnrollments,
-// 	getPublicCourses,
-// 	getPublicCourseById,
-// };
