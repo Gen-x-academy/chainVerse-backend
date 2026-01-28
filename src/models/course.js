@@ -34,7 +34,7 @@ const CourseSchema = new mongoose.Schema({
     },
   ],
   duration: {
-    type: Number, // in minutes
+    type: Number, 
     required: false,
   },
   level: {
@@ -47,7 +47,7 @@ const CourseSchema = new mongoose.Schema({
     default: 0,
   },
   thumbnail: {
-    type: String, // URL to thumbnail image
+    type: String, 
     required: false,
   },
   videos: [
@@ -61,7 +61,7 @@ const CourseSchema = new mongoose.Schema({
         required: true,
       },
       duration: {
-        type: Number, // in seconds
+        type: Number, /
         required: false,
       },
       order: {
@@ -155,11 +155,16 @@ const CourseSchema = new mongoose.Schema({
   },
 });
 
-// Index for better query performance
 CourseSchema.index({ tutor: 1 });
 CourseSchema.index({ status: 1 });
 CourseSchema.index({ isPublished: 1 });
 CourseSchema.index({ category: 1 });
+CourseSchema.index({ level: 1 });
+CourseSchema.index({ price: 1 });
+CourseSchema.index({ rating: -1 });
+CourseSchema.index({ totalEnrollments: -1 });
+
+CourseSchema.index({ title: "text", description: "text", tutorName: "text" });
 
 CourseSchema.pre("save", function (next) {
   this.updatedAt = Date.now();
