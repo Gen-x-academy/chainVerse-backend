@@ -45,6 +45,7 @@ const notificationSchema = new mongoose.Schema({
   },
 });
 
+
 // Compound index for efficient queries
 notificationSchema.index({ userId: 1, read: 1, archived: 1 });
 notificationSchema.index({ userId: 1, createdAt: -1 });
