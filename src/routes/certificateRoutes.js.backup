@@ -12,18 +12,18 @@ const router = express.Router();
 
 // Specific routes - must come before dynamic :certificateId routes
 router.get(
+	'/my-certificates/download-all',
+	auth.authenticate,
+	certificateController.downloadAllCertificates
+);
+
+router.get(
 	'/my-certificates',
 	auth.authenticate,
 	sanitizeQueryParams,
 	validateCertificateQuery,
 	handleValidationErrors,
 	certificateController.getMyCertificates
-);
-
-router.get(
-	'/my-certificates/download-all',
-	auth.authenticate,
-	certificateController.downloadAllCertificates
 );
 
 router.get(

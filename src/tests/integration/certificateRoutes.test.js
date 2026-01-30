@@ -10,7 +10,7 @@ describe('Certificate Routes', () => {
   let testCertificateId;
 
   beforeAll(async () => {
-    await mongoose.connect(process.env.MONGO_URI_TEST);
+    await mongoose.connect(process.env.MONGODB_TEST_URI);
     testStudentId = new mongoose.Types.ObjectId();
     authToken = generateToken({ id: testStudentId });
   });
