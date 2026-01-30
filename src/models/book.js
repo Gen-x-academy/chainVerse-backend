@@ -54,6 +54,24 @@ const BookSchema = new mongoose.Schema({
     4: { type: Number, default: 0 },
     5: { type: Number, default: 0 },
   },
+  // Report content moderation status
+  reportStatus: {
+    type: String,
+    enum: ["active", "under_review", "removed"],
+    default: "active",
+    index: true,
+  },
+  reportCount: {
+    type: Number,
+    default: 0,
+  },
+  lastReportedAt: {
+    type: Date,
+  },
+  moderationNotes: {
+    type: String,
+    trim: true,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
@@ -79,5 +97,7 @@ BookSchema.index({
   tags: "text",
   category: "text",
 });
+// Index for report moderation queries
+BookSchema.index({ reportStatus: 1, reportCount: -1 });
 
 module.exports = mongoose.model("Book", BookSchema);

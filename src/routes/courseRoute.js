@@ -9,7 +9,7 @@ const adminCourseController = require('../controllers/courseController');
 const courseModeratorController = require('../controllers/courseModeratorController');
 const { authMiddleware, roleMiddleware } = require('../middlewares/auth');
 
-const { completeCourse, getCertificateById } = require('../controllers/certificateController');
+const { completeCourse, getCertificate } = require('../controllers/certificateController');
 const { mintNft } = require('../controllers/nftController');
 // const bookController = require('../controllers/bookController');
 const { authenticateTutor, tutorRoleCheck } = require('../middlewares/tutorAuth'); // Book Assignment Routes
@@ -18,7 +18,7 @@ const { authenticateTutor, tutorRoleCheck } = require('../middlewares/tutorAuth'
 // Conflicting admin route commented out to allow Tutor route to take precedence
 // router.post('/courses', auth.authenticate, isAdmin.ensureAdmin, courseController.createCourse);
 router.post('/:id/complete', auth.authenticate, completeCourse);
-router.get('/:id/certificate', auth.authenticate, getCertificateById);
+router.get('/:id/certificate', auth.authenticate, getCertificate);
 router.post('/:id/mint-nft', auth.authenticate, mintNft);
 //router.get('/courses/public', publicRateLimitMiddleware, courseController.getPublicCourses);
 

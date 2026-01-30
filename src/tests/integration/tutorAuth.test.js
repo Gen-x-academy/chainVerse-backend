@@ -11,7 +11,7 @@ let tutorToken;
 describe('Tutor Authentication Tests', () => {
   beforeAll(async () => {
     // Connect to test database
-    await mongoose.connect(process.env.MONGO_URI_TEST, {
+    await mongoose.connect(process.env.MONGODB_TEST_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true
     });
