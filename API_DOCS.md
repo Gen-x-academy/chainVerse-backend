@@ -779,6 +779,118 @@ Retrieve a specific name change request by its ID. **Verified students only.**
 - Certificate name change request submissions are rate-limited to prevent abuse
 - Default: 10 requests per hour per user (configurable)
 
+## Tutor Course Management
+
+### Create Course
+`POST /api/courses`
+
+Allows a tutor to create a new course. **Tutor access only.**
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Request Body:**
+```json
+{
+  "title": "Advanced Web3 Security",
+  "description": "Deep dive into smart contract vulnerabilities",
+  "category": "Security",
+  "level": "Advanced",
+  "duration": "6 weeks",
+  "prerequisites": ["Solidity Basics", "Smart Contract Fundamentals"],
+  "resources": ["https://ethereum.org"],
+  "tags": ["security", "audit"],
+  "price": 0,
+  "thumbnail": "https://..."
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Course created successfully",
+  "data": {
+    "_id": "course_id",
+    "title": "Advanced Web3 Security",
+    "tutor": "tutor_id",
+    "status": "draft",
+    "isPublished": false,
+    ...
+  }
+}
+```
+
+### Update Course
+`PUT /api/courses/:id`
+
+Allows a tutor to update their own course. **Tutor access only.**
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Course updated successfully",
+  "data": { ... }
+}
+```
+
+### Delete Course
+`DELETE /api/courses/:id`
+
+Allows a tutor to delete their own course. **Tutor access only.**
+
+**Note:** Cannot delete a course with active enrollments.
+
+---
+
+## Assignment Management
+
+### Create Assignment
+`POST /api/assignments`
+
+Allows a tutor to create an assignment for their course. **Tutor access only.**
+
+**Request Body:**
+```json
+{
+  "title": "Security Audit Challenge",
+  "description": "Audit the provided contract...",
+  "dueDate": "2024-12-31T23:59:59Z",
+  "courseId": "course_id",
+  "maxScore": 100,
+  "resources": ["https://..."]
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Assignment created successfully",
+  "data": { ... }
+}
+```
+
+### Get Assignments
+`GET /api/assignments/:courseId`
+
+Retrieve assignments for a specific course.
+
+**Response:**
+```json
+{
+  "success": true,
+  "count": 2,
+  "data": [ ... ]
+}
+```
+
+---
+
 ## Gamification System
 
 ### Add Points to Student

@@ -24,6 +24,7 @@ const studentCourseRoutes = require('./studentCourseRoutes');
 const bookRoutes = require('./bookRoutes');
 const leaderboardRoutes = require('./leaderboardRoutes');
 const libraryBooksRoutes = require('./libraryBooksRoutes');
+const assignmentRoutes = require('./assignmentRoute');
 
 const router = express.Router();
 
@@ -52,5 +53,6 @@ router.use('/', studentCourseRoutes);
 router.use('/books', bookRoutes);
 router.use('/leaderboard', leaderboardRoutes);
 router.use('/library', libraryBooksRoutes);
+router.use('/', assignmentRoutes);
 
 module.exports = router;
