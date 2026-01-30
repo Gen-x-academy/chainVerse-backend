@@ -6,6 +6,7 @@
 - [Courses](#courses)
 - [Students](#students)
 - [Student Account Settings](#student-account-settings)
+- [Certificate Retrieval & Download](./CERTIFICATE_API_DOCS.md)
 - [Tutor Authentication](./src/docs/tutorAuth.md)
 - [Tutor Performance Reports](#tutor-performance-reports)
 - [Gamification System](#gamification-system)

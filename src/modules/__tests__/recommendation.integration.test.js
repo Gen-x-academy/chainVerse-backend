@@ -12,7 +12,7 @@ describe("GET /api/recommendation/next-courses", () => {
   let user;
 
   beforeAll(async () => {
-    await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(process.env.MONGODB_URI);
 
     user = await User.create({
       email: "test@chainverse.io",

@@ -1,4 +1,4 @@
-const Certificate = require('../models/certificate-temp');
+const Certificate = require('../models/certificate');
 const Course = require('../models/course');
 const Student = require('../models/student');
 //const ShareAnalytics = require('../models/ShareAnalytics');
@@ -13,6 +13,12 @@ const { v4: uuidv4 } = require('uuid');
 const { createHash } = require('crypto');
 const AdmZip = require('adm-zip');
 const path = require('path');
+const certificateRetrievalService = require('../services/certificateRetrievalService');
+const zipGenerator = require('../utils/zipGenerator');
+const {
+	verifyDownloadToken,
+	extractTokenFromRequest,
+} = require('../utils/downloadTokenGenerator');
 
 // Helper: Verify certificate ownership
 const verifyCertificateOwnership = async (certificateId, userId) => {
@@ -109,67 +115,63 @@ exports.getCertificate = async (req, res) => {
 // Get all certificates for a student
 exports.getMyCertificates = async (req, res) => {
 	try {
-		const { courseId, startDate, endDate } = req.query;
-		let query = { studentId: req.user._id, status: 'ACTIVE' };
+		const studentId = req.user._id || req.user.id;
+		const filters = {
+			courseId: req.query.courseId,
+			startDate: req.query.issueDateStart || req.query.startDate,
+			endDate: req.query.issueDateEnd || req.query.endDate,
+			status: req.query.status,
+		};
+		const pagination = {
+			page: req.query.page,
+			limit: req.query.limit,
+		};
 
-		if (courseId) query.courseId = courseId;
-		if (startDate || endDate) {
-			query.issueDate = {};
-			if (startDate) query.issueDate.$gte = new Date(startDate);
-			if (endDate) query.issueDate.$lte = new Date(endDate);
-		}
+		const certificates = await certificateRetrievalService.getMyCertificates(
+			studentId,
+			filters,
+			pagination
+		);
 
-		const certificates = await Certificate.find(query)
-			.populate('courseId', 'title')
-			.sort({ issueDate: -1 });
-
-		res.status(200).json({ success: true, data: certificates });
+		return res.status(200).json(certificates);
 	} catch (error) {
-		res
-			.status(500)
-			.json({
-				success: false,
-				message: 'Error retrieving certificates',
-				error: error.message,
-			});
+		logger.error(`Error in getMyCertificates: ${error.message}`);
+		return res.status(500).json({
+			success: false,
+			message: 'Error retrieving certificates',
+			error: error.message,
+		});
 	}
 };
 
 // Download all certificates as zip
 exports.downloadAllCertificates = async (req, res) => {
 	try {
-		const certificates = await Certificate.find({
-			studentId: req.user._id,
-			status: 'ACTIVE',
-		}).populate('courseId', 'title');
+		const studentId = req.user._id || req.user.id;
 
-		if (!certificates.length) {
+		const files = await certificateRetrievalService.getCertificateFilesForDownload(
+			studentId
+		);
+
+		if (!files.success || files.data.length === 0) {
 			return res.status(404).json({
 				success: false,
-				message: 'No certificates found',
+				message: 'No certificates found for download',
 			});
 		}
 
-		const zip = new AdmZip();
-		for (const cert of certificates) {
-			const pdfContent = await downloadPDF(cert.certificateUrl); // You must define this utility
-			zip.addFile(`${cert.courseId.title}_${cert._id}.pdf`, pdfContent);
-		}
+		const zipPath = await zipGenerator.getTempZipPath(studentId);
+		await zipGenerator.createCertificateZip(files.data, zipPath);
 
-		res.set('Content-Type', 'application/zip');
-		res.set(
-			'Content-Disposition',
-			`attachment; filename="certificates_${req.user._id}.zip"`
-		);
-		res.send(zip.toBuffer());
+		const filename = `certificates_${studentId}_${Date.now()}.zip`;
+		await zipGenerator.streamZipToResponse(zipPath, res, filename);
 	} catch (error) {
-		res
-			.status(500)
-			.json({
-				success: false,
-				message: 'Error downloading certificates',
-				error: error.message,
-			});
+		logger.error(`Error in downloadAllCertificates: ${error.message}`);
+		return res.status(500).json({
+			success: false,
+			message: 'Error downloading certificates',
+			error: error.message,
+		});
 	}
 };
 
@@ -314,5 +316,132 @@ exports.getPublicCertificate = async (req, res) => {
 	} catch (error) {
 		logger.error(`Error retrieving public certificate: ${error.message}`);
 		res.status(500).json({ error: 'Failed to retrieve certificate' });
+	}
+};
+
+// Get single certificate with ownership verification
+exports.getSingleCertificate = async (req, res) => {
+	try {
+		const certificateId = req.params.certificateId || req.params.id;
+		const studentId = req.user._id || req.user.id;
+
+		const certificate = await certificateRetrievalService.getSingleCertificate(
+			certificateId,
+			studentId
+		);
+
+		return res.status(200).json(certificate);
+	} catch (error) {
+		logger.error(`Error in getSingleCertificate: ${error.message}`);
+
+		if (
+			error.message === 'Certificate not found' ||
+			error.message === 'Unauthorized access to certificate'
+		) {
+			return res.status(404).json({
+				success: false,
+				message: error.message,
+			});
+		}
+
+		return res.status(500).json({
+			success: false,
+			message: 'Error retrieving certificate',
+			error: error.message,
+		});
+	}
+};
+
+// Download single certificate with token verification
+exports.downloadSingleCertificate = async (req, res) => {
+	try {
+		const token = extractTokenFromRequest(req);
+
+		if (!token) {
+			return res.status(401).json({
+				success: false,
+				message: 'Download token is required',
+			});
+		}
+
+		const decoded = verifyDownloadToken(token);
+		const studentId = req.user._id || req.user.id;
+
+		if (decoded.studentId !== studentId.toString()) {
+			return res.status(403).json({
+				success: false,
+				message: 'Invalid download token',
+			});
+		}
+
+		const isOwner = await certificateRetrievalService.verifyCertificateOwnership(
+			decoded.certificateId,
+			studentId
+		);
+
+		if (!isOwner) {
+			return res.status(404).json({
+				success: false,
+				message: 'Certificate not found or access denied',
+			});
+		}
+
+		const certificate = await certificateRetrievalService.getSingleCertificate(
+			decoded.certificateId,
+			studentId
+		);
+
+		if (certificate.data.certificateUrl) {
+			return res.redirect(certificate.data.certificateUrl);
+		}
+
+		return res.status(200).json({
+			success: true,
+			message: 'Certificate download link',
+			downloadUrl: result.data.imageUrl || result.data.certificateUrl,
+		});
+	} catch (error) {
+		logger.error(`Error in downloadSingleCertificate: ${error.message}`);
+
+		if (error.message.includes('expired')) {
+			return res.status(401).json({
+				success: false,
+				message: 'Download token has expired',
+			});
+		}
+
+		return res.status(500).json({
+			success: false,
+			message: 'Error downloading certificate',
+			error: error.message,
+		});
+	}
+};
+
+// Verify certificate ownership endpoint
+exports.verifyCertificateOwnershipEndpoint = async (req, res) => {
+	try {
+		const certificateId = req.params.certificateId || req.params.id;
+		const studentId = req.user._id || req.user.id;
+
+		const isOwner = await certificateRetrievalService.verifyCertificateOwnership(
+			certificateId,
+			studentId
+		);
+
+		return res.status(200).json({
+			success: true,
+			isOwner,
+			message: isOwner
+				? 'Certificate ownership verified'
+				: 'Certificate not owned by this user',
+		});
+	} catch (error) {
+		logger.error(`Error in verifyCertificateOwnership: ${error.message}`);
+		return res.status(500).json({
+			success: false,
+			message: 'Error verifying ownership',
+			error: error.message,
+		});
 	}
 };

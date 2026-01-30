@@ -8,7 +8,7 @@ const jwt = require('jsonwebtoken');
 let studentToken, tutorToken, studentId, tutorId;
 
 beforeAll(async () => {
-  await mongoose.connect(process.env.MONGO_URI_TEST);
+  await mongoose.connect(process.env.MONGODB_TEST_URI);
 
   const student = await User.create({
     email: 'student@test.com',

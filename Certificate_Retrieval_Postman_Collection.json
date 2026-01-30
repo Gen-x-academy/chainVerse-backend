@@ -1,0 +1,621 @@
+{
+  "info": {
+    "name": "Certificate Retrieval & Download API",
+    "description": "Complete collection for testing student certificate retrieval endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3002",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "certificateId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "downloadToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "courseId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Student Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.token) {",
+                  "        pm.collectionVariables.set('authToken', jsonData.token);",
+                  "        pm.environment.set('authToken', jsonData.token);",
+                  "        console.log('Auth token saved:', jsonData.token);",
+                  "    }",
+                  "    pm.test('Status code is 200', function () {",
+                  "        pm.response.to.have.status(200);",
+                  "    });",
+                  "    pm.test('Response has token', function () {",
+                  "        pm.expect(jsonData).to.have.property('token');",
+                  "    });",
+                  "} else {",
+                  "    console.log('Login failed:', pm.response.text());",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"student@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login as a student to get authentication token. Update email/password with valid credentials."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Certificate Retrieval",
+      "item": [
+        {
+          "name": "Get All My Certificates",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "",
+                  "pm.test('Response has success property', function () {",
+                  "    pm.expect(jsonData).to.have.property('success');",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test('Response has data array', function () {",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Response has pagination', function () {",
+                  "    pm.expect(jsonData).to.have.property('pagination');",
+                  "    pm.expect(jsonData.pagination).to.have.property('page');",
+                  "    pm.expect(jsonData.pagination).to.have.property('limit');",
+                  "    pm.expect(jsonData.pagination).to.have.property('totalCount');",
+                  "});",
+                  "",
+                  "if (jsonData.data.length > 0) {",
+                  "    const cert = jsonData.data[0];",
+                  "    pm.collectionVariables.set('certificateId', cert._id);",
+                  "    pm.environment.set('certificateId', cert._id);",
+                  "    ",
+                  "    if (cert.downloadToken) {",
+                  "        pm.collectionVariables.set('downloadToken', cert.downloadToken);",
+                  "        pm.environment.set('downloadToken', cert.downloadToken);",
+                  "    }",
+                  "    ",
+                  "    if (cert.courseId && cert.courseId._id) {",
+                  "        pm.collectionVariables.set('courseId', cert.courseId._id);",
+                  "        pm.environment.set('courseId', cert.courseId._id);",
+                  "    }",
+                  "    ",
+                  "    console.log('Saved certificateId:', cert._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/certificates/my-certificates?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "certificates", "my-certificates"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Retrieve all certificates for the authenticated student with pagination."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Certificates with Filters",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "",
+                  "pm.test('Response has filtered data', function () {",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Certificates match filter status', function () {",
+                  "    jsonData.data.forEach(cert => {",
+                  "        pm.expect(cert.status).to.equal('ACTIVE');",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/certificates/my-certificates?status=ACTIVE&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "certificates", "my-certificates"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "ACTIVE"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "courseId",
+                  "value": "{{courseId}}",
+                  "disabled": true,
+                  "description": "Enable to filter by course"
+                },
+                {
+                  "key": "issueDateStart",
+                  "value": "2024-01-01",
+                  "disabled": true,
+                  "description": "Enable to filter by start date"
+                },
+                {
+                  "key": "issueDateEnd",
+                  "value": "2024-12-31",
+                  "disabled": true,
+                  "description": "Enable to filter by end date"
+                }
+              ]
+            },
+            "description": "Get certificates with filters applied (status, courseId, date range)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Single Certificate",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "",
+                  "pm.test('Response has certificate data', function () {",
+                  "    pm.expect(jsonData).to.have.property('success');",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "});",
+                  "",
+                  "pm.test('Certificate has required fields', function () {",
+                  "    const cert = jsonData.data;",
+                  "    pm.expect(cert).to.have.property('_id');",
+                  "    pm.expect(cert).to.have.property('studentId');",
+                  "    pm.expect(cert).to.have.property('courseId');",
+                  "    pm.expect(cert).to.have.property('status');",
+                  "    pm.expect(cert).to.have.property('certificateUrl');",
+                  "});",
+                  "",
+                  "pm.test('Certificate has download token', function () {",
+                  "    pm.expect(jsonData.data).to.have.property('downloadToken');",
+                  "    pm.expect(jsonData.data).to.have.property('downloadTokenExpiry');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const certId = pm.collectionVariables.get('certificateId') || pm.environment.get('certificateId');",
+                  "if (!certId) {",
+                  "    console.error('No certificateId found. Run \"Get All My Certificates\" first.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/certificates/{{certificateId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "certificates", "{{certificateId}}"]
+            },
+            "description": "Get details of a single certificate with ownership verification."
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Certificate Ownership",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "",
+                  "pm.test('Response has ownership status', function () {",
+                  "    pm.expect(jsonData).to.have.property('success');",
+                  "    pm.expect(jsonData).to.have.property('isOwner');",
+                  "    pm.expect(jsonData.isOwner).to.be.a('boolean');",
+                  "});",
+                  "",
+                  "pm.test('User owns the certificate', function () {",
+                  "    pm.expect(jsonData.isOwner).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/certificates/{{certificateId}}/verify-ownership",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "certificates", "{{certificateId}}", "verify-ownership"]
+            },
+            "description": "Verify if the authenticated student owns the specified certificate."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Certificate Downloads",
+      "item": [
+        {
+          "name": "Download All Certificates (ZIP)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is ZIP file', function () {",
+                  "    const contentType = pm.response.headers.get('Content-Type');",
+                  "    pm.expect(contentType).to.include('application/zip');",
+                  "});",
+                  "",
+                  "pm.test('Has Content-Disposition header', function () {",
+                  "    const disposition = pm.response.headers.get('Content-Disposition');",
+                  "    pm.expect(disposition).to.exist;",
+                  "    pm.expect(disposition).to.include('attachment');",
+                  "    pm.expect(disposition).to.include('certificates_');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/certificates/my-certificates/download-all",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "certificates", "my-certificates", "download-all"]
+            },
+            "description": "Download all active certificates as a single ZIP file."
+          },
+          "response": []
+        },
+        {
+          "name": "Download Single Certificate (with Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 or 302', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 302]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.test('Response has download URL', function () {",
+                  "        pm.expect(jsonData).to.have.property('downloadUrl');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const token = pm.collectionVariables.get('downloadToken') || pm.environment.get('downloadToken');",
+                  "if (!token) {",
+                  "    console.error('No download token found. Run \"Get Single Certificate\" first to get a download token.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/certificates/download/{{certificateId}}?token={{downloadToken}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "certificates", "download", "{{certificateId}}"],
+              "query": [
+                {
+                  "key": "token",
+                  "value": "{{downloadToken}}"
+                }
+              ]
+            },
+            "description": "Download a single certificate using a time-limited download token. No auth header required."
+          },
+          "response": []
+        },
+        {
+          "name": "Download Single Certificate (with Header Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 or 302', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 302]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-download-token",
+                "value": "{{downloadToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/certificates/download/{{certificateId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "certificates", "download", "{{certificateId}}"]
+            },
+            "description": "Download certificate using token in x-download-token header."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Error Cases",
+      "item": [
+        {
+          "name": "Get Certificate - Unauthorized (No Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('Response has error message', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('error');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/certificates/my-certificates",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "certificates", "my-certificates"]
+            },
+            "description": "Test that endpoint returns 401 when no auth token is provided."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Certificate - Invalid ID Format",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "",
+                  "pm.test('Response has validation errors', function () {",
+                  "    pm.expect(jsonData).to.have.property('success');",
+                  "    pm.expect(jsonData.success).to.be.false;",
+                  "    pm.expect(jsonData).to.have.property('errors');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/certificates/invalid-id-format",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "certificates", "invalid-id-format"]
+            },
+            "description": "Test validation of certificate ID format."
+          },
+          "response": []
+        },
+        {
+          "name": "Download - Expired Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 401 or 403', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+                  "});",
+                  "",
+                  "const jsonData = pm.response.json();",
+                  "",
+                  "pm.test('Response indicates token error', function () {",
+                  "    pm.expect(jsonData).to.have.property('message');",
+                  "    const message = jsonData.message.toLowerCase();",
+                  "    pm.expect(message).to.satisfy(msg => {",
+                  "        return msg.includes('expired') || msg.includes('invalid') || msg.includes('token');",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/certificates/download/{{certificateId}}?token=expired_or_invalid_token",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "certificates", "download", "{{certificateId}}"],
+              "query": [
+                {
+                  "key": "token",
+                  "value": "expired_or_invalid_token"
+                }
+              ]
+            },
+            "description": "Test that expired or invalid download tokens are rejected."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

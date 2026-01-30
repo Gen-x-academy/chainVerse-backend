@@ -68,7 +68,7 @@ const quizzes = [
 
 const seed = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(process.env.MONGODB_URI);
     await Quiz.deleteMany({});
     await Quiz.insertMany(quizzes);
     console.log('Quiz seed completed!');

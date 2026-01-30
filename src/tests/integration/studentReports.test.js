@@ -32,7 +32,7 @@ let studyGroup;
 
 describe('Student Reports API', () => {
   beforeAll(async () => {
-    await mongoose.connect(process.env.MONGO_URI_TEST, {
+    await mongoose.connect(process.env.MONGODB_TEST_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true
     });
