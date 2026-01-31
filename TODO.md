@@ -1,0 +1,4 @@
+- [x] Create tests for getPublicCourses endpoint validating filtering (search, category, level, price), sorting (rating, enrollments, price, createdAt), and pagination
+- [x] Update README.md with API documentation for the getPublicCourses endpoint
+- [x] Run tests to ensure they pass
+- [x] Verify README updates
