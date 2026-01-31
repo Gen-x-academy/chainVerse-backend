@@ -12,7 +12,7 @@ const CourseSchema = new mongoose.Schema({
   },
   tutor: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+    ref: "Tutor",
     required: true,
   },
   tutorEmail: {
@@ -35,8 +35,21 @@ const CourseSchema = new mongoose.Schema({
   ],
   duration: {
     type: Number,
+    type: String, // e.g. "4 weeks"
     required: false,
   },
+  prerequisites: [
+    {
+      type: String,
+      trim: true
+    }
+  ],
+  resources: [
+    {
+      type: String, // URL or description
+      trim: true
+    }
+  ],
   level: {
     type: String,
     enum: ["Beginner", "Intermediate", "Advanced"],

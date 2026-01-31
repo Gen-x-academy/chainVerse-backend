@@ -96,6 +96,13 @@ const getMyCertificates = async (
 				? `Retrieved ${certificatesWithTokens.length} certificate(s)`
 				: 'No certificates found',
 		};
+	} catch (error) {
+		logger.error(`Error retrieving certificates: ${error.message}`, {
+			studentId,
+			filters,
+		});
+		throw new Error(`Failed to retrieve certificates: ${error.message}`);
+	}
 };
 
 const getSingleCertificate = async (certificateId, studentId) => {
@@ -104,14 +111,14 @@ const getSingleCertificate = async (certificateId, studentId) => {
 	}
 
 	const certificate = await Certificate.findById(certificateId)
-			.populate('courseId', 'title description tutorName duration category')
-			.populate('tutorId', 'name email profileImage')
-			.populate('studentId', 'name email')
-			.lean();
+		.populate('courseId', 'title description tutorName duration category')
+		.populate('tutorId', 'name email profileImage')
+		.populate('studentId', 'name email')
+		.lean();
 
-		if (!certificate) {
-			throw new Error('Certificate not found');
-		}
+	if (!certificate) {
+		throw new Error('Certificate not found');
+	}
 
 	if (certificate.studentId._id.toString() !== studentId.toString()) {
 		throw new Error('Unauthorized access to certificate');
@@ -133,7 +140,8 @@ const getSingleCertificate = async (certificateId, studentId) => {
 		},
 		message: 'Certificate retrieved successfully',
 	};
- */
+};
+
 const getCertificateFilesForDownload = async (studentId) => {
 	try {
 		if (!studentId) {
@@ -156,30 +164,42 @@ const getCertificateFilesForDownload = async (studentId) => {
 			};
 		}
 
-	const certificateFiles = certificates
-		.filter((cert) => cert.certificateUrl || cert.imageUrl)
-		.map((cert) => {
-			const courseTitle = cert.courseId?.title || 'Unknown_Course';
-			const sanitizedTitle = courseTitle.replace(/[^a-z0-9]/gi, '_');
-			const certificateId = cert._id.toString().substring(0, 8);
-			const fileUrl = cert.certificateUrl || cert.imageUrl;
-			const fileExtension = cert.certificateUrl ? 'pdf' : 'png';
+		const certificateFiles = certificates
+			.filter((cert) => cert.certificateUrl || cert.imageUrl)
+			.map((cert) => {
+				const courseTitle = cert.courseId?.title || 'Unknown_Course';
+				const sanitizedTitle = courseTitle.replace(/[^a-z0-9]/gi, '_');
+				const certificateId = cert._id.toString().substring(0, 8);
+				const fileUrl = cert.certificateUrl || cert.imageUrl;
+				const fileExtension = cert.certificateUrl ? 'pdf' : 'png';
 
-			return {
-				url: fileUrl,
-				filename: `${sanitizedTitle}_${certificateId}.${fileExtension}`,
-				certificateId: cert._id.toString(),
-				courseTitle: cert.courseId?.title || 'Unknown Course',
-				issueDate: cert.issueDate,
-			};
-		});
+				return {
+					url: fileUrl,
+					filename: `${sanitizedTitle}_${certificateId}.${fileExtension}`,
+					certificateId: cert._id.toString(),
+					courseTitle: cert.courseId?.title || 'Unknown Course',
+					issueDate: cert.issueDate,
+				};
+			});
 
-	return {
-		success: true,
-		data: certificateFiles,
-		count: certificateFiles.length,
-		message: `${certificateFiles.length} certificate(s) ready for download`,
-	};
+		return {
+			success: true,
+			data: certificateFiles,
+			count: certificateFiles.length,
+			message: `${certificateFiles.length} certificate(s) ready for download`,
+		};
+	} catch (error) {
+		logger.error(
+			`Error retrieving certificate files: ${error.message}`,
+			{ studentId }
+		);
+		throw new Error(`Failed to retrieve certificate files: ${error.message}`);
+	}
+};
+
+const getCertificateStatistics = async (studentId) => {
+	try {
+		if (!studentId) {
 			throw new Error('Student ID is required');
 		}
 

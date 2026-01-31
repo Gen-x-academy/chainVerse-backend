@@ -41,6 +41,51 @@ router.get(
   courseController.getPublicCourseById,
 );
 
+const isAdmin = require('../middlewares/admin');
+const auth = require('../middlewares/auth');
+const { publicRateLimitMiddleware } = require('../middlewares/rateLimitMiddleware');
+
+const courseController = require('../controllers/courseController');
+const adminCourseController = require('../controllers/courseController');
+const courseModeratorController = require('../controllers/courseModeratorController');
+const { authMiddleware, roleMiddleware } = require('../middlewares/auth');
+
+const { completeCourse, getCertificate } = require('../controllers/certificateController');
+const { mintNft } = require('../controllers/nftController');
+// const bookController = require('../controllers/bookController');
+const { authenticateTutor, tutorRoleCheck } = require('../middlewares/tutorAuth'); // Book Assignment Routes
+
+
+// Conflicting admin route commented out to allow Tutor route to take precedence
+// router.post('/courses', auth.authenticate, isAdmin.ensureAdmin, courseController.createCourse);
+router.post('/:id/complete', auth.authenticate, completeCourse);
+router.get('/:id/certificate', auth.authenticate, getCertificate);
+router.post('/:id/mint-nft', auth.authenticate, mintNft);
+//router.get('/courses/public', publicRateLimitMiddleware, courseController.getPublicCourses);
+
+// Tutor Course Management Routes
+router.post(
+	'/courses',
+	authenticateTutor,
+	tutorRoleCheck,
+	courseController.createCourseByTutor
+);
+
+router.put(
+	'/courses/:id',
+	authenticateTutor,
+	tutorRoleCheck,
+	courseController.updateCourseByTutor
+);
+
+router.delete(
+	'/courses/:id',
+	authenticateTutor,
+	tutorRoleCheck,
+	courseController.deleteCourseByTutor
+);
+
+// Course Retrieval & Review
 router.get(
   "/admin/courses",
   auth.authenticate,
@@ -146,5 +191,17 @@ router.post(
   auth.hasRole(["admin", "tutor"]),
   bookController.assignBookToCourse,
 );
+// router.get(
+// 	'/:id/books',
+// 	auth.authenticate,
+// 	bookController.getCourseBooks
+// );
+
+// router.post(
+// 	'/:id/books',
+// 	auth.authenticate,
+// 	auth.hasRole(['admin', 'tutor']),
+// 	bookController.assignBookToCourse
+// );
 
 module.exports = router;

@@ -1,6 +1,10 @@
 const Course = require("../models/course");
 const User = require("../models/User");
 const { sendEmailTutorCourseAlert } = require("../utils/email");
+const Course = require('../models/course');
+const User = require('../models/User');
+const Tutor = require('../models/tutors');
+const { sendEmailTutorCourseAlert } = require('../utils/email');
 
 const handleError = (res, statusCode, message) => {
   return res.status(statusCode).json({
@@ -452,4 +456,126 @@ exports.getPublicCourseById = async (req, res) => {
     console.error("Error retrieving public course:", error);
     return handleError(res, 500, "Internal server error");
   }
+// module.exports = {
+// 	getAllCourses,
+// 	getCourseById,
+// 	createCourse,
+// 	reviewCourse,
+// 	publishCourse,
+// 	unpublishCourse,
+// 	deleteCourse,
+// 	updateCourse,
+// getCourseEnrollments,
+// };
+
+// POST /courses - Create a new course (Tutor only)
+exports.createCourseByTutor = async (req, res) => {
+	try {
+		const {
+			title,
+			description,
+			category,
+			tags,
+			duration,
+			level,
+			price,
+			thumbnail,
+			videos,
+			prerequisites,
+			resources
+		} = req.body;
+
+		if (!title || !description) {
+			return handleError(res, 400, "Title and description are required");
+		}
+
+		const tutor = await Tutor.findById(req.tutor._id);
+		if (!tutor) {
+			return handleError(res, 404, "Tutor not found");
+		}
+
+		const course = new Course({
+			title: title.trim(),
+			description,
+			tutor: req.tutor._id,
+			tutorEmail: tutor.email,
+			tutorName: tutor.fullName,
+			category,
+			tags: tags || [],
+			duration,
+			level: level || "Beginner",
+			price: price || 0,
+			thumbnail,
+			videos: videos || [],
+			prerequisites: prerequisites || [],
+			resources: resources || [],
+			status: "draft",
+			isPublished: false,
+		});
+
+		const savedCourse = await course.save();
+		return handleSuccess(res, 201, "Course created successfully", savedCourse);
+	} catch (error) {
+		console.error("Error creating course:", error);
+		return handleError(res, 500, "Internal server error");
+	}
+};
+
+// PUT /courses/:id - Update a course (Tutor only)
+exports.updateCourseByTutor = async (req, res) => {
+	try {
+		const { id } = req.params;
+		const updateData = req.body;
+
+		const course = await Course.findById(id);
+		if (!course) {
+			return handleError(res, 404, "Course not found");
+		}
+
+		if (course.tutor.toString() !== req.tutor._id.toString()) {
+			return handleError(res, 403, "You can only update your own courses");
+		}
+
+		delete updateData.tutor;
+		delete updateData.tutorEmail;
+		delete updateData.tutorName;
+		delete updateData.status;
+
+		const updatedCourse = await Course.findByIdAndUpdate(
+			id,
+			{ ...updateData, updatedAt: new Date() },
+			{ new: true, runValidators: true }
+		);
+
+		return handleSuccess(res, 200, "Course updated successfully", updatedCourse);
+	} catch (error) {
+		console.error("Error updating course:", error);
+		return handleError(res, 500, "Internal server error");
+	}
+};
+
+// DELETE /courses/:id - Delete a course (Tutor only)
+exports.deleteCourseByTutor = async (req, res) => {
+	try {
+		const { id } = req.params;
+
+		const course = await Course.findById(id);
+		if (!course) {
+			return handleError(res, 404, "Course not found");
+		}
+
+		if (course.tutor.toString() !== req.tutor._id.toString()) {
+			return handleError(res, 403, "You can only delete your own courses");
+		}
+
+		if (course.enrollments && course.enrollments.length > 0) {
+			return handleError(res, 400, "Cannot delete course with active enrollments");
+		}
+
+		await Course.findByIdAndDelete(id);
+		return handleSuccess(res, 200, "Course deleted successfully");
+	} catch (error) {
+		console.error("Error deleting course:", error);
+		return handleError(res, 500, "Internal server error");
+	}
 };
