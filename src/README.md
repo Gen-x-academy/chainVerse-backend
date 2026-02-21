@@ -1,1 +1,0 @@
-ChainVerse Backend application
