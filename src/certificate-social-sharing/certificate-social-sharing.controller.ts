@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { CertificateSocialSharingService } from './certificate-social-sharing.service';
 import { CreateCertificateSocialSharingDto } from './dto/create-certificate-social-sharing.dto';
 import { UpdateCertificateSocialSharingDto } from './dto/update-certificate-social-sharing.dto';
@@ -31,7 +40,10 @@ export class CertificateSocialSharingController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
-  update(@Param('id') id: string, @Body() payload: UpdateCertificateSocialSharingDto) {
+  update(
+    @Param('id') id: string,
+    @Body() payload: UpdateCertificateSocialSharingDto,
+  ) {
     return this.service.update(id, payload);
   }
 

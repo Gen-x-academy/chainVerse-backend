@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { CoursePerformanceLeaderboardService } from './course-performance-leaderboard.service';
 import { CreateCoursePerformanceLeaderboardDto } from './dto/create-course-performance-leaderboard.dto';
 import { UpdateCoursePerformanceLeaderboardDto } from './dto/update-course-performance-leaderboard.dto';
@@ -31,7 +40,10 @@ export class CoursePerformanceLeaderboardController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
-  update(@Param('id') id: string, @Body() payload: UpdateCoursePerformanceLeaderboardDto) {
+  update(
+    @Param('id') id: string,
+    @Body() payload: UpdateCoursePerformanceLeaderboardDto,
+  ) {
     return this.service.update(id, payload);
   }
 

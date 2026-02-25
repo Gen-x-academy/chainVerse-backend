@@ -4,7 +4,9 @@ import { UpdateAdminCertificateNameChangeReviewDto } from './dto/update-admin-ce
 
 @Injectable()
 export class AdminCertificateNameChangeReviewService {
-  private readonly items: Array<{ id: string } & CreateAdminCertificateNameChangeReviewDto> = [];
+  private readonly items: Array<
+    { id: string } & CreateAdminCertificateNameChangeReviewDto
+  > = [];
 
   findAll() {
     return this.items;
@@ -13,7 +15,9 @@ export class AdminCertificateNameChangeReviewService {
   findOne(id: string) {
     const item = this.items.find((entry) => entry.id === id);
     if (!item) {
-      throw new NotFoundException('AdminCertificateNameChangeReview item not found');
+      throw new NotFoundException(
+        'AdminCertificateNameChangeReview item not found',
+      );
     }
     return item;
   }
@@ -33,7 +37,9 @@ export class AdminCertificateNameChangeReviewService {
   remove(id: string) {
     const index = this.items.findIndex((entry) => entry.id === id);
     if (index === -1) {
-      throw new NotFoundException('AdminCertificateNameChangeReview item not found');
+      throw new NotFoundException(
+        'AdminCertificateNameChangeReview item not found',
+      );
     }
     this.items.splice(index, 1);
     return { id, deleted: true };

@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { FaqManagementService } from './faq-management.service';
 import { CreateFaqManagementDto } from './dto/create-faq-management.dto';
 import { UpdateFaqManagementDto } from './dto/update-faq-management.dto';

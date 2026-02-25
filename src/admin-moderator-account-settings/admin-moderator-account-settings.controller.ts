@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { AdminModeratorAccountSettingsService } from './admin-moderator-account-settings.service';
 import { CreateAdminModeratorAccountSettingsDto } from './dto/create-admin-moderator-account-settings.dto';
 import { UpdateAdminModeratorAccountSettingsDto } from './dto/update-admin-moderator-account-settings.dto';
@@ -31,7 +40,10 @@ export class AdminModeratorAccountSettingsController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
-  update(@Param('id') id: string, @Body() payload: UpdateAdminModeratorAccountSettingsDto) {
+  update(
+    @Param('id') id: string,
+    @Body() payload: UpdateAdminModeratorAccountSettingsDto,
+  ) {
     return this.service.update(id, payload);
   }
 

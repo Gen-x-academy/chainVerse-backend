@@ -4,7 +4,9 @@ import { UpdateCertificateSocialSharingDto } from './dto/update-certificate-soci
 
 @Injectable()
 export class CertificateSocialSharingService {
-  private readonly items: Array<{ id: string } & CreateCertificateSocialSharingDto> = [];
+  private readonly items: Array<
+    { id: string } & CreateCertificateSocialSharingDto
+  > = [];
 
   findAll() {
     return this.items;

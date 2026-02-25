@@ -4,7 +4,8 @@ import { UpdateGamificationPointsDto } from './dto/update-gamification-points.dt
 
 @Injectable()
 export class GamificationPointsService {
-  private readonly items: Array<{ id: string } & CreateGamificationPointsDto> = [];
+  private readonly items: Array<{ id: string } & CreateGamificationPointsDto> =
+    [];
 
   findAll() {
     return this.items;

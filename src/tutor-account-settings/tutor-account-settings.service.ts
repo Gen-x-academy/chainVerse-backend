@@ -4,7 +4,9 @@ import { UpdateTutorAccountSettingsDto } from './dto/update-tutor-account-settin
 
 @Injectable()
 export class TutorAccountSettingsService {
-  private readonly items: Array<{ id: string } & CreateTutorAccountSettingsDto> = [];
+  private readonly items: Array<
+    { id: string } & CreateTutorAccountSettingsDto
+  > = [];
 
   findAll() {
     return this.items;
