@@ -4,6 +4,9 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import * as crypto from 'crypto';
+
+const JWT_SECRET = process.env.JWT_SECRET || '';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -15,15 +18,32 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('Missing or invalid authorization token');
     }
 
-    // In production, verify the JWT token here
-    // For now, we attach a mock user for development
     const token = authHeader.split(' ')[1];
     if (!token) {
       throw new UnauthorizedException('Token not provided');
     }
 
-    // Placeholder: attach user payload to request
-    request.user = request.user ?? { id: 'mock-user-id', role: 'student' };
-    return true;
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) throw new Error('Malformed token');
+
+      const [header, body, sig] = parts;
+      const expected = crypto
+        .createHmac('sha256', JWT_SECRET)
+        .update(`${header}.${body}`)
+        .digest('base64url');
+
+      if (sig !== expected) throw new Error('Invalid signature');
+
+      const payload = JSON.parse(Buffer.from(body, 'base64url').toString());
+      if (payload.exp < Math.floor(Date.now() / 1000)) {
+        throw new Error('Token expired');
+      }
+
+      request.user = { id: payload.sub, email: payload.email, role: payload.role };
+      return true;
+    } catch (err: any) {
+      throw new UnauthorizedException(err.message || 'Invalid token');
+    }
   }
 }
