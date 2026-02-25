@@ -15,6 +15,7 @@ import { CourseRatingsFeedbackModule } from './course-ratings-feedback/course-ra
 import { StudentSavedCoursesModule } from './student-saved-courses/student-saved-courses.module';
 import { GoogleAuthModule } from './google-auth/google-auth.module';
 import { StudentCartModule } from './student-cart/student-cart.module';
+import { StudentAuthModule } from './student-auth/student-auth.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { StudentCartModule } from './student-cart/student-cart.module';
     StudentSavedCoursesModule,
     GoogleAuthModule,
     StudentCartModule,
+    StudentAuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
