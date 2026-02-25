@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { PrivateTutoringBookingsService } from './private-tutoring-bookings.service';
 import { CreatePrivateTutoringBookingsDto } from './dto/create-private-tutoring-bookings.dto';
 import { UpdatePrivateTutoringBookingsDto } from './dto/update-private-tutoring-bookings.dto';
@@ -31,7 +40,10 @@ export class PrivateTutoringBookingsController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
-  update(@Param('id') id: string, @Body() payload: UpdatePrivateTutoringBookingsDto) {
+  update(
+    @Param('id') id: string,
+    @Body() payload: UpdatePrivateTutoringBookingsDto,
+  ) {
     return this.service.update(id, payload);
   }
 

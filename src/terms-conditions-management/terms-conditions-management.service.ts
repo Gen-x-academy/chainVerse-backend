@@ -4,7 +4,9 @@ import { UpdateTermsConditionsManagementDto } from './dto/update-terms-condition
 
 @Injectable()
 export class TermsConditionsManagementService {
-  private readonly items: Array<{ id: string } & CreateTermsConditionsManagementDto> = [];
+  private readonly items: Array<
+    { id: string } & CreateTermsConditionsManagementDto
+  > = [];
 
   findAll() {
     return this.items;

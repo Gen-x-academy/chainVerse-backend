@@ -4,7 +4,9 @@ import { UpdatePrivateTutoringBookingsDto } from './dto/update-private-tutoring-
 
 @Injectable()
 export class PrivateTutoringBookingsService {
-  private readonly items: Array<{ id: string } & CreatePrivateTutoringBookingsDto> = [];
+  private readonly items: Array<
+    { id: string } & CreatePrivateTutoringBookingsDto
+  > = [];
 
   findAll() {
     return this.items;

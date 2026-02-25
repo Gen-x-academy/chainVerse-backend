@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { CourseCategorizationFilteringService } from './course-categorization-filtering.service';
 import { CreateCourseCategorizationFilteringDto } from './dto/create-course-categorization-filtering.dto';
 import { UpdateCourseCategorizationFilteringDto } from './dto/update-course-categorization-filtering.dto';
@@ -31,7 +40,10 @@ export class CourseCategorizationFilteringController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
-  update(@Param('id') id: string, @Body() payload: UpdateCourseCategorizationFilteringDto) {
+  update(
+    @Param('id') id: string,
+    @Body() payload: UpdateCourseCategorizationFilteringDto,
+  ) {
     return this.service.update(id, payload);
   }
 

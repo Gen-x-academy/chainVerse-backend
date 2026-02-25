@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { GamificationPointsService } from './gamification-points.service';
 import { CreateGamificationPointsDto } from './dto/create-gamification-points.dto';
 import { UpdateGamificationPointsDto } from './dto/update-gamification-points.dto';
@@ -31,7 +40,10 @@ export class GamificationPointsController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
-  update(@Param('id') id: string, @Body() payload: UpdateGamificationPointsDto) {
+  update(
+    @Param('id') id: string,
+    @Body() payload: UpdateGamificationPointsDto,
+  ) {
     return this.service.update(id, payload);
   }
 

@@ -4,7 +4,9 @@ import { UpdateCourseCertificationNftAchievementsDto } from './dto/update-course
 
 @Injectable()
 export class CourseCertificationNftAchievementsService {
-  private readonly items: Array<{ id: string } & CreateCourseCertificationNftAchievementsDto> = [];
+  private readonly items: Array<
+    { id: string } & CreateCourseCertificationNftAchievementsDto
+  > = [];
 
   findAll() {
     return this.items;
@@ -13,7 +15,9 @@ export class CourseCertificationNftAchievementsService {
   findOne(id: string) {
     const item = this.items.find((entry) => entry.id === id);
     if (!item) {
-      throw new NotFoundException('CourseCertificationNftAchievements item not found');
+      throw new NotFoundException(
+        'CourseCertificationNftAchievements item not found',
+      );
     }
     return item;
   }
@@ -33,7 +37,9 @@ export class CourseCertificationNftAchievementsService {
   remove(id: string) {
     const index = this.items.findIndex((entry) => entry.id === id);
     if (index === -1) {
-      throw new NotFoundException('CourseCertificationNftAchievements item not found');
+      throw new NotFoundException(
+        'CourseCertificationNftAchievements item not found',
+      );
     }
     this.items.splice(index, 1);
     return { id, deleted: true };

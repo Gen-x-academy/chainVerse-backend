@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { PrivacyPolicyManagementService } from './privacy-policy-management.service';
 import { CreatePrivacyPolicyManagementDto } from './dto/create-privacy-policy-management.dto';
 import { UpdatePrivacyPolicyManagementDto } from './dto/update-privacy-policy-management.dto';
@@ -31,7 +40,10 @@ export class PrivacyPolicyManagementController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
-  update(@Param('id') id: string, @Body() payload: UpdatePrivacyPolicyManagementDto) {
+  update(
+    @Param('id') id: string,
+    @Body() payload: UpdatePrivacyPolicyManagementDto,
+  ) {
     return this.service.update(id, payload);
   }
 

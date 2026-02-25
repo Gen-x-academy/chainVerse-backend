@@ -4,7 +4,9 @@ import { UpdateCourseRatingsFeedbackDto } from './dto/update-course-ratings-feed
 
 @Injectable()
 export class CourseRatingsFeedbackService {
-  private readonly items: Array<{ id: string } & CreateCourseRatingsFeedbackDto> = [];
+  private readonly items: Array<
+    { id: string } & CreateCourseRatingsFeedbackDto
+  > = [];
 
   findAll() {
     return this.items;
