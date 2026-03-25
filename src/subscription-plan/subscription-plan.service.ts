@@ -1,63 +1,55 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { CreateSubscriptionPlanDto } from './dto/create-subscription-plan.dto';
 import { UpdateSubscriptionPlanDto } from './dto/update-subscription-plan.dto';
-
-export interface SubscriptionPlan {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  duration: number;
-  features: string[];
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import {
+  SubscriptionPlan,
+  SubscriptionPlanDocument,
+} from './schemas/subscription-plan.schema';
 
 @Injectable()
 export class SubscriptionPlanService {
-  private readonly plans: SubscriptionPlan[] = [];
+  constructor(
+    @InjectModel(SubscriptionPlan.name)
+    private readonly planModel: Model<SubscriptionPlanDocument>,
+  ) {}
 
-  create(payload: CreateSubscriptionPlanDto): SubscriptionPlan {
-    const plan: SubscriptionPlan = {
-      id: crypto.randomUUID(),
-      name: payload.name,
-      description: payload.description,
-      price: payload.price,
-      duration: payload.duration,
-      features: payload.features,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.plans.push(plan);
-    return plan;
+  async create(payload: CreateSubscriptionPlanDto): Promise<SubscriptionPlan> {
+    const plan = new this.planModel(payload);
+    return plan.save();
   }
 
-  findAll(): SubscriptionPlan[] {
-    return this.plans;
+  async findAll(): Promise<SubscriptionPlan[]> {
+    return this.planModel.find().exec();
   }
 
-  findOne(id: string): SubscriptionPlan {
-    const plan = this.plans.find((p) => p.id === id);
+  async findOne(id: string): Promise<SubscriptionPlanDocument> {
+    const plan = await this.planModel.findById(id).exec();
     if (!plan) {
       throw new NotFoundException('Subscription plan not found');
     }
     return plan;
   }
 
-  update(id: string, payload: UpdateSubscriptionPlanDto): SubscriptionPlan {
-    const plan = this.findOne(id);
-    Object.assign(plan, { ...payload, updatedAt: new Date() });
+  async update(
+    id: string,
+    payload: UpdateSubscriptionPlanDto,
+  ): Promise<SubscriptionPlan> {
+    const plan = await this.planModel
+      .findByIdAndUpdate(id, payload, { new: true })
+      .exec();
+    if (!plan) {
+      throw new NotFoundException('Subscription plan not found');
+    }
     return plan;
   }
 
-  remove(id: string): { id: string; deleted: boolean } {
-    const index = this.plans.findIndex((p) => p.id === id);
-    if (index === -1) {
+  async remove(id: string): Promise<{ id: string; deleted: boolean }> {
+    const result = await this.planModel.findByIdAndDelete(id).exec();
+    if (!result) {
       throw new NotFoundException('Subscription plan not found');
     }
-    this.plans.splice(index, 1);
     return { id, deleted: true };
   }
 }

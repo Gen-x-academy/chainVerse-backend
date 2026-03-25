@@ -1,18 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { UpdateNotificationDto } from './dto/update-notification.dto';
-
-export interface Notification {
-  id: string;
-  userId: string;
-  title: string;
-  message: string;
-  type?: string;
-  isRead: boolean;
-  metadata?: Record<string, unknown>;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import {
+  Notification,
+  NotificationDocument,
+} from './schemas/notification.schema';
 
 export interface PaginatedResult<T> {
   data: T[];
@@ -24,76 +18,81 @@ export interface PaginatedResult<T> {
 
 @Injectable()
 export class NotificationService {
-  private readonly notifications: Notification[] = [];
+  constructor(
+    @InjectModel(Notification.name)
+    private readonly notificationModel: Model<NotificationDocument>,
+  ) {}
 
-  create(payload: CreateNotificationDto): Notification {
-    const notification: Notification = {
-      id: crypto.randomUUID(),
-      userId: payload.userId,
-      title: payload.title,
-      message: payload.message,
-      type: payload.type,
-      isRead: false,
-      metadata: payload.metadata,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.notifications.push(notification);
-    return notification;
+  async create(payload: CreateNotificationDto): Promise<Notification> {
+    const notification = new this.notificationModel(payload);
+    return notification.save();
   }
 
-  findAll(page = 1, limit = 10): PaginatedResult<Notification> {
-    const total = this.notifications.length;
-    const totalPages = Math.ceil(total / limit);
-    const start = (page - 1) * limit;
-    const data = this.notifications.slice(start, start + limit);
-
-    return { data, total, page, limit, totalPages };
+  async findAll(
+    page = 1,
+    limit = 10,
+  ): Promise<PaginatedResult<Notification>> {
+    const skip = (page - 1) * limit;
+    const [data, total] = await Promise.all([
+      this.notificationModel.find().skip(skip).limit(limit).exec(),
+      this.notificationModel.countDocuments().exec(),
+    ]);
+    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
-  findByUserId(
+  async findByUserId(
     userId: string,
     page = 1,
     limit = 10,
-  ): PaginatedResult<Notification> {
-    const userNotifications = this.notifications.filter(
-      (n) => n.userId === userId,
-    );
-    const total = userNotifications.length;
-    const totalPages = Math.ceil(total / limit);
-    const start = (page - 1) * limit;
-    const data = userNotifications.slice(start, start + limit);
-
-    return { data, total, page, limit, totalPages };
+  ): Promise<PaginatedResult<Notification>> {
+    const skip = (page - 1) * limit;
+    const [data, total] = await Promise.all([
+      this.notificationModel
+        .find({ userId })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.notificationModel.countDocuments({ userId }).exec(),
+    ]);
+    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
-  findOne(id: string): Notification {
-    const notification = this.notifications.find((n) => n.id === id);
+  async findOne(id: string): Promise<NotificationDocument> {
+    const notification = await this.notificationModel.findById(id).exec();
     if (!notification) {
       throw new NotFoundException('Notification not found');
     }
     return notification;
   }
 
-  update(id: string, payload: UpdateNotificationDto): Notification {
-    const notification = this.findOne(id);
-    Object.assign(notification, { ...payload, updatedAt: new Date() });
-    return notification;
-  }
-
-  markAsRead(id: string): Notification {
-    const notification = this.findOne(id);
-    notification.isRead = true;
-    notification.updatedAt = new Date();
-    return notification;
-  }
-
-  remove(id: string): { id: string; deleted: boolean } {
-    const index = this.notifications.findIndex((n) => n.id === id);
-    if (index === -1) {
+  async update(
+    id: string,
+    payload: UpdateNotificationDto,
+  ): Promise<Notification> {
+    const notification = await this.notificationModel
+      .findByIdAndUpdate(id, payload, { new: true })
+      .exec();
+    if (!notification) {
       throw new NotFoundException('Notification not found');
     }
-    this.notifications.splice(index, 1);
+    return notification;
+  }
+
+  async markAsRead(id: string): Promise<Notification> {
+    const notification = await this.notificationModel
+      .findByIdAndUpdate(id, { isRead: true }, { new: true })
+      .exec();
+    if (!notification) {
+      throw new NotFoundException('Notification not found');
+    }
+    return notification;
+  }
+
+  async remove(id: string): Promise<{ id: string; deleted: boolean }> {
+    const result = await this.notificationModel.findByIdAndDelete(id).exec();
+    if (!result) {
+      throw new NotFoundException('Notification not found');
+    }
     return { id, deleted: true };
   }
 }
