@@ -1,67 +1,52 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { CreateSessionDto } from './dto/create-session.dto';
-
-export interface Session {
-  id: string;
-  userId: string;
-  token: string;
-  ipAddress: string;
-  userAgent: string;
-  loginTime: Date;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { Session, SessionDocument } from './schemas/session.schema';
 
 @Injectable()
 export class SessionService {
-  private readonly sessions: Session[] = [];
+  constructor(
+    @InjectModel(Session.name)
+    private readonly sessionModel: Model<SessionDocument>,
+  ) {}
 
-  create(userId: string, payload: CreateSessionDto): Session {
-    const session: Session = {
-      id: crypto.randomUUID(),
-      userId,
-      token: payload.token,
-      ipAddress: payload.ipAddress,
-      userAgent: payload.userAgent,
-      loginTime: new Date(),
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.sessions.push(session);
-    return session;
+  async create(userId: string, payload: CreateSessionDto): Promise<Session> {
+    const session = new this.sessionModel({ userId, ...payload });
+    return session.save();
   }
 
-  findAll(): Session[] {
-    return this.sessions;
+  async findAll(): Promise<Session[]> {
+    return this.sessionModel.find().exec();
   }
 
-  findByUserId(userId: string): Session[] {
-    return this.sessions.filter((s) => s.userId === userId);
+  async findByUserId(userId: string): Promise<Session[]> {
+    return this.sessionModel.find({ userId }).exec();
   }
 
-  findOne(id: string): Session {
-    const session = this.sessions.find((s) => s.id === id);
+  async findOne(id: string): Promise<SessionDocument> {
+    const session = await this.sessionModel.findById(id).exec();
     if (!session) {
       throw new NotFoundException('Session not found');
     }
     return session;
   }
 
-  invalidate(id: string): Session {
-    const session = this.findOne(id);
-    session.isActive = false;
-    session.updatedAt = new Date();
+  async invalidate(id: string): Promise<Session> {
+    const session = await this.sessionModel
+      .findByIdAndUpdate(id, { isActive: false }, { new: true })
+      .exec();
+    if (!session) {
+      throw new NotFoundException('Session not found');
+    }
     return session;
   }
 
-  remove(id: string): { id: string; deleted: boolean } {
-    const index = this.sessions.findIndex((s) => s.id === id);
-    if (index === -1) {
+  async remove(id: string): Promise<{ id: string; deleted: boolean }> {
+    const result = await this.sessionModel.findByIdAndDelete(id).exec();
+    if (!result) {
       throw new NotFoundException('Session not found');
     }
-    this.sessions.splice(index, 1);
     return { id, deleted: true };
   }
 }

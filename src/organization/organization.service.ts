@@ -1,61 +1,55 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
-
-export interface Organization {
-  id: string;
-  name: string;
-  description?: string;
-  website?: string;
-  logoUrl?: string;
-  metadata?: Record<string, unknown>;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import {
+  Organization,
+  OrganizationDocument,
+} from './schemas/organization.schema';
 
 @Injectable()
 export class OrganizationService {
-  private readonly organizations: Organization[] = [];
+  constructor(
+    @InjectModel(Organization.name)
+    private readonly organizationModel: Model<OrganizationDocument>,
+  ) {}
 
-  create(payload: CreateOrganizationDto): Organization {
-    const organization: Organization = {
-      id: crypto.randomUUID(),
-      name: payload.name,
-      description: payload.description,
-      website: payload.website,
-      logoUrl: payload.logoUrl,
-      metadata: payload.metadata,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.organizations.push(organization);
-    return organization;
+  async create(payload: CreateOrganizationDto): Promise<Organization> {
+    const organization = new this.organizationModel(payload);
+    return organization.save();
   }
 
-  findAll(): Organization[] {
-    return this.organizations;
+  async findAll(): Promise<Organization[]> {
+    return this.organizationModel.find().exec();
   }
 
-  findOne(id: string): Organization {
-    const org = this.organizations.find((o) => o.id === id);
+  async findOne(id: string): Promise<OrganizationDocument> {
+    const org = await this.organizationModel.findById(id).exec();
     if (!org) {
       throw new NotFoundException('Organization not found');
     }
     return org;
   }
 
-  update(id: string, payload: UpdateOrganizationDto): Organization {
-    const org = this.findOne(id);
-    Object.assign(org, { ...payload, updatedAt: new Date() });
+  async update(
+    id: string,
+    payload: UpdateOrganizationDto,
+  ): Promise<Organization> {
+    const org = await this.organizationModel
+      .findByIdAndUpdate(id, payload, { new: true })
+      .exec();
+    if (!org) {
+      throw new NotFoundException('Organization not found');
+    }
     return org;
   }
 
-  remove(id: string): { id: string; deleted: boolean } {
-    const index = this.organizations.findIndex((o) => o.id === id);
-    if (index === -1) {
+  async remove(id: string): Promise<{ id: string; deleted: boolean }> {
+    const result = await this.organizationModel.findByIdAndDelete(id).exec();
+    if (!result) {
       throw new NotFoundException('Organization not found');
     }
-    this.organizations.splice(index, 1);
     return { id, deleted: true };
   }
 }

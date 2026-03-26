@@ -3,6 +3,8 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { EventsModule } from './events/events.module';
+import { HealthModule } from './health/health.module';
+import { DatabaseModule } from './database/database.module';
 import { FinancialAidModule } from './financial-aid/financial-aid.module';
 import { BadgeModule } from './badge/badge.module';
 import { NotificationModule } from './notification/notification.module';
@@ -24,6 +26,8 @@ import { AdminCourseModule } from './admin-course/admin-course.module';
   imports: [
     EventEmitterModule.forRoot(),
     EventsModule,
+    HealthModule,
+    DatabaseModule,
     FinancialAidModule,
     BadgeModule,
     NotificationModule,
