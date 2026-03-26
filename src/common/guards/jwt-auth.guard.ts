@@ -6,10 +6,20 @@ import {
 } from '@nestjs/common';
 import * as crypto from 'crypto';
 
-const JWT_SECRET = process.env.JWT_SECRET || '';
-
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
+  private readonly jwtSecret: string;
+
+  constructor() {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error(
+        'JWT_SECRET environment variable must be set before the application starts',
+      );
+    }
+    this.jwtSecret = secret;
+  }
+
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
     const authHeader = request.headers?.authorization;
@@ -29,21 +39,46 @@ export class JwtAuthGuard implements CanActivate {
 
       const [header, body, sig] = parts;
       const expected = crypto
-        .createHmac('sha256', JWT_SECRET)
+        .createHmac('sha256', this.jwtSecret)
         .update(`${header}.${body}`)
         .digest('base64url');
 
       if (sig !== expected) throw new Error('Invalid signature');
 
-      const payload = JSON.parse(Buffer.from(body, 'base64url').toString());
-      if (payload.exp < Math.floor(Date.now() / 1000)) {
+      const payload = JSON.parse(
+        Buffer.from(body, 'base64url').toString(),
+      ) as Record<string, unknown>;
+
+      if ((payload.exp as number) < Math.floor(Date.now() / 1000)) {
         throw new Error('Token expired');
       }
 
-      request.user = { id: payload.sub, email: payload.email, role: payload.role };
+      // Refresh tokens must not be used for authentication
+      if (payload.type === 'refresh') {
+        throw new Error('Refresh tokens cannot be used for authentication');
+      }
+
+      // All identity and role claims must be present in the token itself
+      if (
+        typeof payload.sub !== 'string' ||
+        !payload.sub ||
+        typeof payload.email !== 'string' ||
+        !payload.email ||
+        typeof payload.role !== 'string' ||
+        !payload.role
+      ) {
+        throw new Error('Token is missing required claims');
+      }
+
+      request.user = {
+        id: payload.sub,
+        email: payload.email,
+        role: payload.role,
+      };
       return true;
-    } catch (err: any) {
-      throw new UnauthorizedException(err.message || 'Invalid token');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Invalid token';
+      throw new UnauthorizedException(message);
     }
   }
 }

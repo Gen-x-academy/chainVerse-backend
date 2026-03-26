@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { EventsModule } from './events/events.module';
@@ -24,6 +26,14 @@ import { AdminCourseModule } from './admin-course/admin-course.module';
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([
+      {
+        name: 'default',
+        // 100 requests per minute for all routes
+        ttl: 60_000,
+        limit: 100,
+      },
+    ]),
     EventEmitterModule.forRoot(),
     EventsModule,
     HealthModule,
@@ -46,6 +56,10 @@ import { AdminCourseModule } from './admin-course/admin-course.module';
     AdminCourseModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    // Apply the throttler guard to every route in the application
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+  ],
 })
 export class AppModule {}

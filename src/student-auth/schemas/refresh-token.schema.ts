@@ -6,15 +6,20 @@ export type RefreshTokenDocument = HydratedDocument<RefreshToken>;
 @Schema({ timestamps: true })
 export class RefreshToken {
   @Prop({ required: true })
-  token: string;
+  tokenHash: string;
+
+  @Prop({ required: true })
+  tokenFamily: string;
 
   @Prop({ required: true })
   studentId: string;
 
   @Prop({ required: true })
-  expiresAt: number;
+  expiresAt: Date;
 }
 
 export const RefreshTokenSchema = SchemaFactory.createForClass(RefreshToken);
 
-RefreshTokenSchema.index({ token: 1 }, { unique: true });
+RefreshTokenSchema.index({ tokenHash: 1 }, { unique: true });
+RefreshTokenSchema.index({ tokenFamily: 1 });
+RefreshTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
