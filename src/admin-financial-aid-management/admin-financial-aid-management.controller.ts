@@ -1,3 +1,4 @@
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { AdminFinancialAidManagementService } from './admin-financial-aid-management.service';
 import { CreateAdminFinancialAidManagementDto } from './dto/create-admin-financial-aid-management.dto';
@@ -7,6 +8,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 
+@ApiBearerAuth('access-token')
 @Controller('admin/financial-aid')
 export class AdminFinancialAidManagementController {
   constructor(private readonly service: AdminFinancialAidManagementService) {}

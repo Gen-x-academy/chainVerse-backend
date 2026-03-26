@@ -5,6 +5,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as crypto from 'crypto';
@@ -20,8 +21,6 @@ import { StudentRegisteredPayload } from '../events/payloads/student-registered.
 import { Student, StudentDocument } from './schemas/student.schema';
 import { RefreshToken, RefreshTokenDocument } from './schemas/refresh-token.schema';
 
-const JWT_SECRET =
-  process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
 const ACCESS_TOKEN_EXPIRY = 3600;
 const REFRESH_TOKEN_EXPIRY = 604800;
 
@@ -32,9 +31,13 @@ export class StudentAuthService {
     private readonly studentModel: Model<StudentDocument>,
     @InjectModel(RefreshToken.name)
     private readonly refreshTokenModel: Model<RefreshTokenDocument>,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly configService: ConfigService,
   ) {}
 
-  constructor(private readonly eventEmitter: EventEmitter2) {}
+  private get jwtSecret(): string {
+    return this.configService.get<string>('jwtSecret') ?? '';
+  }
 
   private hashPassword(password: string): string {
     const salt = crypto.randomBytes(16).toString('hex');
@@ -64,18 +67,18 @@ export class StudentAuthService {
       JSON.stringify({ ...payload, iat: now, exp: now + expiresIn }),
     ).toString('base64url');
     const sig = crypto
-      .createHmac('sha256', JWT_SECRET)
+      .createHmac('sha256', this.jwtSecret)
       .update(`${header}.${body}`)
       .digest('base64url');
     return `${header}.${body}.${sig}`;
   }
 
-  static verifyJwt(token: string): Record<string, unknown> {
+  verifyJwt(token: string): Record<string, unknown> {
     const parts = token.split('.');
     if (parts.length !== 3) throw new Error('Malformed token');
     const [header, body, sig] = parts;
     const expected = crypto
-      .createHmac('sha256', JWT_SECRET)
+      .createHmac('sha256', this.jwtSecret)
       .update(`${header}.${body}`)
       .digest('base64url');
     if (sig !== expected) throw new Error('Invalid token signature');
@@ -93,7 +96,7 @@ export class StudentAuthService {
       ACCESS_TOKEN_EXPIRY,
     );
     const refreshToken = this.createJwt(
-      { sub: student.id, type: 'refresh' },
+      { sub: student.id, type: 'refresh', jti: crypto.randomBytes(16).toString('hex') },
       REFRESH_TOKEN_EXPIRY,
     );
     await new this.refreshTokenModel({
@@ -148,8 +151,6 @@ export class StudentAuthService {
       verificationToken,
     }).save();
 
-    this.students.push(student);
-
     this.eventEmitter.emit(
       DomainEvents.STUDENT_REGISTERED,
       Object.assign(new StudentRegisteredPayload(), {
@@ -159,7 +160,6 @@ export class StudentAuthService {
       }),
     );
 
-    const tokens = this.generateTokenPair(student);
     const tokens = await this.generateTokenPair(student);
 
     return {
@@ -283,7 +283,7 @@ export class StudentAuthService {
     }
 
     try {
-      StudentAuthService.verifyJwt(dto.refreshToken);
+      this.verifyJwt(dto.refreshToken);
     } catch {
       await this.refreshTokenModel.deleteOne({ token: dto.refreshToken }).exec();
       throw new UnauthorizedException('Refresh token expired');
