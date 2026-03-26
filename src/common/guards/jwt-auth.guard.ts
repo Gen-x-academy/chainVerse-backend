@@ -38,15 +38,40 @@ export class JwtAuthGuard implements CanActivate {
 
       if (sig !== expected) throw new Error('Invalid signature');
 
-      const payload = JSON.parse(Buffer.from(body, 'base64url').toString());
-      if (payload.exp < Math.floor(Date.now() / 1000)) {
+      const payload = JSON.parse(
+        Buffer.from(body, 'base64url').toString(),
+      ) as Record<string, unknown>;
+
+      if ((payload.exp as number) < Math.floor(Date.now() / 1000)) {
         throw new Error('Token expired');
       }
 
-      request.user = { id: payload.sub, email: payload.email, role: payload.role };
+      // Refresh tokens must not be used for authentication
+      if (payload.type === 'refresh') {
+        throw new Error('Refresh tokens cannot be used for authentication');
+      }
+
+      // All identity and role claims must be present in the token itself
+      if (
+        typeof payload.sub !== 'string' ||
+        !payload.sub ||
+        typeof payload.email !== 'string' ||
+        !payload.email ||
+        typeof payload.role !== 'string' ||
+        !payload.role
+      ) {
+        throw new Error('Token is missing required claims');
+      }
+
+      request.user = {
+        id: payload.sub,
+        email: payload.email,
+        role: payload.role,
+      };
       return true;
-    } catch (err: any) {
-      throw new UnauthorizedException(err.message || 'Invalid token');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Invalid token';
+      throw new UnauthorizedException(message);
     }
   }
 }
