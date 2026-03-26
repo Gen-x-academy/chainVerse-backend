@@ -3,39 +3,22 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { ReviewCourseDto } from './dto/review-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
-
-interface Course {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  tags: string[];
-  price: number;
-  thumbnailUrl: string;
-  tutorId: string;
-  tutorEmail: string;
-  status: 'draft' | 'pending' | 'approved' | 'rejected' | 'published' | 'unpublished';
-  enrolledStudents: string[];
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-interface EmailLog {
-  to: string;
-  subject: string;
-  body: string;
-  sentAt: Date;
-}
+import { Course, CourseDocument } from './schemas/course.schema';
 
 @Injectable()
 export class AdminCourseService {
-  private readonly courses: Course[] = [];
-  private readonly emailLogs: EmailLog[] = [];
+  constructor(
+    @InjectModel(Course.name)
+    private readonly courseModel: Model<CourseDocument>,
+  ) {}
 
-  findAll() {
-    return this.courses.map((c) => ({
+  async findAll() {
+    const courses = await this.courseModel.find().exec();
+    return courses.map((c) => ({
       id: c.id,
       title: c.title,
       category: c.category,
@@ -46,15 +29,15 @@ export class AdminCourseService {
     }));
   }
 
-  findOne(id: string) {
-    const course = this.courses.find((c) => c.id === id);
+  async findOne(id: string): Promise<CourseDocument> {
+    const course = await this.courseModel.findById(id).exec();
     if (!course) {
       throw new NotFoundException(`Course ${id} not found`);
     }
     return course;
   }
 
-  review(id: string, dto: ReviewCourseDto) {
+  async review(id: string, dto: ReviewCourseDto) {
     if (!dto.decision || !['approved', 'rejected'].includes(dto.decision)) {
       throw new BadRequestException('Decision must be "approved" or "rejected"');
     }
@@ -63,9 +46,9 @@ export class AdminCourseService {
       throw new BadRequestException('Rejection reason is required');
     }
 
-    const course = this.findOne(id);
+    const course = await this.findOne(id);
     course.status = dto.decision;
-    course.updatedAt = new Date();
+    await course.save();
 
     if (dto.decision === 'approved') {
       this.sendEmail(
@@ -84,51 +67,51 @@ export class AdminCourseService {
     return { message: `Course ${dto.decision}`, course };
   }
 
-  publish(id: string) {
-    const course = this.findOne(id);
-    if (course.status !== 'approved' && course.status !== 'unpublished') {
-      throw new BadRequestException('Only approved or unpublished courses can be published');
+  async publish(id: string) {
+    const course = await this.findOne(id);
+    if (
+      course.status !== 'approved' &&
+      course.status !== 'unpublished'
+    ) {
+      throw new BadRequestException(
+        'Only approved or unpublished courses can be published',
+      );
     }
     course.status = 'published';
-    course.updatedAt = new Date();
+    await course.save();
     return { message: 'Course published', course };
   }
 
-  unpublish(id: string) {
-    const course = this.findOne(id);
+  async unpublish(id: string) {
+    const course = await this.findOne(id);
     if (course.status !== 'published') {
       throw new BadRequestException('Only published courses can be unpublished');
     }
     course.status = 'unpublished';
-    course.updatedAt = new Date();
+    await course.save();
     return { message: 'Course unpublished', course };
   }
 
-  update(id: string, dto: UpdateCourseDto) {
-    const course = this.findOne(id);
-
-    if (dto.title !== undefined) course.title = dto.title;
-    if (dto.description !== undefined) course.description = dto.description;
-    if (dto.category !== undefined) course.category = dto.category;
-    if (dto.tags !== undefined) course.tags = dto.tags;
-    if (dto.price !== undefined) course.price = dto.price;
-    if (dto.thumbnailUrl !== undefined) course.thumbnailUrl = dto.thumbnailUrl;
-
-    course.updatedAt = new Date();
+  async update(id: string, dto: UpdateCourseDto) {
+    const course = await this.courseModel
+      .findByIdAndUpdate(id, dto, { new: true })
+      .exec();
+    if (!course) {
+      throw new NotFoundException(`Course ${id} not found`);
+    }
     return course;
   }
 
-  delete(id: string) {
-    const index = this.courses.findIndex((c) => c.id === id);
-    if (index === -1) {
+  async delete(id: string) {
+    const result = await this.courseModel.findByIdAndDelete(id).exec();
+    if (!result) {
       throw new NotFoundException(`Course ${id} not found`);
     }
-    this.courses.splice(index, 1);
     return { message: 'Course deleted' };
   }
 
-  getEnrollments(id: string) {
-    const course = this.findOne(id);
+  async getEnrollments(id: string) {
+    const course = await this.findOne(id);
     return {
       courseId: id,
       courseTitle: course.title,
@@ -138,7 +121,6 @@ export class AdminCourseService {
   }
 
   private sendEmail(to: string, subject: string, body: string) {
-    this.emailLogs.push({ to, subject, body, sentAt: new Date() });
-    console.log(`[Email] To: ${to} | Subject: ${subject}`);
+    console.log(`[Email] To: ${to} | Subject: ${subject} | Body: ${body}`);
   }
 }
