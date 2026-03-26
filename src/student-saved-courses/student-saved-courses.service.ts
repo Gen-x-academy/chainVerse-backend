@@ -4,10 +4,15 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { DomainEvents } from '../events/event-names';
+import { StudentEnrolledPayload } from '../events/payloads/student-enrolled.payload';
 
 @Injectable()
 export class StudentSavedCoursesService {
   private readonly saved = new Map<string, Set<string>>();
+
+  constructor(private readonly eventEmitter: EventEmitter2) {}
 
   add(studentId: string, courseId: string) {
     if (!courseId) {
@@ -24,6 +29,12 @@ export class StudentSavedCoursesService {
     }
 
     studentCourses.add(courseId);
+
+    this.eventEmitter.emit(
+      DomainEvents.STUDENT_ENROLLED,
+      Object.assign(new StudentEnrolledPayload(), { studentId, courseId }),
+    );
+
     return { studentId, courses: [...studentCourses] };
   }
 

@@ -6,12 +6,15 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import * as crypto from 'crypto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { LoginStudentDto } from './dto/login-student.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ForgetPasswordDto } from './dto/forget-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { DomainEvents } from '../events/event-names';
+import { StudentRegisteredPayload } from '../events/payloads/student-registered.payload';
 
 interface Student {
   id: string;
@@ -36,6 +39,8 @@ const REFRESH_TOKEN_EXPIRY = 604800;
 export class StudentAuthService {
   private readonly students: Student[] = [];
   private readonly refreshTokens = new Map<string, string>();
+
+  constructor(private readonly eventEmitter: EventEmitter2) {}
 
   private hashPassword(password: string): string {
     const salt = crypto.randomBytes(16).toString('hex');
@@ -137,6 +142,16 @@ export class StudentAuthService {
     };
 
     this.students.push(student);
+
+    this.eventEmitter.emit(
+      DomainEvents.STUDENT_REGISTERED,
+      Object.assign(new StudentRegisteredPayload(), {
+        studentId: student.id,
+        email: student.email,
+        firstName: student.firstName,
+      }),
+    );
+
     const tokens = this.generateTokenPair(student);
 
     return {

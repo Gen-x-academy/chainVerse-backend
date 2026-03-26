@@ -1,6 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CreateFinancialAidDto } from './dto/create-financial-aid.dto';
 import { UpdateFinancialAidDto } from './dto/update-financial-aid.dto';
+import { DomainEvents } from '../events/event-names';
+import { FinancialAidApprovedPayload } from '../events/payloads/financial-aid-approved.payload';
 
 export interface FinancialAidApplication {
   id: string;
@@ -15,6 +18,8 @@ export interface FinancialAidApplication {
 @Injectable()
 export class FinancialAidService {
   private readonly applications: FinancialAidApplication[] = [];
+
+  constructor(private readonly eventEmitter: EventEmitter2) {}
 
   create(payload: CreateFinancialAidDto): FinancialAidApplication {
     const application: FinancialAidApplication = {
@@ -48,9 +53,22 @@ export class FinancialAidService {
 
   update(id: string, payload: UpdateFinancialAidDto): FinancialAidApplication {
     const application = this.findOne(id);
+    const wasApproved = application.status === 'approved';
     if (payload.reason !== undefined) application.reason = payload.reason;
     if (payload.status !== undefined) application.status = payload.status;
     application.updatedAt = new Date();
+
+    if (!wasApproved && application.status === 'approved') {
+      this.eventEmitter.emit(
+        DomainEvents.FINANCIAL_AID_APPROVED,
+        Object.assign(new FinancialAidApprovedPayload(), {
+          applicationId: application.id,
+          studentId: application.studentId,
+          courseId: application.courseId,
+        }),
+      );
+    }
+
     return application;
   }
 

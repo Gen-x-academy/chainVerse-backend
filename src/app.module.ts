@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { EventsModule } from './events/events.module';
 import { FinancialAidModule } from './financial-aid/financial-aid.module';
 import { BadgeModule } from './badge/badge.module';
 import { NotificationModule } from './notification/notification.module';
@@ -20,6 +22,8 @@ import { AdminCourseModule } from './admin-course/admin-course.module';
 
 @Module({
   imports: [
+    EventEmitterModule.forRoot(),
+    EventsModule,
     FinancialAidModule,
     BadgeModule,
     NotificationModule,
