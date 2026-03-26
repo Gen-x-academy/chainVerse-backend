@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { PrivateTutoringBookingsService } from './private-tutoring-bookings.service';
 import { CreatePrivateTutoringBookingsDto } from './dto/create-private-tutoring-bookings.dto';
 import { UpdatePrivateTutoringBookingsDto } from './dto/update-private-tutoring-bookings.dto';
@@ -7,6 +17,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 
+@ApiBearerAuth('access-token')
 @Controller('tutoring/bookings')
 export class PrivateTutoringBookingsController {
   constructor(private readonly service: PrivateTutoringBookingsService) {}
@@ -31,7 +42,10 @@ export class PrivateTutoringBookingsController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
-  update(@Param('id') id: string, @Body() payload: UpdatePrivateTutoringBookingsDto) {
+  update(
+    @Param('id') id: string,
+    @Body() payload: UpdatePrivateTutoringBookingsDto,
+  ) {
     return this.service.update(id, payload);
   }
 

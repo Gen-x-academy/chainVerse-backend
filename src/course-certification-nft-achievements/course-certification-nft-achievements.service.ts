@@ -1,10 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CreateCourseCertificationNftAchievementsDto } from './dto/create-course-certification-nft-achievements.dto';
 import { UpdateCourseCertificationNftAchievementsDto } from './dto/update-course-certification-nft-achievements.dto';
+import { DomainEvents } from '../events/event-names';
+import { CertificateIssuedPayload } from '../events/payloads/certificate-issued.payload';
 
 @Injectable()
 export class CourseCertificationNftAchievementsService {
-  private readonly items: Array<{ id: string } & CreateCourseCertificationNftAchievementsDto> = [];
+  private readonly items: Array<
+    { id: string } & CreateCourseCertificationNftAchievementsDto
+  > = [];
+
+  constructor(private readonly eventEmitter: EventEmitter2) {}
 
   findAll() {
     return this.items;
@@ -13,7 +20,9 @@ export class CourseCertificationNftAchievementsService {
   findOne(id: string) {
     const item = this.items.find((entry) => entry.id === id);
     if (!item) {
-      throw new NotFoundException('CourseCertificationNftAchievements item not found');
+      throw new NotFoundException(
+        'CourseCertificationNftAchievements item not found',
+      );
     }
     return item;
   }
@@ -21,6 +30,16 @@ export class CourseCertificationNftAchievementsService {
   create(payload: CreateCourseCertificationNftAchievementsDto) {
     const created = { id: crypto.randomUUID(), ...payload };
     this.items.push(created);
+
+    this.eventEmitter.emit(
+      DomainEvents.CERTIFICATE_ISSUED,
+      Object.assign(new CertificateIssuedPayload(), {
+        certificateId: created.id,
+        studentId: payload.studentId,
+        courseTitle: payload.title,
+      }),
+    );
+
     return created;
   }
 
@@ -33,7 +52,9 @@ export class CourseCertificationNftAchievementsService {
   remove(id: string) {
     const index = this.items.findIndex((entry) => entry.id === id);
     if (index === -1) {
-      throw new NotFoundException('CourseCertificationNftAchievements item not found');
+      throw new NotFoundException(
+        'CourseCertificationNftAchievements item not found',
+      );
     }
     this.items.splice(index, 1);
     return { id, deleted: true };

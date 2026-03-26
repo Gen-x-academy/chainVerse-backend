@@ -4,7 +4,9 @@ import { UpdateCourseCategorizationFilteringDto } from './dto/update-course-cate
 
 @Injectable()
 export class CourseCategorizationFilteringService {
-  private readonly items: Array<{ id: string } & CreateCourseCategorizationFilteringDto> = [];
+  private readonly items: Array<
+    { id: string } & CreateCourseCategorizationFilteringDto
+  > = [];
 
   findAll() {
     return this.items;
@@ -13,7 +15,9 @@ export class CourseCategorizationFilteringService {
   findOne(id: string) {
     const item = this.items.find((entry) => entry.id === id);
     if (!item) {
-      throw new NotFoundException('CourseCategorizationFiltering item not found');
+      throw new NotFoundException(
+        'CourseCategorizationFiltering item not found',
+      );
     }
     return item;
   }
@@ -33,7 +37,9 @@ export class CourseCategorizationFilteringService {
   remove(id: string) {
     const index = this.items.findIndex((entry) => entry.id === id);
     if (index === -1) {
-      throw new NotFoundException('CourseCategorizationFiltering item not found');
+      throw new NotFoundException(
+        'CourseCategorizationFiltering item not found',
+      );
     }
     this.items.splice(index, 1);
     return { id, deleted: true };

@@ -4,7 +4,9 @@ import { UpdateStudentReportsAnalyticsDto } from './dto/update-student-reports-a
 
 @Injectable()
 export class StudentReportsAnalyticsService {
-  private readonly items: Array<{ id: string } & CreateStudentReportsAnalyticsDto> = [];
+  private readonly items: Array<
+    { id: string } & CreateStudentReportsAnalyticsDto
+  > = [];
 
   findAll() {
     return this.items;

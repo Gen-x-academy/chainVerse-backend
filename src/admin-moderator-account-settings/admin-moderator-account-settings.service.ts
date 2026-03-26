@@ -4,7 +4,9 @@ import { UpdateAdminModeratorAccountSettingsDto } from './dto/update-admin-moder
 
 @Injectable()
 export class AdminModeratorAccountSettingsService {
-  private readonly items: Array<{ id: string } & CreateAdminModeratorAccountSettingsDto> = [];
+  private readonly items: Array<
+    { id: string } & CreateAdminModeratorAccountSettingsDto
+  > = [];
 
   findAll() {
     return this.items;
@@ -13,7 +15,9 @@ export class AdminModeratorAccountSettingsService {
   findOne(id: string) {
     const item = this.items.find((entry) => entry.id === id);
     if (!item) {
-      throw new NotFoundException('AdminModeratorAccountSettings item not found');
+      throw new NotFoundException(
+        'AdminModeratorAccountSettings item not found',
+      );
     }
     return item;
   }
@@ -33,7 +37,9 @@ export class AdminModeratorAccountSettingsService {
   remove(id: string) {
     const index = this.items.findIndex((entry) => entry.id === id);
     if (index === -1) {
-      throw new NotFoundException('AdminModeratorAccountSettings item not found');
+      throw new NotFoundException(
+        'AdminModeratorAccountSettings item not found',
+      );
     }
     this.items.splice(index, 1);
     return { id, deleted: true };

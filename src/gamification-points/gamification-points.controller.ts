@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { GamificationPointsService } from './gamification-points.service';
 import { CreateGamificationPointsDto } from './dto/create-gamification-points.dto';
 import { UpdateGamificationPointsDto } from './dto/update-gamification-points.dto';
@@ -7,6 +17,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 
+@ApiBearerAuth('access-token')
 @Controller('gamification/points')
 export class GamificationPointsController {
   constructor(private readonly service: GamificationPointsService) {}
@@ -31,7 +42,10 @@ export class GamificationPointsController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
-  update(@Param('id') id: string, @Body() payload: UpdateGamificationPointsDto) {
+  update(
+    @Param('id') id: string,
+    @Body() payload: UpdateGamificationPointsDto,
+  ) {
     return this.service.update(id, payload);
   }
 

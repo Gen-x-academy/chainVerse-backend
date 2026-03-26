@@ -4,7 +4,9 @@ import { UpdateStudentCertificateNameChangeRequestDto } from './dto/update-stude
 
 @Injectable()
 export class StudentCertificateNameChangeRequestService {
-  private readonly items: Array<{ id: string } & CreateStudentCertificateNameChangeRequestDto> = [];
+  private readonly items: Array<
+    { id: string } & CreateStudentCertificateNameChangeRequestDto
+  > = [];
 
   findAll() {
     return this.items;
@@ -13,7 +15,9 @@ export class StudentCertificateNameChangeRequestService {
   findOne(id: string) {
     const item = this.items.find((entry) => entry.id === id);
     if (!item) {
-      throw new NotFoundException('StudentCertificateNameChangeRequest item not found');
+      throw new NotFoundException(
+        'StudentCertificateNameChangeRequest item not found',
+      );
     }
     return item;
   }
@@ -33,7 +37,9 @@ export class StudentCertificateNameChangeRequestService {
   remove(id: string) {
     const index = this.items.findIndex((entry) => entry.id === id);
     if (index === -1) {
-      throw new NotFoundException('StudentCertificateNameChangeRequest item not found');
+      throw new NotFoundException(
+        'StudentCertificateNameChangeRequest item not found',
+      );
     }
     this.items.splice(index, 1);
     return { id, deleted: true };

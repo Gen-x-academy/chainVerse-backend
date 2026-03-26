@@ -1,23 +1,83 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { DomainEvents } from '../events/event-names';
+import { StudentEnrolledPayload } from '../events/payloads/student-enrolled.payload';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { SavedCourse, SavedCourseDocument } from './schemas/saved-course.schema';
 
 @Injectable()
 export class StudentSavedCoursesService {
-  private readonly saved = new Map<string, Set<string>>();
+  constructor(
+    @InjectModel(SavedCourse.name)
+    private readonly savedCourseModel: Model<SavedCourseDocument>,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
-  add(studentId: string, courseId: string) {
-    if (!this.saved.has(studentId)) {
-      this.saved.set(studentId, new Set());
+  async add(
+    studentId: string,
+    courseId: string,
+  ): Promise<{ studentId: string; courses: string[] }> {
+    if (!courseId) {
+      throw new BadRequestException('Invalid course ID');
     }
-    this.saved.get(studentId)?.add(courseId);
-    return { studentId, courses: [...(this.saved.get(studentId) ?? [])] };
+
+    const existing = await this.savedCourseModel
+      .findOne({ studentId, courseId })
+      .exec();
+    if (existing) {
+      throw new ConflictException('Course is already saved');
+    }
+
+    await new this.savedCourseModel({ studentId, courseId }).save();
+
+    this.eventEmitter.emit(
+      DomainEvents.STUDENT_ENROLLED,
+      Object.assign(new StudentEnrolledPayload(), { studentId, courseId }),
+    );
+
+    const saved = await this.savedCourseModel.find({ studentId }).exec();
+    return { studentId, courses: saved.map((s) => s.courseId) };
   }
 
-  list(studentId: string) {
-    return { studentId, courses: [...(this.saved.get(studentId) ?? [])] };
+  async list(
+    studentId: string,
+  ): Promise<{ studentId: string; courses: string[] }> {
+    if (!studentId) {
+      throw new BadRequestException('Invalid student ID');
+    }
+
+    const saved = await this.savedCourseModel.find({ studentId }).exec();
+    return { studentId, courses: saved.map((s) => s.courseId) };
   }
 
-  remove(studentId: string, courseId: string) {
-    this.saved.get(studentId)?.delete(courseId);
-    return { studentId, courses: [...(this.saved.get(studentId) ?? [])] };
+  async remove(
+    studentId: string,
+    courseId: string,
+  ): Promise<{
+    studentId: string;
+    courseId: string;
+    message: string;
+    courses: string[];
+  }> {
+    const result = await this.savedCourseModel
+      .findOneAndDelete({ studentId, courseId })
+      .exec();
+    if (!result) {
+      throw new NotFoundException('Saved course not found');
+    }
+
+    const remaining = await this.savedCourseModel.find({ studentId }).exec();
+    return {
+      studentId,
+      courseId,
+      message: 'Course removed from saved list',
+      courses: remaining.map((s) => s.courseId),
+    };
   }
 }

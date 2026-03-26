@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { FaqManagementService } from './faq-management.service';
 import { CreateFaqManagementDto } from './dto/create-faq-management.dto';
 import { UpdateFaqManagementDto } from './dto/update-faq-management.dto';
@@ -7,6 +17,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 
+@ApiBearerAuth('access-token')
 @Controller('faq')
 export class FaqManagementController {
   constructor(private readonly service: FaqManagementService) {}

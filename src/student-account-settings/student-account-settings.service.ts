@@ -4,7 +4,9 @@ import { UpdateStudentAccountSettingsDto } from './dto/update-student-account-se
 
 @Injectable()
 export class StudentAccountSettingsService {
-  private readonly items: Array<{ id: string } & CreateStudentAccountSettingsDto> = [];
+  private readonly items: Array<
+    { id: string } & CreateStudentAccountSettingsDto
+  > = [];
 
   findAll() {
     return this.items;

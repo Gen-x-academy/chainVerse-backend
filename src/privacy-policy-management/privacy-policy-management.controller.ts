@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { PrivacyPolicyManagementService } from './privacy-policy-management.service';
 import { CreatePrivacyPolicyManagementDto } from './dto/create-privacy-policy-management.dto';
 import { UpdatePrivacyPolicyManagementDto } from './dto/update-privacy-policy-management.dto';
@@ -7,6 +17,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 
+@ApiBearerAuth('access-token')
 @Controller('privacy-policy')
 export class PrivacyPolicyManagementController {
   constructor(private readonly service: PrivacyPolicyManagementService) {}
@@ -31,7 +42,10 @@ export class PrivacyPolicyManagementController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
-  update(@Param('id') id: string, @Body() payload: UpdatePrivacyPolicyManagementDto) {
+  update(
+    @Param('id') id: string,
+    @Body() payload: UpdatePrivacyPolicyManagementDto,
+  ) {
     return this.service.update(id, payload);
   }
 

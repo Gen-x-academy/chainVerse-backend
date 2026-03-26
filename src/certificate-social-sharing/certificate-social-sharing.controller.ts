@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { CertificateSocialSharingService } from './certificate-social-sharing.service';
 import { CreateCertificateSocialSharingDto } from './dto/create-certificate-social-sharing.dto';
 import { UpdateCertificateSocialSharingDto } from './dto/update-certificate-social-sharing.dto';
@@ -7,6 +17,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 
+@ApiBearerAuth('access-token')
 @Controller('certificates/social-sharing')
 export class CertificateSocialSharingController {
   constructor(private readonly service: CertificateSocialSharingService) {}
@@ -31,7 +42,10 @@ export class CertificateSocialSharingController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
-  update(@Param('id') id: string, @Body() payload: UpdateCertificateSocialSharingDto) {
+  update(
+    @Param('id') id: string,
+    @Body() payload: UpdateCertificateSocialSharingDto,
+  ) {
     return this.service.update(id, payload);
   }
 

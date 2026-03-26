@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { TutorJwtAuthService } from './tutor-jwt-auth.service';
 import { CreateTutorJwtAuthDto } from './dto/create-tutor-jwt-auth.dto';
 import { UpdateTutorJwtAuthDto } from './dto/update-tutor-jwt-auth.dto';
@@ -7,6 +17,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 
+@ApiBearerAuth('access-token')
 @Controller('tutor/jwt-auth')
 export class TutorJwtAuthController {
   constructor(private readonly service: TutorJwtAuthService) {}

@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { CourseCertificationNftAchievementsService } from './course-certification-nft-achievements.service';
 import { CreateCourseCertificationNftAchievementsDto } from './dto/create-course-certification-nft-achievements.dto';
 import { UpdateCourseCertificationNftAchievementsDto } from './dto/update-course-certification-nft-achievements.dto';
@@ -7,9 +17,12 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 
+@ApiBearerAuth('access-token')
 @Controller('courses/certification-nft')
 export class CourseCertificationNftAchievementsController {
-  constructor(private readonly service: CourseCertificationNftAchievementsService) {}
+  constructor(
+    private readonly service: CourseCertificationNftAchievementsService,
+  ) {}
 
   @Get()
   findAll() {
@@ -31,7 +44,10 @@ export class CourseCertificationNftAchievementsController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
-  update(@Param('id') id: string, @Body() payload: UpdateCourseCertificationNftAchievementsDto) {
+  update(
+    @Param('id') id: string,
+    @Body() payload: UpdateCourseCertificationNftAchievementsDto,
+  ) {
     return this.service.update(id, payload);
   }
 

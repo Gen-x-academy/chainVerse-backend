@@ -4,7 +4,9 @@ import { UpdatePrivacyPolicyManagementDto } from './dto/update-privacy-policy-ma
 
 @Injectable()
 export class PrivacyPolicyManagementService {
-  private readonly items: Array<{ id: string } & CreatePrivacyPolicyManagementDto> = [];
+  private readonly items: Array<
+    { id: string } & CreatePrivacyPolicyManagementDto
+  > = [];
 
   findAll() {
     return this.items;

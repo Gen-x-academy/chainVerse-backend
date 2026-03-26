@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { TutorAccountSettingsService } from './tutor-account-settings.service';
 import { CreateTutorAccountSettingsDto } from './dto/create-tutor-account-settings.dto';
 import { UpdateTutorAccountSettingsDto } from './dto/update-tutor-account-settings.dto';
@@ -7,6 +17,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 
+@ApiBearerAuth('access-token')
 @Controller('tutor/account-settings')
 export class TutorAccountSettingsController {
   constructor(private readonly service: TutorAccountSettingsService) {}
@@ -31,7 +42,10 @@ export class TutorAccountSettingsController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
-  update(@Param('id') id: string, @Body() payload: UpdateTutorAccountSettingsDto) {
+  update(
+    @Param('id') id: string,
+    @Body() payload: UpdateTutorAccountSettingsDto,
+  ) {
     return this.service.update(id, payload);
   }
 

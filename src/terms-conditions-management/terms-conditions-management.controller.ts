@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { TermsConditionsManagementService } from './terms-conditions-management.service';
 import { CreateTermsConditionsManagementDto } from './dto/create-terms-conditions-management.dto';
 import { UpdateTermsConditionsManagementDto } from './dto/update-terms-conditions-management.dto';
@@ -7,6 +17,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 
+@ApiBearerAuth('access-token')
 @Controller('terms-conditions')
 export class TermsConditionsManagementController {
   constructor(private readonly service: TermsConditionsManagementService) {}
@@ -31,7 +42,10 @@ export class TermsConditionsManagementController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
-  update(@Param('id') id: string, @Body() payload: UpdateTermsConditionsManagementDto) {
+  update(
+    @Param('id') id: string,
+    @Body() payload: UpdateTermsConditionsManagementDto,
+  ) {
     return this.service.update(id, payload);
   }
 
