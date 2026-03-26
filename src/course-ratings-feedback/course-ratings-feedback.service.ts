@@ -4,107 +4,107 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { CreateCourseRatingsFeedbackDto } from './dto/create-course-ratings-feedback.dto';
 import { UpdateCourseRatingsFeedbackDto } from './dto/update-course-ratings-feedback.dto';
-
-export interface CourseRating {
-  id: string;
-  courseId: string;
-  studentId: string;
-  rating: number;
-  feedback?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import {
+  CourseRating,
+  CourseRatingDocument,
+} from './schemas/course-rating.schema';
 
 @Injectable()
 export class CourseRatingsFeedbackService {
-  private readonly ratings: CourseRating[] = [];
+  constructor(
+    @InjectModel(CourseRating.name)
+    private readonly ratingModel: Model<CourseRatingDocument>,
+  ) {}
 
-  create(
+  async create(
     courseId: string,
     studentId: string,
     payload: CreateCourseRatingsFeedbackDto,
-  ): CourseRating {
+  ): Promise<CourseRating> {
     if (payload.rating < 1 || payload.rating > 5) {
       throw new BadRequestException('Rating must be between 1 and 5');
     }
 
-    const existing = this.ratings.find(
-      (r) => r.courseId === courseId && r.studentId === studentId,
-    );
+    const existing = await this.ratingModel
+      .findOne({ courseId, studentId })
+      .exec();
     if (existing) {
       throw new ConflictException(
         'You have already rated this course. Use PUT to update your rating.',
       );
     }
 
-    const rating: CourseRating = {
-      id: crypto.randomUUID(),
-      courseId,
-      studentId,
-      rating: payload.rating,
-      feedback: payload.feedback,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.ratings.push(rating);
-    return rating;
+    const rating = new this.ratingModel({ courseId, studentId, ...payload });
+    return rating.save();
   }
 
-  findAllForCourse(
-    courseId: string,
-  ): { ratings: CourseRating[]; averageRating: number; totalRatings: number } {
-    const courseRatings = this.ratings.filter((r) => r.courseId === courseId);
-    const totalRatings = courseRatings.length;
+  async findAllForCourse(courseId: string): Promise<{
+    ratings: CourseRating[];
+    averageRating: number;
+    totalRatings: number;
+  }> {
+    const ratings = await this.ratingModel.find({ courseId }).exec();
+    const totalRatings = ratings.length;
     const averageRating =
       totalRatings > 0
-        ? courseRatings.reduce((sum, r) => sum + r.rating, 0) / totalRatings
+        ? ratings.reduce((sum, r) => sum + r.rating, 0) / totalRatings
         : 0;
 
     return {
-      ratings: courseRatings,
+      ratings,
       averageRating: Math.round(averageRating * 100) / 100,
       totalRatings,
     };
   }
 
-  findByStudentAndCourse(studentId: string, courseId: string): CourseRating {
-    const rating = this.ratings.find(
-      (r) => r.studentId === studentId && r.courseId === courseId,
-    );
+  async findByStudentAndCourse(
+    studentId: string,
+    courseId: string,
+  ): Promise<CourseRatingDocument> {
+    const rating = await this.ratingModel
+      .findOne({ studentId, courseId })
+      .exec();
     if (!rating) {
       throw new NotFoundException('Rating not found for this course');
     }
     return rating;
   }
 
-  update(
+  async update(
     courseId: string,
     studentId: string,
     payload: UpdateCourseRatingsFeedbackDto,
-  ): CourseRating {
-    const rating = this.findByStudentAndCourse(studentId, courseId);
-
-    if (payload.rating !== undefined && (payload.rating < 1 || payload.rating > 5)) {
+  ): Promise<CourseRating> {
+    if (
+      payload.rating !== undefined &&
+      (payload.rating < 1 || payload.rating > 5)
+    ) {
       throw new BadRequestException('Rating must be between 1 and 5');
     }
 
-    Object.assign(rating, { ...payload, updatedAt: new Date() });
+    const rating = await this.ratingModel
+      .findOneAndUpdate({ courseId, studentId }, payload, { new: true })
+      .exec();
+    if (!rating) {
+      throw new NotFoundException('Rating not found for this course');
+    }
     return rating;
   }
 
-  remove(
+  async remove(
     courseId: string,
     studentId: string,
-  ): { courseId: string; studentId: string; deleted: boolean } {
-    const index = this.ratings.findIndex(
-      (r) => r.courseId === courseId && r.studentId === studentId,
-    );
-    if (index === -1) {
+  ): Promise<{ courseId: string; studentId: string; deleted: boolean }> {
+    const result = await this.ratingModel
+      .findOneAndDelete({ courseId, studentId })
+      .exec();
+    if (!result) {
       throw new NotFoundException('Rating not found for this course');
     }
-    this.ratings.splice(index, 1);
     return { courseId, studentId, deleted: true };
   }
 }

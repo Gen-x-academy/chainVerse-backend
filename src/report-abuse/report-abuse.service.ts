@@ -1,66 +1,59 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { CreateReportAbuseDto } from './dto/create-report-abuse.dto';
 import { UpdateReportAbuseDto } from './dto/update-report-abuse.dto';
-
-export interface AbuseReport {
-  id: string;
-  reporterUserId: string;
-  reason: string;
-  contentId: string;
-  contentType: string;
-  status: string;
-  adminNotes?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { AbuseReport, AbuseReportDocument } from './schemas/report-abuse.schema';
 
 @Injectable()
 export class ReportAbuseService {
-  private readonly reports: AbuseReport[] = [];
+  constructor(
+    @InjectModel(AbuseReport.name)
+    private readonly abuseReportModel: Model<AbuseReportDocument>,
+  ) {}
 
-  create(reporterUserId: string, payload: CreateReportAbuseDto): AbuseReport {
-    const report: AbuseReport = {
-      id: crypto.randomUUID(),
-      reporterUserId,
-      reason: payload.reason,
-      contentId: payload.contentId,
-      contentType: payload.contentType,
-      status: 'pending',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.reports.push(report);
-    return report;
+  async create(
+    reporterUserId: string,
+    payload: CreateReportAbuseDto,
+  ): Promise<AbuseReport> {
+    const report = new this.abuseReportModel({ reporterUserId, ...payload });
+    return report.save();
   }
 
-  findAll(): AbuseReport[] {
-    return this.reports;
+  async findAll(): Promise<AbuseReport[]> {
+    return this.abuseReportModel.find().exec();
   }
 
-  findByReporter(reporterUserId: string): AbuseReport[] {
-    return this.reports.filter((r) => r.reporterUserId === reporterUserId);
+  async findByReporter(reporterUserId: string): Promise<AbuseReport[]> {
+    return this.abuseReportModel.find({ reporterUserId }).exec();
   }
 
-  findOne(id: string): AbuseReport {
-    const report = this.reports.find((r) => r.id === id);
+  async findOne(id: string): Promise<AbuseReportDocument> {
+    const report = await this.abuseReportModel.findById(id).exec();
     if (!report) {
       throw new NotFoundException('Abuse report not found');
     }
     return report;
   }
 
-  update(id: string, payload: UpdateReportAbuseDto): AbuseReport {
-    const report = this.findOne(id);
-    Object.assign(report, { ...payload, updatedAt: new Date() });
+  async update(
+    id: string,
+    payload: UpdateReportAbuseDto,
+  ): Promise<AbuseReport> {
+    const report = await this.abuseReportModel
+      .findByIdAndUpdate(id, payload, { new: true })
+      .exec();
+    if (!report) {
+      throw new NotFoundException('Abuse report not found');
+    }
     return report;
   }
 
-  remove(id: string): { id: string; deleted: boolean } {
-    const index = this.reports.findIndex((r) => r.id === id);
-    if (index === -1) {
+  async remove(id: string): Promise<{ id: string; deleted: boolean }> {
+    const result = await this.abuseReportModel.findByIdAndDelete(id).exec();
+    if (!result) {
       throw new NotFoundException('Abuse report not found');
     }
-    this.reports.splice(index, 1);
     return { id, deleted: true };
   }
 }
