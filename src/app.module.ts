@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HealthModule } from './health/health.module';
+import { DatabaseModule } from './database/database.module';
 import { FinancialAidModule } from './financial-aid/financial-aid.module';
 import { BadgeModule } from './badge/badge.module';
 import { NotificationModule } from './notification/notification.module';
@@ -22,6 +23,7 @@ import { AdminCourseModule } from './admin-course/admin-course.module';
 @Module({
   imports: [
     HealthModule,
+    DatabaseModule,
     FinancialAidModule,
     BadgeModule,
     NotificationModule,

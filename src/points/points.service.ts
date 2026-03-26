@@ -1,17 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { CreatePointsDto } from './dto/create-points.dto';
 import { UpdatePointsDto } from './dto/update-points.dto';
-
-export interface PointsRecord {
-  id: string;
-  userId: string;
-  points: number;
-  reason: string;
-  activityType: string;
-  metadata?: Record<string, unknown>;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { PointsRecord, PointsRecordDocument } from './schemas/points.schema';
 
 export interface UserPointsSummary {
   userId: string;
@@ -21,53 +13,49 @@ export interface UserPointsSummary {
 
 @Injectable()
 export class PointsService {
-  private readonly records: PointsRecord[] = [];
+  constructor(
+    @InjectModel(PointsRecord.name)
+    private readonly pointsModel: Model<PointsRecordDocument>,
+  ) {}
 
-  awardPoints(payload: CreatePointsDto): PointsRecord {
-    const record: PointsRecord = {
-      id: crypto.randomUUID(),
-      userId: payload.userId,
-      points: payload.points,
-      reason: payload.reason,
-      activityType: payload.activityType,
-      metadata: payload.metadata,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.records.push(record);
-    return record;
+  async awardPoints(payload: CreatePointsDto): Promise<PointsRecord> {
+    const record = new this.pointsModel(payload);
+    return record.save();
   }
 
-  findAll(): PointsRecord[] {
-    return this.records;
+  async findAll(): Promise<PointsRecord[]> {
+    return this.pointsModel.find().exec();
   }
 
-  findOne(id: string): PointsRecord {
-    const record = this.records.find((r) => r.id === id);
+  async findOne(id: string): Promise<PointsRecordDocument> {
+    const record = await this.pointsModel.findById(id).exec();
     if (!record) {
       throw new NotFoundException('Points record not found');
     }
     return record;
   }
 
-  getUserPoints(userId: string): UserPointsSummary {
-    const userRecords = this.records.filter((r) => r.userId === userId);
-    const totalPoints = userRecords.reduce((sum, r) => sum + r.points, 0);
-    return { userId, totalPoints, records: userRecords };
+  async getUserPoints(userId: string): Promise<UserPointsSummary> {
+    const records = await this.pointsModel.find({ userId }).exec();
+    const totalPoints = records.reduce((sum, r) => sum + r.points, 0);
+    return { userId, totalPoints, records };
   }
 
-  update(id: string, payload: UpdatePointsDto): PointsRecord {
-    const record = this.findOne(id);
-    Object.assign(record, { ...payload, updatedAt: new Date() });
+  async update(id: string, payload: UpdatePointsDto): Promise<PointsRecord> {
+    const record = await this.pointsModel
+      .findByIdAndUpdate(id, payload, { new: true })
+      .exec();
+    if (!record) {
+      throw new NotFoundException('Points record not found');
+    }
     return record;
   }
 
-  remove(id: string): { id: string; deleted: boolean } {
-    const index = this.records.findIndex((r) => r.id === id);
-    if (index === -1) {
+  async remove(id: string): Promise<{ id: string; deleted: boolean }> {
+    const result = await this.pointsModel.findByIdAndDelete(id).exec();
+    if (!result) {
       throw new NotFoundException('Points record not found');
     }
-    this.records.splice(index, 1);
     return { id, deleted: true };
   }
 }

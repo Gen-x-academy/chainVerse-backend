@@ -1,75 +1,62 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { CreateRemovalRequestDto } from './dto/create-removal-request.dto';
 import { UpdateRemovalRequestDto } from './dto/update-removal-request.dto';
-
-export interface RemovalRequest {
-  id: string;
-  requestedBy: string;
-  contentId: string;
-  contentType: string;
-  reason: string;
-  status: string;
-  adminNotes?: string;
-  metadata?: Record<string, unknown>;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import {
+  RemovalRequest,
+  RemovalRequestDocument,
+} from './schemas/removal-request.schema';
 
 @Injectable()
 export class RemovalRequestService {
-  private readonly requests: RemovalRequest[] = [];
+  constructor(
+    @InjectModel(RemovalRequest.name)
+    private readonly removalRequestModel: Model<RemovalRequestDocument>,
+  ) {}
 
-  create(
+  async create(
     requestedBy: string,
     payload: CreateRemovalRequestDto,
-  ): RemovalRequest {
-    const request: RemovalRequest = {
-      id: crypto.randomUUID(),
-      requestedBy,
-      contentId: payload.contentId,
-      contentType: payload.contentType,
-      reason: payload.reason,
-      status: 'pending',
-      metadata: payload.metadata,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.requests.push(request);
-    return request;
+  ): Promise<RemovalRequest> {
+    const request = new this.removalRequestModel({ requestedBy, ...payload });
+    return request.save();
   }
 
-  findAll(): RemovalRequest[] {
-    return this.requests;
+  async findAll(): Promise<RemovalRequest[]> {
+    return this.removalRequestModel.find().exec();
   }
 
-  findByUser(userId: string): RemovalRequest[] {
-    return this.requests.filter((r) => r.requestedBy === userId);
+  async findByUser(userId: string): Promise<RemovalRequest[]> {
+    return this.removalRequestModel.find({ requestedBy: userId }).exec();
   }
 
-  findOne(id: string): RemovalRequest {
-    const request = this.requests.find((r) => r.id === id);
+  async findOne(id: string): Promise<RemovalRequestDocument> {
+    const request = await this.removalRequestModel.findById(id).exec();
     if (!request) {
       throw new NotFoundException('Removal request not found');
     }
     return request;
   }
 
-  moderate(id: string, payload: UpdateRemovalRequestDto): RemovalRequest {
-    const request = this.findOne(id);
+  async moderate(
+    id: string,
+    payload: UpdateRemovalRequestDto,
+  ): Promise<RemovalRequest> {
+    const request = await this.findOne(id);
     if (payload.status !== undefined) request.status = payload.status;
-    if (payload.adminNotes !== undefined)
-      request.adminNotes = payload.adminNotes;
+    if (payload.adminNotes !== undefined) request.adminNotes = payload.adminNotes;
     if (payload.metadata !== undefined) request.metadata = payload.metadata;
-    request.updatedAt = new Date();
-    return request;
+    return request.save();
   }
 
-  remove(id: string): { id: string; deleted: boolean } {
-    const index = this.requests.findIndex((r) => r.id === id);
-    if (index === -1) {
+  async remove(id: string): Promise<{ id: string; deleted: boolean }> {
+    const result = await this.removalRequestModel
+      .findByIdAndDelete(id)
+      .exec();
+    if (!result) {
       throw new NotFoundException('Removal request not found');
     }
-    this.requests.splice(index, 1);
     return { id, deleted: true };
   }
 }
