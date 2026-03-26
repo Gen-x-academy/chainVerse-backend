@@ -3,44 +3,32 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { GoogleAuthDto } from './dto/google-auth.dto';
-
-export interface GoogleUser {
-  id: string;
-  googleId: string;
-  email: string;
-  displayName: string;
-  avatarUrl?: string;
-  role: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { GoogleUser, GoogleUserDocument } from './schemas/google-user.schema';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class GoogleAuthService {
-  private readonly users: GoogleUser[] = [];
+  constructor(
+    @InjectModel(GoogleUser.name)
+    private readonly googleUserModel: Model<GoogleUserDocument>,
+  ) {}
 
-  register(
+  async register(
     payload: GoogleAuthDto,
-  ): { user: GoogleUser; token: string } {
-    const existing = this.users.find(
-      (u) => u.googleId === payload.googleId || u.email === payload.email,
-    );
+  ): Promise<{ user: GoogleUser; token: string }> {
+    const existing = await this.googleUserModel
+      .findOne({
+        $or: [{ googleId: payload.googleId }, { email: payload.email }],
+      })
+      .exec();
     if (existing) {
       throw new ConflictException('User already registered');
     }
 
-    const user: GoogleUser = {
-      id: crypto.randomUUID(),
-      googleId: payload.googleId,
-      email: payload.email,
-      displayName: payload.displayName,
-      avatarUrl: payload.avatarUrl,
-      role: 'student',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.users.push(user);
+    const user = await new this.googleUserModel(payload).save();
 
     return {
       user,
@@ -48,15 +36,19 @@ export class GoogleAuthService {
     };
   }
 
-  login(
+  async login(
     payload: GoogleAuthDto,
-  ): { user: GoogleUser; token: string } {
-    const user = this.users.find((u) => u.googleId === payload.googleId);
+  ): Promise<{ user: GoogleUser; token: string }> {
+    const user = await this.googleUserModel
+      .findOneAndUpdate(
+        { googleId: payload.googleId },
+        { $set: {} },
+        { new: true },
+      )
+      .exec();
     if (!user) {
       throw new NotFoundException('User not found. Please register first.');
     }
-
-    user.updatedAt = new Date();
 
     return {
       user,

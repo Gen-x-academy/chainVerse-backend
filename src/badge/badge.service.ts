@@ -1,67 +1,53 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { CreateBadgeDto } from './dto/create-badge.dto';
 import { UpdateBadgeDto } from './dto/update-badge.dto';
-
-export interface Badge {
-  id: string;
-  name: string;
-  description?: string;
-  imageUrl?: string;
-  nftTokenId?: string;
-  criteria?: string;
-  metadata?: Record<string, unknown>;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { Badge, BadgeDocument } from './schemas/badge.schema';
 
 @Injectable()
 export class BadgeService {
-  private readonly badges: Badge[] = [];
+  constructor(
+    @InjectModel(Badge.name)
+    private readonly badgeModel: Model<BadgeDocument>,
+  ) {}
 
-  create(payload: CreateBadgeDto): Badge {
-    const badge: Badge = {
-      id: crypto.randomUUID(),
-      name: payload.name,
-      description: payload.description,
-      imageUrl: payload.imageUrl,
-      nftTokenId: payload.nftTokenId,
-      criteria: payload.criteria,
-      metadata: payload.metadata,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.badges.push(badge);
-    return badge;
+  async create(payload: CreateBadgeDto): Promise<Badge> {
+    const badge = new this.badgeModel(payload);
+    return badge.save();
   }
 
-  findAll(): Badge[] {
-    return this.badges;
+  async findAll(): Promise<Badge[]> {
+    return this.badgeModel.find().exec();
   }
 
-  findOne(id: string): Badge {
-    const badge = this.badges.find((b) => b.id === id);
+  async findOne(id: string): Promise<BadgeDocument> {
+    const badge = await this.badgeModel.findById(id).exec();
     if (!badge) {
       throw new NotFoundException('Badge not found');
     }
     return badge;
   }
 
-  findByNftTokenId(nftTokenId: string): Badge | undefined {
-    return this.badges.find((b) => b.nftTokenId === nftTokenId);
+  async findByNftTokenId(nftTokenId: string): Promise<Badge | null> {
+    return this.badgeModel.findOne({ nftTokenId }).exec();
   }
 
-  update(id: string, payload: UpdateBadgeDto): Badge {
-    const badge = this.findOne(id);
-    Object.assign(badge, { ...payload, updatedAt: new Date() });
+  async update(id: string, payload: UpdateBadgeDto): Promise<Badge> {
+    const badge = await this.badgeModel
+      .findByIdAndUpdate(id, payload, { new: true })
+      .exec();
+    if (!badge) {
+      throw new NotFoundException('Badge not found');
+    }
     return badge;
   }
 
-  remove(id: string): { id: string; deleted: boolean } {
-    const index = this.badges.findIndex((b) => b.id === id);
-    if (index === -1) {
+  async remove(id: string): Promise<{ id: string; deleted: boolean }> {
+    const result = await this.badgeModel.findByIdAndDelete(id).exec();
+    if (!result) {
       throw new NotFoundException('Badge not found');
     }
-    this.badges.splice(index, 1);
     return { id, deleted: true };
   }
 }

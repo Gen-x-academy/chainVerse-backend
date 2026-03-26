@@ -4,80 +4,70 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { UpdateStudentCartDto } from './dto/update-student-cart.dto';
-
-export interface CartItem {
-  id: string;
-  studentId: string;
-  courseId: string;
-  quantity: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { CartItem, CartItemDocument } from './schemas/cart-item.schema';
 
 @Injectable()
 export class StudentCartService {
-  private readonly cartItems: CartItem[] = [];
+  constructor(
+    @InjectModel(CartItem.name)
+    private readonly cartItemModel: Model<CartItemDocument>,
+  ) {}
 
-  add(studentId: string, courseId: string): CartItem {
+  async add(studentId: string, courseId: string): Promise<CartItem> {
     if (!courseId) {
       throw new BadRequestException('Invalid course ID');
     }
 
-    const existing = this.cartItems.find(
-      (item) => item.studentId === studentId && item.courseId === courseId,
-    );
+    const existing = await this.cartItemModel
+      .findOne({ studentId, courseId })
+      .exec();
     if (existing) {
       throw new ConflictException('Course already in cart');
     }
 
-    const cartItem: CartItem = {
-      id: crypto.randomUUID(),
-      studentId,
-      courseId,
-      quantity: 1,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.cartItems.push(cartItem);
-    return cartItem;
+    const cartItem = new this.cartItemModel({ studentId, courseId });
+    return cartItem.save();
   }
 
-  getCart(
+  async getCart(
     studentId: string,
-  ): { studentId: string; items: CartItem[]; totalItems: number } {
-    const items = this.cartItems.filter(
-      (item) => item.studentId === studentId,
-    );
+  ): Promise<{ studentId: string; items: CartItem[]; totalItems: number }> {
+    const items = await this.cartItemModel.find({ studentId }).exec();
     return { studentId, items, totalItems: items.length };
   }
 
-  update(
+  async update(
     studentId: string,
     courseId: string,
     payload: UpdateStudentCartDto,
-  ): CartItem {
-    const item = this.cartItems.find(
-      (i) => i.studentId === studentId && i.courseId === courseId,
-    );
+  ): Promise<CartItem> {
+    const item = await this.cartItemModel
+      .findOneAndUpdate({ studentId, courseId }, payload, { new: true })
+      .exec();
     if (!item) {
       throw new NotFoundException('Cart item not found');
     }
-    Object.assign(item, { ...payload, updatedAt: new Date() });
     return item;
   }
 
-  remove(
+  async remove(
     studentId: string,
     courseId: string,
-  ): { studentId: string; courseId: string; message: string; deleted: boolean } {
-    const index = this.cartItems.findIndex(
-      (i) => i.studentId === studentId && i.courseId === courseId,
-    );
-    if (index === -1) {
+  ): Promise<{
+    studentId: string;
+    courseId: string;
+    message: string;
+    deleted: boolean;
+  }> {
+    const result = await this.cartItemModel
+      .findOneAndDelete({ studentId, courseId })
+      .exec();
+    if (!result) {
       throw new NotFoundException('Cart item not found');
     }
-    this.cartItems.splice(index, 1);
     return {
       studentId,
       courseId,
