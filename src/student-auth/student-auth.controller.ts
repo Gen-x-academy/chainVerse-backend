@@ -1,4 +1,5 @@
 import { Body, Controller, Post } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { StudentAuthService } from './student-auth.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { LoginStudentDto } from './dto/login-student.dto';
@@ -7,6 +8,8 @@ import { ForgetPasswordDto } from './dto/forget-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 
+// Auth endpoints are more sensitive to brute-force: tighten to 10 req/min
+@Throttle({ default: { limit: 10, ttl: 60_000 } })
 @Controller('student')
 export class StudentAuthController {
   constructor(private readonly studentAuthService: StudentAuthService) {}
@@ -39,5 +42,10 @@ export class StudentAuthController {
   @Post('refresh-token')
   refreshToken(@Body() dto: RefreshTokenDto) {
     return this.studentAuthService.refreshToken(dto);
+  }
+
+  @Post('logout')
+  logout(@Body() dto: RefreshTokenDto) {
+    return this.studentAuthService.logout(dto);
   }
 }

@@ -25,6 +25,8 @@
     "@nestjs/event-emitter": "^3.0.1",
     "@nestjs/mongoose": "^11.0.4",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/throttler": "^6.4.0",
+    "helmet": "^8.0.0",
     "mongoose": "^9.3.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"

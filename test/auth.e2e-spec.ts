@@ -198,11 +198,69 @@ describe('Student Auth – Full Journey (e2e)', () => {
       refreshToken = res.body.refreshToken;
     });
 
-    it('rejects a refresh token that has already been consumed with 401', () =>
-      // The previous call rotated the token; reusing the old one must fail
+    it('rejects a refresh token that has already been consumed with 401', async () => {
+      // Capture the current token, rotate it, then try to replay the old one
+      const oldToken = refreshToken;
+      const rotateRes = await request(server)
+        .post('/student/refresh-token')
+        .send({ refreshToken: oldToken })
+        .expect((r) => {
+          if (r.status !== 200 && r.status !== 201) {
+            throw new Error(`Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`);
+          }
+        });
+
+      refreshToken = rotateRes.body.refreshToken;
+
+      // Replaying the consumed old token must be rejected and revoke the family
+      await request(server)
+        .post('/student/refresh-token')
+        .send({ refreshToken: oldToken })
+        .expect(401);
+
+      // The new token issued from rotation should also be revoked (family invalidated)
+      await request(server)
+        .post('/student/refresh-token')
+        .send({ refreshToken })
+        .expect(401);
+
+      // Re-login to get a fresh token for subsequent tests
+      const loginRes = await request(server)
+        .post('/student/login')
+        .send({ email: BASE_EMAIL, password: BASE_PASSWORD })
+        .expect((r) => {
+          if (r.status !== 200 && r.status !== 201) {
+            throw new Error(`Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`);
+          }
+        });
+      refreshToken = loginRes.body.refreshToken;
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Logout
+  // ---------------------------------------------------------------------------
+  describe('POST /student/logout', () => {
+    it('rejects a missing refresh token with 400', () =>
+      request(server).post('/student/logout').send({}).expect(400));
+
+    it('invalidates the session and returns success', async () => {
+      const res = await request(server)
+        .post('/student/logout')
+        .send({ refreshToken })
+        .expect((r) => {
+          if (r.status !== 200 && r.status !== 201) {
+            throw new Error(`Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`);
+          }
+        });
+
+      expect(res.body.message).toMatch(/logged out/i);
+    });
+
+    it('the logged-out refresh token can no longer be used to refresh', () =>
       request(server)
         .post('/student/refresh-token')
-        .send({ refreshToken: 'already-used-above' })
+        .send({ refreshToken })
         .expect(401));
   });
 
