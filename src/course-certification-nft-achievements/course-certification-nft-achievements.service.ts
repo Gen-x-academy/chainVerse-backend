@@ -1,12 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CreateCourseCertificationNftAchievementsDto } from './dto/create-course-certification-nft-achievements.dto';
 import { UpdateCourseCertificationNftAchievementsDto } from './dto/update-course-certification-nft-achievements.dto';
+import { DomainEvents } from '../events/event-names';
+import { CertificateIssuedPayload } from '../events/payloads/certificate-issued.payload';
 
 @Injectable()
 export class CourseCertificationNftAchievementsService {
   private readonly items: Array<
     { id: string } & CreateCourseCertificationNftAchievementsDto
   > = [];
+
+  constructor(private readonly eventEmitter: EventEmitter2) {}
 
   findAll() {
     return this.items;
@@ -25,6 +30,16 @@ export class CourseCertificationNftAchievementsService {
   create(payload: CreateCourseCertificationNftAchievementsDto) {
     const created = { id: crypto.randomUUID(), ...payload };
     this.items.push(created);
+
+    this.eventEmitter.emit(
+      DomainEvents.CERTIFICATE_ISSUED,
+      Object.assign(new CertificateIssuedPayload(), {
+        certificateId: created.id,
+        studentId: payload.studentId,
+        courseTitle: payload.title,
+      }),
+    );
+
     return created;
   }
 

@@ -4,6 +4,9 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { DomainEvents } from '../events/event-names';
+import { StudentEnrolledPayload } from '../events/payloads/student-enrolled.payload';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { SavedCourse, SavedCourseDocument } from './schemas/saved-course.schema';
@@ -15,6 +18,9 @@ export class StudentSavedCoursesService {
     private readonly savedCourseModel: Model<SavedCourseDocument>,
   ) {}
 
+  constructor(private readonly eventEmitter: EventEmitter2) {}
+
+  add(studentId: string, courseId: string) {
   async add(
     studentId: string,
     courseId: string,
@@ -30,6 +36,14 @@ export class StudentSavedCoursesService {
       throw new ConflictException('Course is already saved');
     }
 
+    studentCourses.add(courseId);
+
+    this.eventEmitter.emit(
+      DomainEvents.STUDENT_ENROLLED,
+      Object.assign(new StudentEnrolledPayload(), { studentId, courseId }),
+    );
+
+    return { studentId, courses: [...studentCourses] };
     await new this.savedCourseModel({ studentId, courseId }).save();
 
     const saved = await this.savedCourseModel.find({ studentId }).exec();

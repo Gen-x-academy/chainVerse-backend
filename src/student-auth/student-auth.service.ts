@@ -8,12 +8,15 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as crypto from 'crypto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { LoginStudentDto } from './dto/login-student.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ForgetPasswordDto } from './dto/forget-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { DomainEvents } from '../events/event-names';
+import { StudentRegisteredPayload } from '../events/payloads/student-registered.payload';
 import { Student, StudentDocument } from './schemas/student.schema';
 import { RefreshToken, RefreshTokenDocument } from './schemas/refresh-token.schema';
 
@@ -30,6 +33,8 @@ export class StudentAuthService {
     @InjectModel(RefreshToken.name)
     private readonly refreshTokenModel: Model<RefreshTokenDocument>,
   ) {}
+
+  constructor(private readonly eventEmitter: EventEmitter2) {}
 
   private hashPassword(password: string): string {
     const salt = crypto.randomBytes(16).toString('hex');
@@ -143,6 +148,18 @@ export class StudentAuthService {
       verificationToken,
     }).save();
 
+    this.students.push(student);
+
+    this.eventEmitter.emit(
+      DomainEvents.STUDENT_REGISTERED,
+      Object.assign(new StudentRegisteredPayload(), {
+        studentId: student.id,
+        email: student.email,
+        firstName: student.firstName,
+      }),
+    );
+
+    const tokens = this.generateTokenPair(student);
     const tokens = await this.generateTokenPair(student);
 
     return {
