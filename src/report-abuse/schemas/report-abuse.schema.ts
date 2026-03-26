@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
+import { applySoftDeleteSchema } from '../../common/soft-delete/soft-delete.schema';
 
 export type AbuseReportDocument = HydratedDocument<AbuseReport>;
 
@@ -22,6 +23,19 @@ export class AbuseReport {
 
   @Prop()
   adminNotes?: string;
+
+  @Prop({ type: Date, default: null })
+  deletedAt?: Date | null;
+
+  @Prop({ type: String, default: null })
+  deletedBy?: string | null;
+
+  @Prop({ type: String, default: null })
+  deletionReason?: string | null;
+
+  @Prop({ type: Date, default: null })
+  restoreBy?: Date | null;
 }
 
 export const AbuseReportSchema = SchemaFactory.createForClass(AbuseReport);
+applySoftDeleteSchema(AbuseReportSchema);
