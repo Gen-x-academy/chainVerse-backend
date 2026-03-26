@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
   imports: [
     MongooseModule.forRootAsync({
-      useFactory: () => ({
-        uri: process.env.MONGO_URI || 'mongodb://localhost:27017/chain-verse',
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        uri: config.get<string>('mongoUri'),
       }),
     }),
   ],

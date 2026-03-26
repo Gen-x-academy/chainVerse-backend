@@ -16,11 +16,9 @@ export class StudentSavedCoursesService {
   constructor(
     @InjectModel(SavedCourse.name)
     private readonly savedCourseModel: Model<SavedCourseDocument>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  constructor(private readonly eventEmitter: EventEmitter2) {}
-
-  add(studentId: string, courseId: string) {
   async add(
     studentId: string,
     courseId: string,
@@ -36,15 +34,12 @@ export class StudentSavedCoursesService {
       throw new ConflictException('Course is already saved');
     }
 
-    studentCourses.add(courseId);
+    await new this.savedCourseModel({ studentId, courseId }).save();
 
     this.eventEmitter.emit(
       DomainEvents.STUDENT_ENROLLED,
       Object.assign(new StudentEnrolledPayload(), { studentId, courseId }),
     );
-
-    return { studentId, courses: [...studentCourses] };
-    await new this.savedCourseModel({ studentId, courseId }).save();
 
     const saved = await this.savedCourseModel.find({ studentId }).exec();
     return { studentId, courses: saved.map((s) => s.courseId) };

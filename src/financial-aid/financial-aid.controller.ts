@@ -1,3 +1,4 @@
+import { ApiBearerAuth } from '@nestjs/swagger';
 import {
   Body,
   Controller,
@@ -27,6 +28,7 @@ import { DeleteFinancialAidApplicationUseCase } from './use-cases/delete-financi
  * the request, delegates to the relevant use-case, and returns the result.
  * No persistence or domain logic lives here.
  */
+@ApiBearerAuth('access-token')
 @Controller('financial-aid')
 export class FinancialAidController {
   constructor(

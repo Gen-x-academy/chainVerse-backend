@@ -20,13 +20,13 @@ export class Student {
   @Prop({ default: false })
   emailVerified: boolean;
 
-  @Prop({ default: null })
+  @Prop({ type: String, default: null })
   verificationToken: string | null;
 
-  @Prop({ default: null })
+  @Prop({ type: String, default: null })
   resetToken: string | null;
 
-  @Prop({ default: null })
+  @Prop({ type: Number, default: null })
   resetTokenExpiry: number | null;
 
   @Prop({ default: 'student' })

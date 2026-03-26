@@ -5,6 +5,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as crypto from 'crypto';
@@ -20,8 +21,6 @@ import { StudentRegisteredPayload } from '../events/payloads/student-registered.
 import { Student, StudentDocument } from './schemas/student.schema';
 import { RefreshToken, RefreshTokenDocument } from './schemas/refresh-token.schema';
 
-const JWT_SECRET =
-  process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
 const ACCESS_TOKEN_EXPIRY = 3600;
 const REFRESH_TOKEN_EXPIRY = 604800;
 
@@ -32,9 +31,13 @@ export class StudentAuthService {
     private readonly studentModel: Model<StudentDocument>,
     @InjectModel(RefreshToken.name)
     private readonly refreshTokenModel: Model<RefreshTokenDocument>,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly configService: ConfigService,
   ) {}
 
-  constructor(private readonly eventEmitter: EventEmitter2) {}
+  private get jwtSecret(): string {
+    return this.configService.get<string>('jwtSecret') ?? '';
+  }
 
   private hashPassword(password: string): string {
     const salt = crypto.randomBytes(16).toString('hex');
@@ -52,6 +55,10 @@ export class StudentAuthService {
     return hash === verify;
   }
 
+  private hashToken(token: string): string {
+    return crypto.createHash('sha256').update(token).digest('hex');
+  }
+
   private createJwt(
     payload: Record<string, unknown>,
     expiresIn: number,
@@ -64,18 +71,18 @@ export class StudentAuthService {
       JSON.stringify({ ...payload, iat: now, exp: now + expiresIn }),
     ).toString('base64url');
     const sig = crypto
-      .createHmac('sha256', JWT_SECRET)
+      .createHmac('sha256', this.jwtSecret)
       .update(`${header}.${body}`)
       .digest('base64url');
     return `${header}.${body}.${sig}`;
   }
 
-  static verifyJwt(token: string): Record<string, unknown> {
+  verifyJwt(token: string): Record<string, unknown> {
     const parts = token.split('.');
     if (parts.length !== 3) throw new Error('Malformed token');
     const [header, body, sig] = parts;
     const expected = crypto
-      .createHmac('sha256', JWT_SECRET)
+      .createHmac('sha256', this.jwtSecret)
       .update(`${header}.${body}`)
       .digest('base64url');
     if (sig !== expected) throw new Error('Invalid token signature');
@@ -87,19 +94,21 @@ export class StudentAuthService {
     return decoded;
   }
 
-  private async generateTokenPair(student: StudentDocument) {
+  private async generateTokenPair(student: StudentDocument, tokenFamily?: string) {
+    const family = tokenFamily ?? crypto.randomUUID();
     const accessToken = this.createJwt(
       { sub: student.id, email: student.email, role: student.role },
       ACCESS_TOKEN_EXPIRY,
     );
     const refreshToken = this.createJwt(
-      { sub: student.id, type: 'refresh' },
+      { sub: student.id, type: 'refresh', jti: crypto.randomBytes(16).toString('hex') },
       REFRESH_TOKEN_EXPIRY,
     );
     await new this.refreshTokenModel({
-      token: refreshToken,
+      tokenHash: this.hashToken(refreshToken),
+      tokenFamily: family,
       studentId: student.id,
-      expiresAt: Date.now() + REFRESH_TOKEN_EXPIRY * 1000,
+      expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRY * 1000),
     }).save();
     return { accessToken, refreshToken, expiresIn: ACCESS_TOKEN_EXPIRY };
   }
@@ -148,8 +157,6 @@ export class StudentAuthService {
       verificationToken,
     }).save();
 
-    this.students.push(student);
-
     this.eventEmitter.emit(
       DomainEvents.STUDENT_REGISTERED,
       Object.assign(new StudentRegisteredPayload(), {
@@ -159,7 +166,6 @@ export class StudentAuthService {
       }),
     );
 
-    const tokens = this.generateTokenPair(student);
     const tokens = await this.generateTokenPair(student);
 
     return {
@@ -267,6 +273,9 @@ export class StudentAuthService {
     student.resetTokenExpiry = null;
     await student.save();
 
+    // Invalidate all active sessions after password reset
+    await this.refreshTokenModel.deleteMany({ studentId: student.id }).exec();
+
     return { message: 'Password reset successfully' };
   }
 
@@ -275,27 +284,46 @@ export class StudentAuthService {
       throw new BadRequestException('Refresh token is required');
     }
 
-    const stored = await this.refreshTokenModel
-      .findOne({ token: dto.refreshToken })
-      .exec();
-    if (!stored) {
-      throw new UnauthorizedException('Invalid refresh token');
-    }
-
+    // Verify JWT signature and expiry first to extract the token family claim
+    let payload: Record<string, unknown>;
     try {
-      StudentAuthService.verifyJwt(dto.refreshToken);
+      this.verifyJwt(dto.refreshToken);
     } catch {
-      await this.refreshTokenModel.deleteOne({ token: dto.refreshToken }).exec();
-      throw new UnauthorizedException('Refresh token expired');
+      throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
-    await this.refreshTokenModel.deleteOne({ token: dto.refreshToken }).exec();
+    const tokenHash = this.hashToken(dto.refreshToken);
+    const stored = await this.refreshTokenModel.findOne({ tokenHash }).exec();
+
+    if (!stored) {
+      // Token not in DB — possible replay of an already-rotated token.
+      // Revoke the entire token family to invalidate any sessions derived from it.
+      const family = payload.family as string | undefined;
+      if (family) {
+        await this.refreshTokenModel.deleteMany({ tokenFamily: family }).exec();
+      }
+      throw new UnauthorizedException('Refresh token has been revoked or already used');
+    }
+
+    // Rotate: delete consumed token, issue new pair in the same family
+    await this.refreshTokenModel.deleteOne({ tokenHash }).exec();
 
     const student = await this.studentModel.findById(stored.studentId).exec();
     if (!student) {
       throw new NotFoundException('Student not found');
     }
 
-    return this.generateTokenPair(student);
+    return this.generateTokenPair(student, stored.tokenFamily);
+  }
+
+  async logout(dto: RefreshTokenDto) {
+    if (!dto.refreshToken) {
+      throw new BadRequestException('Refresh token is required');
+    }
+
+    const tokenHash = this.hashToken(dto.refreshToken);
+    await this.refreshTokenModel.deleteOne({ tokenHash }).exec();
+
+    return { message: 'Logged out successfully' };
   }
 }

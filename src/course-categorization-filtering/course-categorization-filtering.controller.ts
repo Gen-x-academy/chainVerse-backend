@@ -1,3 +1,4 @@
+import { ApiBearerAuth } from '@nestjs/swagger';
 import {
   Body,
   Controller,
@@ -16,6 +17,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 
+@ApiBearerAuth('access-token')
 @Controller('courses/categorization-filtering')
 export class CourseCategorizationFilteringController {
   constructor(private readonly service: CourseCategorizationFilteringService) {}
