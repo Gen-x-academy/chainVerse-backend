@@ -1,9 +1,13 @@
-import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller';
+import appConfig from './config/app.config';
+import { envValidationSchema } from './config/env.validation';
 import { AppService } from './app.service';
+import { AppLoggerModule } from './logger/logger.module';
+import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { EventsModule } from './events/events.module';
 import { HealthModule } from './health/health.module';
 import { DatabaseModule } from './database/database.module';
@@ -23,17 +27,17 @@ import { GoogleAuthModule } from './google-auth/google-auth.module';
 import { StudentCartModule } from './student-cart/student-cart.module';
 import { StudentAuthModule } from './student-auth/student-auth.module';
 import { AdminCourseModule } from './admin-course/admin-course.module';
+import { AdminAuthModule } from './admin-auth/admin-auth.module';
 
 @Module({
   imports: [
-    ThrottlerModule.forRoot([
-      {
-        name: 'default',
-        // 100 requests per minute for all routes
-        ttl: 60_000,
-        limit: 100,
-      },
-    ]),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [appConfig],
+      validationSchema: envValidationSchema,
+      validationOptions: { allowUnknown: true, abortEarly: false },
+    }),
+    AppLoggerModule,
     EventEmitterModule.forRoot(),
     EventsModule,
     HealthModule,
@@ -54,6 +58,7 @@ import { AdminCourseModule } from './admin-course/admin-course.module';
     StudentCartModule,
     StudentAuthModule,
     AdminCourseModule,
+    AdminAuthModule,
   ],
   controllers: [AppController],
   providers: [
@@ -62,4 +67,8 @@ import { AdminCourseModule } from './admin-course/admin-course.module';
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestIdMiddleware).forRoutes('*');
+  }
+}

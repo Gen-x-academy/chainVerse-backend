@@ -1,3 +1,4 @@
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { StudentCertificateNameChangeRequestService } from './student-certificate-name-change-request.service';
 import { CreateStudentCertificateNameChangeRequestDto } from './dto/create-student-certificate-name-change-request.dto';
@@ -7,6 +8,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 
+@ApiBearerAuth('access-token')
 @Controller('student/certificates/name-change-request')
 export class StudentCertificateNameChangeRequestController {
   constructor(private readonly service: StudentCertificateNameChangeRequestService) {}

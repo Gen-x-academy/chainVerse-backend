@@ -4,21 +4,12 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  private readonly jwtSecret: string;
-
-  constructor() {
-    const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      throw new Error(
-        'JWT_SECRET environment variable must be set before the application starts',
-      );
-    }
-    this.jwtSecret = secret;
-  }
+  constructor(private readonly configService: ConfigService) {}
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
@@ -33,13 +24,15 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('Token not provided');
     }
 
+    const jwtSecret = this.configService.get<string>('jwtSecret') ?? '';
+
     try {
       const parts = token.split('.');
       if (parts.length !== 3) throw new Error('Malformed token');
 
       const [header, body, sig] = parts;
       const expected = crypto
-        .createHmac('sha256', this.jwtSecret)
+        .createHmac('sha256', jwtSecret)
         .update(`${header}.${body}`)
         .digest('base64url');
 

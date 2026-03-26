@@ -1,3 +1,4 @@
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { AboutManagementService } from './about-management.service';
 import { CreateAboutManagementDto } from './dto/create-about-management.dto';
@@ -7,6 +8,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 
+@ApiBearerAuth('access-token')
 @Controller('about')
 export class AboutManagementController {
   constructor(private readonly service: AboutManagementService) {}
