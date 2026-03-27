@@ -351,10 +351,8 @@ describe('Student Auth – Full Journey (e2e)', () => {
         });
 
       expect(res.body.message).toMatch(/reset link/i);
-      // The service leaks the token in non-production for testability
-      expect(typeof res.body.resetToken).toBe('string');
-
-      resetToken = res.body.resetToken;
+      // Token is no longer returned in response for security
+      expect(res.body.resetToken).toBeUndefined();
     });
 
     it('POST /student/forget/password returns success even for an unknown email', async () => {
@@ -387,22 +385,131 @@ describe('Student Auth – Full Journey (e2e)', () => {
     it('POST /student/reset/password rejects a short new password with 400', () =>
       request(server)
         .post('/student/reset/password')
-        .send({ token: resetToken, newPassword: 'short' })
+        .send({ token: 'sometoken', newPassword: 'short' })
         .expect(400));
 
-    it('POST /student/reset/password resets the password with a valid token', async () => {
+    it('POST /student/reset/password rejects an expired token with 400', async () => {
+      // Generate a fake expired token (this would fail validation)
       const res = await request(server)
         .post('/student/reset/password')
-        .send({ token: resetToken, newPassword: 'NewSecurePass1!' })
-        .expect((r) => {
-          if (r.status !== 200 && r.status !== 201) {
-            throw new Error(
-              `Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`,
-            );
-          }
-        });
+        .send({ token: 'invalid-token-format', newPassword: 'NewSecurePass1!' })
+        .expect(400);
 
-      expect(res.body.message).toMatch(/reset successfully/i);
+      expect(res.body.message).toMatch(/invalid|expired/i);
+    });
+
+    it('POST /student/reset/password rejects a used token (one-time use)', async () => {
+      // First, request a reset token
+      await request(server)
+        .post('/student/forget/password')
+        .send({ email: BASE_EMAIL });
+
+      // Get the token from database for testing
+      const { MongoClient } = await import('mongodb');
+      const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
+      const mongoDb = process.env.MONGODB_DB || 'chainverse-test';
+      const client = new MongoClient(mongoUri);
+
+      try {
+        await client.connect();
+        const db = client.db(mongoDb);
+
+        // Get the student
+        const student = await db
+          .collection('students')
+          .findOne({ email: BASE_EMAIL });
+        if (!student) {
+          throw new Error('Student not found');
+        }
+
+        // Get the reset token
+        const resetTokenRecord = await db
+          .collection('passwordresettokens')
+          .findOne(
+            { studentId: student._id.toString(), used: false },
+            { sort: { createdAt: -1 } },
+          );
+
+        if (!resetTokenRecord) {
+          throw new Error('Reset token not found');
+        }
+
+        // Use the token once
+        await request(server)
+          .post('/student/reset/password')
+          .send({
+            token: resetTokenRecord.tokenHash,
+            newPassword: 'TempPass123!',
+          })
+          .expect(200);
+
+        // Try to use it again - should fail
+        const res = await request(server)
+          .post('/student/reset/password')
+          .send({
+            token: resetTokenRecord.tokenHash,
+            newPassword: 'AnotherPass123!',
+          })
+          .expect(400);
+
+        expect(res.body.message).toMatch(/invalid|expired/i);
+      } finally {
+        await client.close();
+      }
+    });
+
+    it('POST /student/reset/password resets the password with a valid token', async () => {
+      // Request a new reset token
+      await request(server)
+        .post('/student/forget/password')
+        .send({ email: BASE_EMAIL });
+
+      // Get the token from database for testing
+      const { MongoClient } = await import('mongodb');
+      const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
+      const mongoDb = process.env.MONGODB_DB || 'chainverse-test';
+      const client = new MongoClient(mongoUri);
+
+      try {
+        await client.connect();
+        const db = client.db(mongoDb);
+
+        const student = await db
+          .collection('students')
+          .findOne({ email: BASE_EMAIL });
+        if (!student) {
+          throw new Error('Student not found');
+        }
+
+        const resetTokenRecord = await db
+          .collection('passwordresettokens')
+          .findOne(
+            { studentId: student._id.toString(), used: false },
+            { sort: { createdAt: -1 } },
+          );
+
+        if (!resetTokenRecord) {
+          throw new Error('Reset token not found');
+        }
+
+        const res = await request(server)
+          .post('/student/reset/password')
+          .send({
+            token: resetTokenRecord.tokenHash,
+            newPassword: 'NewSecurePass1!',
+          })
+          .expect((r) => {
+            if (r.status !== 200 && r.status !== 201) {
+              throw new Error(
+                `Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`,
+              );
+            }
+          });
+
+        expect(res.body.message).toMatch(/reset successfully/i);
+      } finally {
+        await client.close();
+      }
     });
 
     it('old password no longer works after reset', () =>

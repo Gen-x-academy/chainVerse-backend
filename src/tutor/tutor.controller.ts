@@ -5,6 +5,7 @@ import {
   Param,
   Post,
   Put,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
@@ -12,6 +13,8 @@ import { TutorService } from './tutor.service';
 import { CreateTutorDto } from './dto/create-tutor.dto';
 import { LoginTutorDto } from './dto/login-tutor.dto';
 import { VerifyTutorEmailDto } from './dto/verify-tutor-email.dto';
+import { ForgetTutorPasswordDto } from './dto/forget-tutor-password.dto';
+import { ResetTutorPasswordDto } from './dto/reset-tutor-password.dto';
 import { UpdateTutorProfileDto } from './dto/update-tutor-profile.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -33,6 +36,24 @@ export class TutorController {
   @Post('verify-email')
   verifyEmail(@Body() dto: VerifyTutorEmailDto) {
     return this.tutorService.verifyEmail(dto);
+  }
+
+  @Post('forget/password')
+  forgetPassword(@Body() dto: ForgetTutorPasswordDto, @Req() req: Request) {
+    return this.tutorService.forgetPassword(
+      dto,
+      req.ip,
+      req.headers['user-agent'],
+    );
+  }
+
+  @Post('reset/password')
+  resetPassword(@Body() dto: ResetTutorPasswordDto, @Req() req: Request) {
+    return this.tutorService.resetPassword(
+      dto,
+      req.ip,
+      req.headers['user-agent'],
+    );
   }
 
   @ApiBearerAuth('access-token')

@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Req } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { StudentAuthService } from './student-auth.service';
 import { CreateStudentDto } from './dto/create-student.dto';
@@ -36,13 +36,21 @@ export class StudentAuthController {
   }
 
   @Post('forget/password')
-  forgetPassword(@Body() dto: ForgetPasswordDto) {
-    return this.studentAuthService.forgetPassword(dto);
+  forgetPassword(@Body() dto: ForgetPasswordDto, @Req() req: Request) {
+    return this.studentAuthService.forgetPassword(
+      dto,
+      req.ip,
+      req.headers['user-agent'],
+    );
   }
 
   @Post('reset/password')
-  resetPassword(@Body() dto: ResetPasswordDto) {
-    return this.studentAuthService.resetPassword(dto);
+  resetPassword(@Body() dto: ResetPasswordDto, @Req() req: Request) {
+    return this.studentAuthService.resetPassword(
+      dto,
+      req.ip,
+      req.headers['user-agent'],
+    );
   }
 
   @Post('refresh-token')

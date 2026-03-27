@@ -24,6 +24,10 @@ import {
   RefreshToken,
   RefreshTokenDocument,
 } from './schemas/refresh-token.schema';
+import {
+  PasswordResetToken,
+  PasswordResetTokenDocument,
+} from './schemas/password-reset-token.schema';
 
 const ACCESS_TOKEN_EXPIRY = 3600;
 const REFRESH_TOKEN_EXPIRY = 604800;
@@ -31,6 +35,7 @@ const VERIFICATION_TOKEN_EXPIRY = 86400; // 24 hours
 const MAX_VERIFICATION_ATTEMPTS = 5;
 const VERIFICATION_ATTEMPT_WINDOW = 3600; // 1 hour in seconds
 const VERIFICATION_COOLDOWN = 300; // 5 minutes in seconds
+const RESET_TOKEN_EXPIRY = 900; // 15 minutes in seconds
 
 @Injectable()
 export class StudentAuthService {
@@ -39,6 +44,8 @@ export class StudentAuthService {
     private readonly studentModel: Model<StudentDocument>,
     @InjectModel(RefreshToken.name)
     private readonly refreshTokenModel: Model<RefreshTokenDocument>,
+    @InjectModel(PasswordResetToken.name)
+    private readonly passwordResetTokenModel: Model<PasswordResetTokenDocument>,
     private readonly eventEmitter: EventEmitter2,
     private readonly configService: ConfigService,
   ) {}
@@ -371,7 +378,11 @@ export class StudentAuthService {
     };
   }
 
-  async forgetPassword(dto: ForgetPasswordDto) {
+  async forgetPassword(
+    dto: ForgetPasswordDto,
+    ipAddress?: string,
+    userAgent?: string,
+  ) {
     if (!dto.email) {
       throw new BadRequestException('Email is required');
     }
@@ -380,21 +391,50 @@ export class StudentAuthService {
       .findOne({ email: dto.email })
       .exec();
     if (!student) {
+      // Return success even if email doesn't exist to prevent email enumeration
       return { message: 'If the email exists, a reset link has been sent' };
     }
 
+    // Invalidate any existing reset tokens for this student
+    await this.passwordResetTokenModel
+      .updateMany(
+        { studentId: student.id },
+        { $set: { used: true, usedAt: new Date() } },
+      )
+      .exec();
+
+    // Generate a new secure reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
-    student.resetToken = resetToken;
-    student.resetTokenExpiry = Date.now() + 15 * 60 * 1000;
+    const tokenHash = this.hashToken(resetToken);
+    const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRY * 1000);
+
+    // Persist the hashed token
+    await new this.passwordResetTokenModel({
+      tokenHash,
+      studentId: student.id,
+      expiresAt,
+      ipAddress,
+      userAgent,
+    }).save();
+
+    // Also update student record for backward compatibility (will be removed later)
+    student.resetToken = tokenHash;
+    student.resetTokenExpiry = expiresAt.getTime();
     await student.save();
 
-    return {
-      message: 'If the email exists, a reset link has been sent',
-      resetToken,
-    };
+    // In production, send email with reset link containing the token
+    // For now, log it (in real implementation, this would be sent via email service)
+    console.log(`[Password Reset] Token for ${student.email}: ${resetToken}`);
+
+    // Return success without leaking the token
+    return { message: 'If the email exists, a reset link has been sent' };
   }
 
-  async resetPassword(dto: ResetPasswordDto) {
+  async resetPassword(
+    dto: ResetPasswordDto,
+    ipAddress?: string,
+    userAgent?: string,
+  ) {
     if (!dto.token || !dto.newPassword) {
       throw new BadRequestException('Token and new password are required');
     }
@@ -403,24 +443,58 @@ export class StudentAuthService {
       throw new BadRequestException('Password must be at least 8 characters');
     }
 
-    const student = await this.studentModel
+    // Hash the provided token to compare with stored hash
+    const tokenHash = this.hashToken(dto.token);
+
+    // Find the reset token record
+    const resetTokenRecord = await this.passwordResetTokenModel
       .findOne({
-        resetToken: dto.token,
-        resetTokenExpiry: { $gt: Date.now() },
+        tokenHash,
+        used: false,
+        expiresAt: { $gt: new Date() },
       })
       .exec();
 
-    if (!student) {
+    if (!resetTokenRecord) {
       throw new BadRequestException('Invalid or expired reset token');
     }
 
+    // Get the student
+    const student = await this.studentModel
+      .findById(resetTokenRecord.studentId)
+      .exec();
+
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+
+    // Update password securely
     student.passwordHash = this.hashPassword(dto.newPassword);
     student.resetToken = null;
     student.resetTokenExpiry = null;
     await student.save();
 
-    // Invalidate all active sessions after password reset
+    // Mark the reset token as used (one-time use enforcement)
+    resetTokenRecord.used = true;
+    resetTokenRecord.usedAt = new Date();
+    if (ipAddress) {
+      resetTokenRecord.ipAddress = ipAddress;
+    }
+    if (userAgent) {
+      resetTokenRecord.userAgent = userAgent;
+    }
+    await resetTokenRecord.save();
+
+    // Invalidate all active sessions after password reset (security measure)
     await this.refreshTokenModel.deleteMany({ studentId: student.id }).exec();
+
+    // Emit password reset event for audit/logging
+    this.eventEmitter.emit('password.reset', {
+      studentId: student.id,
+      email: student.email,
+      resetAt: new Date(),
+      ipAddress,
+    });
 
     return { message: 'Password reset successfully' };
   }

@@ -14,17 +14,26 @@ import { CreateTutorDto } from './dto/create-tutor.dto';
 import { LoginTutorDto } from './dto/login-tutor.dto';
 import { VerifyTutorEmailDto } from './dto/verify-tutor-email.dto';
 import { UpdateTutorProfileDto } from './dto/update-tutor-profile.dto';
+import { ForgetTutorPasswordDto } from './dto/forget-tutor-password.dto';
+import { ResetTutorPasswordDto } from './dto/reset-tutor-password.dto';
 import { Tutor, TutorDocument } from './schemas/tutor.schema';
+import {
+  PasswordResetToken,
+  PasswordResetTokenDocument,
+} from './schemas/password-reset-token.schema';
 
 const ACCESS_TOKEN_EXPIRY = 3600;
 const REFRESH_TOKEN_EXPIRY = 604800;
 const VERIFICATION_TOKEN_EXPIRY = 86400; // 24 hours
+const RESET_TOKEN_EXPIRY = 900; // 15 minutes in seconds
 
 @Injectable()
 export class TutorService {
   constructor(
     @InjectModel(Tutor.name)
     private readonly tutorModel: Model<TutorDocument>,
+    @InjectModel(PasswordResetToken.name)
+    private readonly passwordResetTokenModel: Model<PasswordResetTokenDocument>,
     private readonly eventEmitter: EventEmitter2,
     private readonly configService: ConfigService,
   ) {}
@@ -98,7 +107,11 @@ export class TutorService {
       ACCESS_TOKEN_EXPIRY,
     );
     const refreshToken = this.createJwt(
-      { sub: tutor.id, type: 'refresh', jti: crypto.randomBytes(16).toString('hex') },
+      {
+        sub: tutor.id,
+        type: 'refresh',
+        jti: crypto.randomBytes(16).toString('hex'),
+      },
       REFRESH_TOKEN_EXPIRY,
     );
     return { accessToken, refreshToken, expiresIn: ACCESS_TOKEN_EXPIRY };
@@ -143,9 +156,7 @@ export class TutorService {
       throw new BadRequestException('Password must be at least 8 characters');
     }
 
-    const existing = await this.tutorModel
-      .findOne({ email: dto.email })
-      .exec();
+    const existing = await this.tutorModel.findOne({ email: dto.email }).exec();
     if (existing) {
       throw new ConflictException('Email already registered');
     }
@@ -163,13 +174,14 @@ export class TutorService {
     );
 
     tutor.verificationToken = verificationToken;
-    tutor.verificationTokenExpiry = Date.now() + VERIFICATION_TOKEN_EXPIRY * 1000;
+    tutor.verificationTokenExpiry =
+      Date.now() + VERIFICATION_TOKEN_EXPIRY * 1000;
     await tutor.save();
 
     return {
       message: 'Account created. Please verify your email.',
       user: this.sanitizeTutor(tutor),
-      ...await this.generateTokenPair(tutor),
+      ...(await this.generateTokenPair(tutor)),
     };
   }
 
@@ -218,9 +230,7 @@ export class TutorService {
       throw new BadRequestException('Email and password are required');
     }
 
-    const tutor = await this.tutorModel
-      .findOne({ email: dto.email })
-      .exec();
+    const tutor = await this.tutorModel.findOne({ email: dto.email }).exec();
     if (!tutor) {
       throw new UnauthorizedException('Invalid email or password');
     }
@@ -247,6 +257,123 @@ export class TutorService {
       user: this.sanitizeTutor(tutor),
       ...tokens,
     };
+  }
+
+  private hashToken(token: string): string {
+    return crypto.createHash('sha256').update(token).digest('hex');
+  }
+
+  async forgetPassword(
+    dto: ForgetTutorPasswordDto,
+    ipAddress?: string,
+    userAgent?: string,
+  ) {
+    if (!dto.email) {
+      throw new BadRequestException('Email is required');
+    }
+
+    const tutor = await this.tutorModel.findOne({ email: dto.email }).exec();
+    if (!tutor) {
+      return { message: 'If the email exists, a reset link has been sent' };
+    }
+
+    // Invalidate any existing reset tokens for this tutor
+    await this.passwordResetTokenModel
+      .updateMany(
+        { tutorId: tutor.id },
+        { $set: { used: true, usedAt: new Date() } },
+      )
+      .exec();
+
+    // Generate a new secure reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = this.hashToken(resetToken);
+    const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRY * 1000);
+
+    // Persist the hashed token
+    await new this.passwordResetTokenModel({
+      tokenHash,
+      tutorId: tutor.id,
+      expiresAt,
+      ipAddress,
+      userAgent,
+    }).save();
+
+    // Also update tutor record for backward compatibility
+    tutor.resetToken = tokenHash;
+    tutor.resetTokenExpiry = expiresAt.getTime();
+    await tutor.save();
+
+    // In production, send email with reset link containing the token
+    console.log(`[Password Reset] Token for ${tutor.email}: ${resetToken}`);
+
+    return { message: 'If the email exists, a reset link has been sent' };
+  }
+
+  async resetPassword(
+    dto: ResetTutorPasswordDto,
+    ipAddress?: string,
+    userAgent?: string,
+  ) {
+    if (!dto.token || !dto.newPassword) {
+      throw new BadRequestException('Token and new password are required');
+    }
+
+    if (dto.newPassword.length < 8) {
+      throw new BadRequestException('Password must be at least 8 characters');
+    }
+
+    // Hash the provided token to compare with stored hash
+    const tokenHash = this.hashToken(dto.token);
+
+    // Find the reset token record
+    const resetTokenRecord = await this.passwordResetTokenModel
+      .findOne({
+        tokenHash,
+        used: false,
+        expiresAt: { $gt: new Date() },
+      })
+      .exec();
+
+    if (!resetTokenRecord) {
+      throw new BadRequestException('Invalid or expired reset token');
+    }
+
+    // Get the tutor
+    const tutor = await this.tutorModel
+      .findById(resetTokenRecord.tutorId)
+      .exec();
+
+    if (!tutor) {
+      throw new NotFoundException('Tutor not found');
+    }
+
+    // Update password securely
+    tutor.passwordHash = this.hashPassword(dto.newPassword);
+    tutor.resetToken = null;
+    tutor.resetTokenExpiry = null;
+    await tutor.save();
+
+    // Mark the reset token as used (one-time use enforcement)
+    resetTokenRecord.used = true;
+    resetTokenRecord.usedAt = new Date();
+    if (ipAddress) {
+      resetTokenRecord.ipAddress = ipAddress;
+    }
+    if (userAgent) {
+      resetTokenRecord.userAgent = userAgent;
+    }
+    await resetTokenRecord.save();
+
+    // Emit password reset event for audit/logging
+    this.eventEmitter.emit('password.reset', {
+      tutorId: tutor.id,
+      email: tutor.email,
+      resetAt: new Date(),
+      ipAddress,
+    });
+
+    return { message: 'Password reset successfully' };
   }
 
   async getProfile(tutorId: string) {
