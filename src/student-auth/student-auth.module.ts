@@ -7,12 +7,17 @@ import {
   RefreshToken,
   RefreshTokenSchema,
 } from './schemas/refresh-token.schema';
+import {
+  PasswordResetToken,
+  PasswordResetTokenSchema,
+} from './schemas/password-reset-token.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Student.name, schema: StudentSchema },
       { name: RefreshToken.name, schema: RefreshTokenSchema },
+      { name: PasswordResetToken.name, schema: PasswordResetTokenSchema },
     ]),
   ],
   controllers: [StudentAuthController],

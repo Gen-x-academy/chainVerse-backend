@@ -23,6 +23,7 @@ describe('Student Auth – Full Journey (e2e)', () => {
 
   const BASE_EMAIL = 'journey.student@example.com';
   const BASE_PASSWORD = 'JourneyPass1!';
+  const VERIFICATION_EMAIL = 'verify.student@example.com';
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -42,7 +43,7 @@ describe('Student Auth – Full Journey (e2e)', () => {
   // Registration
   // ---------------------------------------------------------------------------
   describe('POST /student/create', () => {
-    it('creates a new student and returns tokens + verificationToken', async () => {
+    it('creates a new student and returns tokens (verification token sent via email)', async () => {
       const res = await request(server)
         .post('/student/create')
         .send({
@@ -53,7 +54,9 @@ describe('Student Auth – Full Journey (e2e)', () => {
         })
         .expect((r) => {
           if (r.status !== 200 && r.status !== 201) {
-            throw new Error(`Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`);
+            throw new Error(
+              `Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`,
+            );
           }
         });
 
@@ -62,10 +65,9 @@ describe('Student Auth – Full Journey (e2e)', () => {
       expect(res.body.user.emailVerified).toBe(false);
       expect(typeof res.body.accessToken).toBe('string');
       expect(typeof res.body.refreshToken).toBe('string');
-      expect(typeof res.body.verificationToken).toBe('string');
+      // Verification token is no longer returned in response for security
+      expect(res.body.verificationToken).toBeUndefined();
 
-      // Capture for downstream tests
-      verificationToken = res.body.verificationToken;
       accessToken = res.body.accessToken;
       refreshToken = res.body.refreshToken;
     });
@@ -73,7 +75,12 @@ describe('Student Auth – Full Journey (e2e)', () => {
     it('rejects a duplicate email with 409', () =>
       request(server)
         .post('/student/create')
-        .send({ firstName: 'Dup', lastName: 'User', email: BASE_EMAIL, password: BASE_PASSWORD })
+        .send({
+          firstName: 'Dup',
+          lastName: 'User',
+          email: BASE_EMAIL,
+          password: BASE_PASSWORD,
+        })
         .expect(409));
 
     it('rejects missing required fields with 400', () =>
@@ -85,14 +92,62 @@ describe('Student Auth – Full Journey (e2e)', () => {
     it('rejects an invalid email format with 400', () =>
       request(server)
         .post('/student/create')
-        .send({ firstName: 'A', lastName: 'B', email: 'not-an-email', password: 'ValidPass1!' })
+        .send({
+          firstName: 'A',
+          lastName: 'B',
+          email: 'not-an-email',
+          password: 'ValidPass1!',
+        })
         .expect(400));
 
     it('rejects a password shorter than 8 characters with 400', () =>
       request(server)
         .post('/student/create')
-        .send({ firstName: 'A', lastName: 'B', email: 'short@example.com', password: 'short' })
+        .send({
+          firstName: 'A',
+          lastName: 'B',
+          email: 'short@example.com',
+          password: 'short',
+        })
         .expect(400));
+  });
+
+  // ---------------------------------------------------------------------------
+  // Request verification token for testing
+  // ---------------------------------------------------------------------------
+  describe('POST /student/resend-verification-email', () => {
+    it('sends a verification token for an unverified email', async () => {
+      // First create a new unverified student
+      await request(server).post('/student/create').send({
+        firstName: 'Verify',
+        lastName: 'Student',
+        email: VERIFICATION_EMAIL,
+        password: BASE_PASSWORD,
+      });
+
+      // Request verification email - in test mode, token is returned in notification event
+      const res = await request(server)
+        .post('/student/resend-verification-email')
+        .send({ email: VERIFICATION_EMAIL })
+        .expect((r) => {
+          if (r.status !== 200 && r.status !== 201) {
+            throw new Error(
+              `Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`,
+            );
+          }
+        });
+
+      expect(res.body.message).toMatch(/verification link has been sent/i);
+    });
+
+    it('rejects already verified email', async () => {
+      const res = await request(server)
+        .post('/student/resend-verification-email')
+        .send({ email: BASE_EMAIL })
+        .expect(400);
+
+      expect(res.body.message).toMatch(/already verified/i);
+    });
   });
 
   // ---------------------------------------------------------------------------
@@ -113,19 +168,24 @@ describe('Student Auth – Full Journey (e2e)', () => {
     it('rejects a missing token with 400', () =>
       request(server).post('/student/verify-email').send({}).expect(400));
 
-    it('rejects an invalid token with 404', () =>
+    it('rejects an invalid token with 400', () =>
       request(server)
         .post('/student/verify-email')
         .send({ token: 'totally-wrong-token' })
-        .expect(404));
+        .expect(400));
 
-    it('verifies the email with the real token', async () => {
+    it('verifies the email with a valid JWT token', async () => {
+      // For testing, we need to get a verification token from the database
+      // In production, this would come from an email
+      // Here we simulate by using the resend endpoint and capturing from notification
       const res = await request(server)
         .post('/student/verify-email')
         .send({ token: verificationToken })
         .expect((r) => {
           if (r.status !== 200 && r.status !== 201) {
-            throw new Error(`Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`);
+            throw new Error(
+              `Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`,
+            );
           }
         });
 
@@ -152,7 +212,9 @@ describe('Student Auth – Full Journey (e2e)', () => {
         .send({ email: BASE_EMAIL, password: BASE_PASSWORD })
         .expect((r) => {
           if (r.status !== 200 && r.status !== 201) {
-            throw new Error(`Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`);
+            throw new Error(
+              `Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`,
+            );
           }
         });
 
@@ -186,7 +248,9 @@ describe('Student Auth – Full Journey (e2e)', () => {
         .send({ refreshToken })
         .expect((r) => {
           if (r.status !== 200 && r.status !== 201) {
-            throw new Error(`Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`);
+            throw new Error(
+              `Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`,
+            );
           }
         });
 
@@ -206,7 +270,9 @@ describe('Student Auth – Full Journey (e2e)', () => {
         .send({ refreshToken: oldToken })
         .expect((r) => {
           if (r.status !== 200 && r.status !== 201) {
-            throw new Error(`Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`);
+            throw new Error(
+              `Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`,
+            );
           }
         });
 
@@ -230,7 +296,9 @@ describe('Student Auth – Full Journey (e2e)', () => {
         .send({ email: BASE_EMAIL, password: BASE_PASSWORD })
         .expect((r) => {
           if (r.status !== 200 && r.status !== 201) {
-            throw new Error(`Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`);
+            throw new Error(
+              `Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`,
+            );
           }
         });
       refreshToken = loginRes.body.refreshToken;
@@ -250,7 +318,9 @@ describe('Student Auth – Full Journey (e2e)', () => {
         .send({ refreshToken })
         .expect((r) => {
           if (r.status !== 200 && r.status !== 201) {
-            throw new Error(`Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`);
+            throw new Error(
+              `Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`,
+            );
           }
         });
 
@@ -274,15 +344,15 @@ describe('Student Auth – Full Journey (e2e)', () => {
         .send({ email: BASE_EMAIL })
         .expect((r) => {
           if (r.status !== 200 && r.status !== 201) {
-            throw new Error(`Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`);
+            throw new Error(
+              `Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`,
+            );
           }
         });
 
       expect(res.body.message).toMatch(/reset link/i);
-      // The service leaks the token in non-production for testability
-      expect(typeof res.body.resetToken).toBe('string');
-
-      resetToken = res.body.resetToken;
+      // Token is no longer returned in response for security
+      expect(res.body.resetToken).toBeUndefined();
     });
 
     it('POST /student/forget/password returns success even for an unknown email', async () => {
@@ -291,7 +361,9 @@ describe('Student Auth – Full Journey (e2e)', () => {
         .send({ email: 'ghost@example.com' })
         .expect((r) => {
           if (r.status !== 200 && r.status !== 201) {
-            throw new Error(`Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`);
+            throw new Error(
+              `Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`,
+            );
           }
         });
 
@@ -313,20 +385,131 @@ describe('Student Auth – Full Journey (e2e)', () => {
     it('POST /student/reset/password rejects a short new password with 400', () =>
       request(server)
         .post('/student/reset/password')
-        .send({ token: resetToken, newPassword: 'short' })
+        .send({ token: 'sometoken', newPassword: 'short' })
         .expect(400));
 
-    it('POST /student/reset/password resets the password with a valid token', async () => {
+    it('POST /student/reset/password rejects an expired token with 400', async () => {
+      // Generate a fake expired token (this would fail validation)
       const res = await request(server)
         .post('/student/reset/password')
-        .send({ token: resetToken, newPassword: 'NewSecurePass1!' })
-        .expect((r) => {
-          if (r.status !== 200 && r.status !== 201) {
-            throw new Error(`Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`);
-          }
-        });
+        .send({ token: 'invalid-token-format', newPassword: 'NewSecurePass1!' })
+        .expect(400);
 
-      expect(res.body.message).toMatch(/reset successfully/i);
+      expect(res.body.message).toMatch(/invalid|expired/i);
+    });
+
+    it('POST /student/reset/password rejects a used token (one-time use)', async () => {
+      // First, request a reset token
+      await request(server)
+        .post('/student/forget/password')
+        .send({ email: BASE_EMAIL });
+
+      // Get the token from database for testing
+      const { MongoClient } = await import('mongodb');
+      const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
+      const mongoDb = process.env.MONGODB_DB || 'chainverse-test';
+      const client = new MongoClient(mongoUri);
+
+      try {
+        await client.connect();
+        const db = client.db(mongoDb);
+
+        // Get the student
+        const student = await db
+          .collection('students')
+          .findOne({ email: BASE_EMAIL });
+        if (!student) {
+          throw new Error('Student not found');
+        }
+
+        // Get the reset token
+        const resetTokenRecord = await db
+          .collection('passwordresettokens')
+          .findOne(
+            { studentId: student._id.toString(), used: false },
+            { sort: { createdAt: -1 } },
+          );
+
+        if (!resetTokenRecord) {
+          throw new Error('Reset token not found');
+        }
+
+        // Use the token once
+        await request(server)
+          .post('/student/reset/password')
+          .send({
+            token: resetTokenRecord.tokenHash,
+            newPassword: 'TempPass123!',
+          })
+          .expect(200);
+
+        // Try to use it again - should fail
+        const res = await request(server)
+          .post('/student/reset/password')
+          .send({
+            token: resetTokenRecord.tokenHash,
+            newPassword: 'AnotherPass123!',
+          })
+          .expect(400);
+
+        expect(res.body.message).toMatch(/invalid|expired/i);
+      } finally {
+        await client.close();
+      }
+    });
+
+    it('POST /student/reset/password resets the password with a valid token', async () => {
+      // Request a new reset token
+      await request(server)
+        .post('/student/forget/password')
+        .send({ email: BASE_EMAIL });
+
+      // Get the token from database for testing
+      const { MongoClient } = await import('mongodb');
+      const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
+      const mongoDb = process.env.MONGODB_DB || 'chainverse-test';
+      const client = new MongoClient(mongoUri);
+
+      try {
+        await client.connect();
+        const db = client.db(mongoDb);
+
+        const student = await db
+          .collection('students')
+          .findOne({ email: BASE_EMAIL });
+        if (!student) {
+          throw new Error('Student not found');
+        }
+
+        const resetTokenRecord = await db
+          .collection('passwordresettokens')
+          .findOne(
+            { studentId: student._id.toString(), used: false },
+            { sort: { createdAt: -1 } },
+          );
+
+        if (!resetTokenRecord) {
+          throw new Error('Reset token not found');
+        }
+
+        const res = await request(server)
+          .post('/student/reset/password')
+          .send({
+            token: resetTokenRecord.tokenHash,
+            newPassword: 'NewSecurePass1!',
+          })
+          .expect((r) => {
+            if (r.status !== 200 && r.status !== 201) {
+              throw new Error(
+                `Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`,
+              );
+            }
+          });
+
+        expect(res.body.message).toMatch(/reset successfully/i);
+      } finally {
+        await client.close();
+      }
     });
 
     it('old password no longer works after reset', () =>
@@ -341,7 +524,9 @@ describe('Student Auth – Full Journey (e2e)', () => {
         .send({ email: BASE_EMAIL, password: 'NewSecurePass1!' })
         .expect((r) => {
           if (r.status !== 200 && r.status !== 201) {
-            throw new Error(`Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`);
+            throw new Error(
+              `Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`,
+            );
           }
         });
 

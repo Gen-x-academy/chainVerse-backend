@@ -6,11 +6,13 @@ import {
   CourseRating,
   CourseRatingSchema,
 } from './schemas/course-rating.schema';
+import { Course, CourseSchema } from '../admin-course/schemas/course.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: CourseRating.name, schema: CourseRatingSchema },
+      { name: Course.name, schema: CourseSchema },
     ]),
   ],
   controllers: [CourseRatingsFeedbackController],

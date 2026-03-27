@@ -12,12 +12,15 @@ import {
   CourseRating,
   CourseRatingDocument,
 } from './schemas/course-rating.schema';
+import { Course } from '../admin-course/schemas/course.schema';
 
 @Injectable()
 export class CourseRatingsFeedbackService {
   constructor(
     @InjectModel(CourseRating.name)
     private readonly ratingModel: Model<CourseRatingDocument>,
+    @InjectModel(Course.name)
+    private readonly courseModel: Model<Course>,
   ) {}
 
   async create(
@@ -27,6 +30,19 @@ export class CourseRatingsFeedbackService {
   ): Promise<CourseRating> {
     if (payload.rating < 1 || payload.rating > 5) {
       throw new BadRequestException('Rating must be between 1 and 5');
+    }
+
+    // Validate course exists
+    const course = await this.courseModel.findById(courseId).exec();
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+
+    // Check if student is enrolled
+    if (!course.enrolledStudents.includes(studentId)) {
+      throw new BadRequestException(
+        'You can only rate courses you are enrolled in',
+      );
     }
 
     const existing = await this.ratingModel
@@ -39,7 +55,12 @@ export class CourseRatingsFeedbackService {
     }
 
     const rating = new this.ratingModel({ courseId, studentId, ...payload });
-    return rating.save();
+    await rating.save();
+
+    // Update course statistics
+    await this.updateCourseStats(courseId);
+
+    return rating;
   }
 
   async findAllForCourse(courseId: string): Promise<{
@@ -47,6 +68,12 @@ export class CourseRatingsFeedbackService {
     averageRating: number;
     totalRatings: number;
   }> {
+    // Validate course exists
+    const course = await this.courseModel.findById(courseId).exec();
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+
     const ratings = await this.ratingModel.find({ courseId }).exec();
     const totalRatings = ratings.length;
     const averageRating =
@@ -86,12 +113,22 @@ export class CourseRatingsFeedbackService {
       throw new BadRequestException('Rating must be between 1 and 5');
     }
 
+    // Validate course exists
+    const course = await this.courseModel.findById(courseId).exec();
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+
     const rating = await this.ratingModel
       .findOneAndUpdate({ courseId, studentId }, payload, { new: true })
       .exec();
     if (!rating) {
       throw new NotFoundException('Rating not found for this course');
     }
+
+    // Update course statistics
+    await this.updateCourseStats(courseId);
+
     return rating;
   }
 
@@ -105,6 +142,29 @@ export class CourseRatingsFeedbackService {
     if (!result) {
       throw new NotFoundException('Rating not found for this course');
     }
+
+    // Update course statistics
+    await this.updateCourseStats(courseId);
+
     return { courseId, studentId, deleted: true };
+  }
+
+  /**
+   * Update course rating statistics
+   */
+  private async updateCourseStats(courseId: string): Promise<void> {
+    const ratings = await this.ratingModel.find({ courseId }).exec();
+    const totalRatings = ratings.length;
+    const averageRating =
+      totalRatings > 0
+        ? ratings.reduce((sum, r) => sum + r.rating, 0) / totalRatings
+        : 0;
+
+    await this.courseModel
+      .findByIdAndUpdate(courseId, {
+        totalReviews: totalRatings,
+        averageRating: Math.round(averageRating * 100) / 100,
+      })
+      .exec();
   }
 }
