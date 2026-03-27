@@ -7,8 +7,11 @@ on:
     branches: ["**"]
 
 jobs:
-  unit:
-    name: Unit tests
+  # -----------------------------------------------------------------------
+  # 1. Lint
+  # -----------------------------------------------------------------------
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,12 +24,86 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run unit tests
-        run: npm run test -- --forceExit
+      - name: Run ESLint
+        run: npm run lint -- --max-warnings 0
 
+  # -----------------------------------------------------------------------
+  # 2. Build
+  # -----------------------------------------------------------------------
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Compile TypeScript
+        run: npm run build
+
+      - name: Upload build artefacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 7
+
+  # -----------------------------------------------------------------------
+  # 3. Unit tests + coverage
+  # -----------------------------------------------------------------------
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    needs: lint
+    env:
+      JWT_SECRET: ${{ secrets.JWT_SECRET || 'ci-unit-test-secret-key-32chars!!' }}
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests with coverage
+        run: npm run test:cov -- --forceExit
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 14
+
+      - name: Upload test results on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results
+          path: |
+            coverage/
+            junit.xml
+          retention-days: 7
+
+  # -----------------------------------------------------------------------
+  # 4. E2E tests
+  # -----------------------------------------------------------------------
   e2e:
     name: E2E tests
     runs-on: ubuntu-latest
+    needs: build
     env:
       JWT_SECRET: ${{ secrets.JWT_SECRET || 'ci-e2e-test-secret-key-32chars!!' }}
       NODE_ENV: test
@@ -43,3 +120,12 @@ jobs:
 
       - name: Run e2e tests
         run: npm run test:e2e -- --forceExit
+
+      - name: Upload e2e test results on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results
+          path: |
+            test/
+          retention-days: 7

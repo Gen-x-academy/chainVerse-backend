@@ -1,4 +1,4 @@
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import {
   Body,
   Controller,
@@ -8,8 +8,11 @@ import {
   Patch,
   Post,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { CacheInterceptor, CacheKey, CacheTTL } from '@nestjs/cache-manager';
 import { CoursePerformanceLeaderboardService } from './course-performance-leaderboard.service';
+import { LEADERBOARD_CACHE_KEY } from './course-performance-leaderboard.service';
 import { CreateCoursePerformanceLeaderboardDto } from './dto/create-course-performance-leaderboard.dto';
 import { UpdateCoursePerformanceLeaderboardDto } from './dto/update-course-performance-leaderboard.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -23,11 +26,18 @@ export class CoursePerformanceLeaderboardController {
   constructor(private readonly service: CoursePerformanceLeaderboardService) {}
 
   @Get()
+  @UseInterceptors(CacheInterceptor)
+  @CacheKey(LEADERBOARD_CACHE_KEY)
+  @CacheTTL(300000)
+  @ApiOperation({ summary: 'Get leaderboard (cached, 5 min TTL)' })
   findAll() {
     return this.service.findAll();
   }
 
   @Get(':id')
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(300000)
+  @ApiOperation({ summary: 'Get single leaderboard entry (cached, 5 min TTL)' })
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);
   }
