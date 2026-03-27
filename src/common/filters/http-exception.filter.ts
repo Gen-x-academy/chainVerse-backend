@@ -11,6 +11,7 @@ import { Request, Response } from 'express';
 export interface ErrorResponse {
   statusCode: number;
   error: string;
+  errorCode?: string;
   message: string | string[];
   timestamp: string;
   path: string;
@@ -29,6 +30,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     let statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
     let message: string | string[] = 'Internal server error';
     let error = 'Internal Server Error';
+    let errorCode: string | undefined;
 
     if (exception instanceof HttpException) {
       statusCode = exception.getStatus();
@@ -41,6 +43,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
         const body = exceptionResponse as Record<string, unknown>;
         message = (body.message as string | string[]) ?? exception.message;
         error = (body.error as string) ?? HttpStatus[statusCode] ?? 'Error';
+        errorCode = body.errorCode as string | undefined;
       }
     }
 
@@ -67,6 +70,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const payload: ErrorResponse = {
       statusCode,
       error,
+      ...(errorCode && { errorCode }),
       message,
       timestamp: new Date().toISOString(),
       path: request.url,

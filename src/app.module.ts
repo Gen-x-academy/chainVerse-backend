@@ -9,20 +9,14 @@ import { envValidationSchema } from './config/env.validation';
 import { AppService } from './app.service';
 import { WorkerModule } from './worker/worker.module';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
-import { AppCacheModule } from './cache/app-cache.module';
+import { MetricsModule } from './metrics/metrics.module';
+import { TracingModule } from './tracing/tracing.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [appConfig],
-      validationSchema: envValidationSchema,
-      validationOptions: { allowUnknown: true },
-    }),
-    EventEmitterModule.forRoot(),
-    ThrottlerModule.forRoot([{ ttl: 60000, limit: 30 }]),
-    AppCacheModule,
     WorkerModule,
+    MetricsModule,
+    TracingModule,
   ],
   controllers: [AppController],
   providers: [

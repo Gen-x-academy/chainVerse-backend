@@ -1,0 +1,56 @@
+/**
+ * Machine-readable domain error codes returned in every API error response.
+ *
+ * Format: <DOMAIN>_<DESCRIPTION>
+ *
+ * Auth codes (AUTH_*)          – authentication and authorization failures
+ * Validation codes (VAL_*)     – input / schema validation failures
+ * Resource codes (RES_*)       – entity lookup / conflict failures
+ * Business-rule codes (BIZ_*)  – domain rule violations
+ * System codes (SYS_*)         – internal / infrastructure errors
+ */
+export enum ErrorCode {
+  // ── Auth ──────────────────────────────────────────────────────────────────
+  AUTH_MISSING_TOKEN = 'AUTH_MISSING_TOKEN',
+  AUTH_INVALID_TOKEN = 'AUTH_INVALID_TOKEN',
+  AUTH_EXPIRED_TOKEN = 'AUTH_EXPIRED_TOKEN',
+  AUTH_REFRESH_TOKEN_INVALID = 'AUTH_REFRESH_TOKEN_INVALID',
+  AUTH_REFRESH_TOKEN_EXPIRED = 'AUTH_REFRESH_TOKEN_EXPIRED',
+  AUTH_INSUFFICIENT_PERMISSIONS = 'AUTH_INSUFFICIENT_PERMISSIONS',
+  AUTH_ACCOUNT_NOT_VERIFIED = 'AUTH_ACCOUNT_NOT_VERIFIED',
+  AUTH_INVALID_CREDENTIALS = 'AUTH_INVALID_CREDENTIALS',
+  AUTH_ACCOUNT_DISABLED = 'AUTH_ACCOUNT_DISABLED',
+
+  // ── Validation ────────────────────────────────────────────────────────────
+  VAL_INVALID_INPUT = 'VAL_INVALID_INPUT',
+  VAL_MISSING_FIELD = 'VAL_MISSING_FIELD',
+  VAL_INVALID_FORMAT = 'VAL_INVALID_FORMAT',
+  VAL_OUT_OF_RANGE = 'VAL_OUT_OF_RANGE',
+  VAL_IDEMPOTENCY_KEY_MISSING = 'VAL_IDEMPOTENCY_KEY_MISSING',
+
+  // ── Resource ──────────────────────────────────────────────────────────────
+  RES_NOT_FOUND = 'RES_NOT_FOUND',
+  RES_ALREADY_EXISTS = 'RES_ALREADY_EXISTS',
+  RES_EMAIL_TAKEN = 'RES_EMAIL_TAKEN',
+  RES_COURSE_NOT_FOUND = 'RES_COURSE_NOT_FOUND',
+  RES_STUDENT_NOT_FOUND = 'RES_STUDENT_NOT_FOUND',
+  RES_TUTOR_NOT_FOUND = 'RES_TUTOR_NOT_FOUND',
+  RES_ORGANIZATION_NOT_FOUND = 'RES_ORGANIZATION_NOT_FOUND',
+  RES_ENROLLMENT_NOT_FOUND = 'RES_ENROLLMENT_NOT_FOUND',
+
+  // ── Business rules ────────────────────────────────────────────────────────
+  BIZ_ALREADY_ENROLLED = 'BIZ_ALREADY_ENROLLED',
+  BIZ_COURSE_NOT_PUBLISHED = 'BIZ_COURSE_NOT_PUBLISHED',
+  BIZ_INSUFFICIENT_FUNDS = 'BIZ_INSUFFICIENT_FUNDS',
+  BIZ_PAYMENT_FAILED = 'BIZ_PAYMENT_FAILED',
+  BIZ_REVIEW_ALREADY_SUBMITTED = 'BIZ_REVIEW_ALREADY_SUBMITTED',
+  BIZ_SUBSCRIPTION_INACTIVE = 'BIZ_SUBSCRIPTION_INACTIVE',
+  BIZ_FINANCIAL_AID_ALREADY_APPLIED = 'BIZ_FINANCIAL_AID_ALREADY_APPLIED',
+  BIZ_SOFT_DELETED = 'BIZ_SOFT_DELETED',
+  BIZ_DUPLICATE_REQUEST = 'BIZ_DUPLICATE_REQUEST',
+
+  // ── System ────────────────────────────────────────────────────────────────
+  SYS_INTERNAL_ERROR = 'SYS_INTERNAL_ERROR',
+  SYS_SERVICE_UNAVAILABLE = 'SYS_SERVICE_UNAVAILABLE',
+  SYS_RATE_LIMIT_EXCEEDED = 'SYS_RATE_LIMIT_EXCEEDED',
+}
