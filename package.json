@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@nestjs/cache-manager": "^3.1.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.0.1",
@@ -27,6 +28,7 @@
     "@nestjs/mongoose": "^11.0.4",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.2.6",
+    "cache-manager": "^7.2.8",
     "joi": "^18.1.1",
     "mongoose": "^9.3.3",
     "nestjs-pino": "^4.6.1",
@@ -73,9 +75,21 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "**/*.(t|j)s",
+      "!**/node_modules/**",
+      "!**/*.module.ts",
+      "!**/main.ts"
     ],
     "coverageDirectory": "../coverage",
+    "coverageReporters": ["text", "lcov", "html"],
+    "coverageThresholds": {
+      "global": {
+        "statements": 60,
+        "branches": 50,
+        "functions": 60,
+        "lines": 60
+      }
+    },
     "testEnvironment": "node"
   }
 }
