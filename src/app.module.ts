@@ -12,11 +12,26 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { MetricsModule } from './metrics/metrics.module';
 import { TracingModule } from './tracing/tracing.module';
 
+import { StudentEnrollmentModule } from './student-enrollment/student-enrollment.module';
+
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [appConfig],
+      validationSchema: envValidationSchema,
+    }),
+    EventEmitterModule.forRoot(),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60,
+        limit: 10,
+      },
+    ]),
     WorkerModule,
     MetricsModule,
     TracingModule,
+    StudentEnrollmentModule,
   ],
   controllers: [AppController],
   providers: [
