@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as crypto from 'crypto';
+import * as bcrypt from 'bcryptjs';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { LoginStudentDto } from './dto/login-student.dto';
@@ -24,18 +25,10 @@ import {
   RefreshToken,
   RefreshTokenDocument,
 } from './schemas/refresh-token.schema';
-import {
-  PasswordResetToken,
-  PasswordResetTokenDocument,
-} from './schemas/password-reset-token.schema';
 
 const ACCESS_TOKEN_EXPIRY = 3600;
 const REFRESH_TOKEN_EXPIRY = 604800;
-const VERIFICATION_TOKEN_EXPIRY = 86400; // 24 hours
-const MAX_VERIFICATION_ATTEMPTS = 5;
-const VERIFICATION_ATTEMPT_WINDOW = 3600; // 1 hour in seconds
-const VERIFICATION_COOLDOWN = 300; // 5 minutes in seconds
-const RESET_TOKEN_EXPIRY = 900; // 15 minutes in seconds
+const BCRYPT_SALT_ROUNDS = 10;
 
 @Injectable()
 export class StudentAuthService {
@@ -54,20 +47,15 @@ export class StudentAuthService {
     return this.configService.get<string>('jwtSecret') ?? '';
   }
 
-  private hashPassword(password: string): string {
-    const salt = crypto.randomBytes(16).toString('hex');
-    const hash = crypto
-      .pbkdf2Sync(password, salt, 10000, 64, 'sha512')
-      .toString('hex');
-    return `${salt}:${hash}`;
+  private async hashPassword(password: string): Promise<string> {
+    return bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
   }
 
-  private verifyPassword(password: string, stored: string): boolean {
-    const [salt, hash] = stored.split(':');
-    const verify = crypto
-      .pbkdf2Sync(password, salt, 10000, 64, 'sha512')
-      .toString('hex');
-    return hash === verify;
+  private async verifyPassword(
+    password: string,
+    storedHash: string,
+  ): Promise<boolean> {
+    return bcrypt.compare(password, storedHash);
   }
 
   private hashToken(token: string): string {
@@ -176,11 +164,15 @@ export class StudentAuthService {
       throw new ConflictException('Email already registered');
     }
 
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const passwordHash = await this.hashPassword(dto.password);
+
     const student = await new this.studentModel({
       firstName: dto.firstName,
       lastName: dto.lastName,
       email: dto.email,
-      passwordHash: this.hashPassword(dto.password),
+      passwordHash,
+      verificationToken,
     }).save();
 
     const verificationToken = this.createVerificationToken(
@@ -360,7 +352,11 @@ export class StudentAuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    if (!this.verifyPassword(dto.password, student.passwordHash)) {
+    const passwordValid = await this.verifyPassword(
+      dto.password,
+      student.passwordHash,
+    );
+    if (!passwordValid) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
@@ -426,8 +422,10 @@ export class StudentAuthService {
     // For now, log it (in real implementation, this would be sent via email service)
     console.log(`[Password Reset] Token for ${student.email}: ${resetToken}`);
 
-    // Return success without leaking the token
-    return { message: 'If the email exists, a reset link has been sent' };
+    // Do NOT return the token in the response (security)
+    return {
+      message: 'If the email exists, a reset link has been sent',
+    };
   }
 
   async resetPassword(
@@ -459,17 +457,8 @@ export class StudentAuthService {
       throw new BadRequestException('Invalid or expired reset token');
     }
 
-    // Get the student
-    const student = await this.studentModel
-      .findById(resetTokenRecord.studentId)
-      .exec();
-
-    if (!student) {
-      throw new NotFoundException('Student not found');
-    }
-
-    // Update password securely
-    student.passwordHash = this.hashPassword(dto.newPassword);
+    const passwordHash = await this.hashPassword(dto.newPassword);
+    student.passwordHash = passwordHash;
     student.resetToken = null;
     student.resetTokenExpiry = null;
     await student.save();
