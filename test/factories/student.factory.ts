@@ -7,6 +7,9 @@ export interface StudentFields {
   passwordHash: string;
   emailVerified: boolean;
   verificationToken: string | null;
+  verificationTokenExpiry: number | null;
+  verificationAttempts: number;
+  lastVerificationAttempt: number | null;
   resetToken: string | null;
   resetTokenExpiry: number | null;
   role: string;
@@ -27,13 +30,18 @@ let counter = 0;
  * // Specific email
  * const student = buildStudent({ email: 'specific@example.com' });
  */
-export function buildStudent(overrides: Partial<StudentFields> = {}): StudentFields {
+export function buildStudent(
+  overrides: Partial<StudentFields> = {},
+): StudentFields {
   counter += 1;
   return {
     firstName: `Student${counter}`,
     lastName: 'Test',
     email: `student${counter}@factory.test`,
-    passwordHash: crypto.createHash('sha256').update('TestPassword123!').digest('hex'),
+    passwordHash: crypto
+      .createHash('sha256')
+      .update('TestPassword123!')
+      .digest('hex'),
     emailVerified: true,
     verificationToken: null,
     resetToken: null,

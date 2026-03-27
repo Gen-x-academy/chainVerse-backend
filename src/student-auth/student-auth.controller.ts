@@ -4,6 +4,7 @@ import { StudentAuthService } from './student-auth.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { LoginStudentDto } from './dto/login-student.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
+import { ResendVerificationEmailDto } from './dto/resend-verification-email.dto';
 import { ForgetPasswordDto } from './dto/forget-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
@@ -22,6 +23,11 @@ export class StudentAuthController {
   @Post('verify-email')
   verifyEmail(@Body() dto: VerifyEmailDto) {
     return this.studentAuthService.verifyEmail(dto);
+  }
+
+  @Post('resend-verification-email')
+  resendVerificationEmail(@Body() dto: ResendVerificationEmailDto) {
+    return this.studentAuthService.resendVerificationEmail(dto);
   }
 
   @Post('login')
