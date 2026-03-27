@@ -1,4 +1,5 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -7,9 +8,16 @@ import appConfig from './config/app.config';
 import { envValidationSchema } from './config/env.validation';
 import { AppService } from './app.service';
 import { WorkerModule } from './worker/worker.module';
+import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
+import { MetricsModule } from './metrics/metrics.module';
+import { TracingModule } from './tracing/tracing.module';
 
 @Module({
-  imports: [WorkerModule],
+  imports: [
+    WorkerModule,
+    MetricsModule,
+    TracingModule,
+  ],
   controllers: [AppController],
   providers: [
     AppService,
