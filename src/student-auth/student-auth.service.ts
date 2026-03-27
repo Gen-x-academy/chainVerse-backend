@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as crypto from 'crypto';
+import * as bcrypt from 'bcryptjs';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { LoginStudentDto } from './dto/login-student.dto';
@@ -19,10 +20,14 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { DomainEvents } from '../events/event-names';
 import { StudentRegisteredPayload } from '../events/payloads/student-registered.payload';
 import { Student, StudentDocument } from './schemas/student.schema';
-import { RefreshToken, RefreshTokenDocument } from './schemas/refresh-token.schema';
+import {
+  RefreshToken,
+  RefreshTokenDocument,
+} from './schemas/refresh-token.schema';
 
 const ACCESS_TOKEN_EXPIRY = 3600;
 const REFRESH_TOKEN_EXPIRY = 604800;
+const BCRYPT_SALT_ROUNDS = 10;
 
 @Injectable()
 export class StudentAuthService {
@@ -39,20 +44,15 @@ export class StudentAuthService {
     return this.configService.get<string>('jwtSecret') ?? '';
   }
 
-  private hashPassword(password: string): string {
-    const salt = crypto.randomBytes(16).toString('hex');
-    const hash = crypto
-      .pbkdf2Sync(password, salt, 10000, 64, 'sha512')
-      .toString('hex');
-    return `${salt}:${hash}`;
+  private async hashPassword(password: string): Promise<string> {
+    return bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
   }
 
-  private verifyPassword(password: string, stored: string): boolean {
-    const [salt, hash] = stored.split(':');
-    const verify = crypto
-      .pbkdf2Sync(password, salt, 10000, 64, 'sha512')
-      .toString('hex');
-    return hash === verify;
+  private async verifyPassword(
+    password: string,
+    storedHash: string,
+  ): Promise<boolean> {
+    return bcrypt.compare(password, storedHash);
   }
 
   private hashToken(token: string): string {
@@ -94,14 +94,21 @@ export class StudentAuthService {
     return decoded;
   }
 
-  private async generateTokenPair(student: StudentDocument, tokenFamily?: string) {
+  private async generateTokenPair(
+    student: StudentDocument,
+    tokenFamily?: string,
+  ) {
     const family = tokenFamily ?? crypto.randomUUID();
     const accessToken = this.createJwt(
       { sub: student.id, email: student.email, role: student.role },
       ACCESS_TOKEN_EXPIRY,
     );
     const refreshToken = this.createJwt(
-      { sub: student.id, type: 'refresh', jti: crypto.randomBytes(16).toString('hex') },
+      {
+        sub: student.id,
+        type: 'refresh',
+        jti: crypto.randomBytes(16).toString('hex'),
+      },
       REFRESH_TOKEN_EXPIRY,
     );
     await new this.refreshTokenModel({
@@ -148,12 +155,13 @@ export class StudentAuthService {
     }
 
     const verificationToken = crypto.randomBytes(32).toString('hex');
+    const passwordHash = await this.hashPassword(dto.password);
 
     const student = await new this.studentModel({
       firstName: dto.firstName,
       lastName: dto.lastName,
       email: dto.email,
-      passwordHash: this.hashPassword(dto.password),
+      passwordHash,
       verificationToken,
     }).save();
 
@@ -171,7 +179,6 @@ export class StudentAuthService {
     return {
       message: 'Account created. Please verify your email.',
       user: this.sanitizeStudent(student),
-      verificationToken,
       ...tokens,
     };
   }
@@ -207,7 +214,11 @@ export class StudentAuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    if (!this.verifyPassword(dto.password, student.passwordHash)) {
+    const passwordValid = await this.verifyPassword(
+      dto.password,
+      student.passwordHash,
+    );
+    if (!passwordValid) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
@@ -242,9 +253,13 @@ export class StudentAuthService {
     student.resetTokenExpiry = Date.now() + 15 * 60 * 1000;
     await student.save();
 
+    // In production, send email with reset link containing the token
+    // For now, log it (in real implementation, this would be sent via email service)
+    console.log(`[Password Reset] Token for ${student.email}: ${resetToken}`);
+
+    // Do NOT return the token in the response (security)
     return {
       message: 'If the email exists, a reset link has been sent',
-      resetToken,
     };
   }
 
@@ -268,7 +283,8 @@ export class StudentAuthService {
       throw new BadRequestException('Invalid or expired reset token');
     }
 
-    student.passwordHash = this.hashPassword(dto.newPassword);
+    const passwordHash = await this.hashPassword(dto.newPassword);
+    student.passwordHash = passwordHash;
     student.resetToken = null;
     student.resetTokenExpiry = null;
     await student.save();
@@ -302,7 +318,9 @@ export class StudentAuthService {
       if (family) {
         await this.refreshTokenModel.deleteMany({ tokenFamily: family }).exec();
       }
-      throw new UnauthorizedException('Refresh token has been revoked or already used');
+      throw new UnauthorizedException(
+        'Refresh token has been revoked or already used',
+      );
     }
 
     // Rotate: delete consumed token, issue new pair in the same family
