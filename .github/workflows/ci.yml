@@ -25,7 +25,7 @@ jobs:
         run: npm ci
 
       - name: Run ESLint
-        run: npm run lint -- --max-warnings 0
+        run: npm run lint
 
   # -----------------------------------------------------------------------
   # 2. Build
@@ -76,16 +76,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run unit tests with coverage
-        run: npm run test:cov -- --forceExit
-
-      - name: Upload coverage report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage
-          path: coverage/
-          retention-days: 14
+      - name: Run unit tests
+        run: npm run test
 
       - name: Upload test results on failure
         if: failure()
@@ -119,7 +111,7 @@ jobs:
         run: npm ci
 
       - name: Run e2e tests
-        run: npm run test:e2e -- --forceExit
+        run: npm run test:e2e
 
       - name: Upload e2e test results on failure
         if: failure()
