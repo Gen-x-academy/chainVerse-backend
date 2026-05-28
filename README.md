@@ -42,8 +42,8 @@ Moving to NestJS enables:
 | Language       | TypeScript                          | Type safety & maintainability |
 | Authentication | JWT (Access + Refresh Tokens)       | Secure user sessions          |
 | Validation     | class-validator / class-transformer | DTO validation                |
-| ORM            | Prisma / TypeORM                    | Database abstraction          |
-| Database       | PostgreSQL                          | Relational data storage       |
+| ORM            | Mongoose                            | MongoDB object modeling       |
+| Database       | MongoDB                             | Document data storage         |
 | Caching        | Redis (optional)                    | Performance optimization      |
 | Documentation  | Swagger                             | API exploration               |
 | Storage        | Local / S3-compatible               | File uploads                  |
@@ -214,7 +214,7 @@ Create a `.env` file in the root directory:
 ```
 PORT=3000
 
-DATABASE_URL=postgresql://user:password@localhost:5432/chainverse
+MONGO_URI=mongodb://localhost:27017/chainverse
 
 JWT_SECRET=your_access_secret
 JWT_REFRESH_SECRET=your_refresh_secret
@@ -335,4 +335,3 @@ We welcome contributions! Follow these steps:
 MIT License
 
 ---
-
