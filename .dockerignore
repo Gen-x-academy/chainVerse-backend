@@ -1,0 +1,9 @@
+# Prevent sensitive and unnecessary files from being copied into Docker image
+node_modules
+dist
+coverage
+.env
+.env.*
+*.log
+.git
+test
