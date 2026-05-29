@@ -18,6 +18,17 @@ services:
           cpus: '0.5'
           memory: 256M
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   app:
     build: .
     restart: unless-stopped
@@ -28,6 +39,8 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
+      redis:
+        condition: service_healthy
 
     deploy:
       resources:
@@ -37,3 +50,4 @@ services:
 
 volumes:
   mongo_data:
+  redis_data:
