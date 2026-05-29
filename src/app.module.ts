@@ -38,6 +38,7 @@ import { SubscriptionPlanModule } from './subscription-plan/subscription-plan.mo
 import { OrganizationModule } from './organization/organization.module';
 import { OrganizationMemberModule } from './organization-member/organization-member.module';
 import { NotificationModule } from './notification/notification.module';
+import { CoursePerformanceLeaderboardModule } from './course-performance-leaderboard/course-performance-leaderboard.module';
 import { FinancialAidModule } from './financial-aid/financial-aid.module';
 import { StudentAuthModule } from './student-auth/student-auth.module';
 
@@ -103,6 +104,7 @@ import { StudentAuthModule } from './student-auth/student-auth.module';
     CourseAnalyticsModule,
     // Gamification
     GamificationPointsModule,
+    CoursePerformanceLeaderboardModule,
     // FAQ
     FaqManagementModule,
     // Google Auth
