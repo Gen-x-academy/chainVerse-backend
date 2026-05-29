@@ -13,6 +13,12 @@ async function bootstrap() {
 
   app.useLogger(app.get(Logger));
 
+
+  // Body size limits for security (#405)
+  const express = await import('express');
+  app.use(express.json({ limit: '1mb' }));
+  app.use(express.urlencoded({ limit: '1mb', extended: true }));
+
   // Compress all responses (#416)
   app.use(compression());
 
