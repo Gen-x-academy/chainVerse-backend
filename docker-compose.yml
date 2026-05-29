@@ -4,8 +4,6 @@ services:
   mongo:
     image: mongo:7
     restart: unless-stopped
-    ports:
-      - '27017:27017'
     volumes:
       - mongo_data:/data/db
     healthcheck:
@@ -14,6 +12,11 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
 
   redis:
     image: redis:7-alpine
