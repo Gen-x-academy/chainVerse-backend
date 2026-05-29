@@ -71,4 +71,38 @@ export class EmailService {
       );
     }
   }
+
+  async sendVerificationEmail(
+    to: string,
+    verificationToken: string,
+  ): Promise<void> {
+    const from =
+      this.configService.get<string>('emailFrom') ??
+      'noreply@chainverse.academy';
+    const baseUrl =
+      this.configService.get<string>('baseUrl') ?? 'http://localhost:3000';
+    const verificationLink = `${baseUrl}/student/verify-email?token=${encodeURIComponent(
+      verificationToken,
+    )}`;
+
+    const mailOptions = {
+      from,
+      to,
+      subject: 'Verify your ChainVerse email',
+      text: `Please verify your email by visiting: ${verificationLink}`,
+      html: `<p>Welcome to ChainVerse!</p>
+<p>Please verify your email by clicking the link below:</p>
+<p><a href="${verificationLink}">Verify my email</a></p>
+<p>If you did not create an account, please ignore this message.</p>`,
+    };
+
+    if (this.transporter) {
+      await this.transporter.sendMail(mailOptions);
+      this.logger.log(`Verification email sent to ${to}`);
+    } else {
+      this.logger.warn(
+        `SMTP not configured. Verification email to ${to} was NOT sent.`,
+      );
+    }
+  }
 }

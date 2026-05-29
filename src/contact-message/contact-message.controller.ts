@@ -18,7 +18,7 @@ import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 
 @ApiBearerAuth('access-token')
-@Controller('contact-messages')
+@Controller(['contact-messages', 'contact', 'v1/contact'])
 export class ContactMessageController {
   constructor(private readonly service: ContactMessageService) {}
 
@@ -33,8 +33,6 @@ export class ContactMessageController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   create(@Body() payload: CreateContactMessageDto) {
     return this.service.create(payload);
   }

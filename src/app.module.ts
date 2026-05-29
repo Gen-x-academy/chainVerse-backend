@@ -40,6 +40,8 @@ import { OrganizationMemberModule } from './organization-member/organization-mem
 import { NotificationModule } from './notification/notification.module';
 import { FinancialAidModule } from './financial-aid/financial-aid.module';
 import { StudentAuthModule } from './student-auth/student-auth.module';
+import { ContactMessageModule } from './contact-message/contact-message.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -120,6 +122,10 @@ import { StudentAuthModule } from './student-auth/student-auth.module';
     NotificationModule,
     // Financial Aid
     FinancialAidModule,
+    // Contact
+    ContactMessageModule,
+    // Reporting
+    ReportsModule,
     // Stellar
     StellarModule,
   ],
