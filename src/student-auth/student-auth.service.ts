@@ -160,6 +160,11 @@ export class StudentAuthService {
       Date.now() + VERIFICATION_TOKEN_EXPIRY * 1000;
     await student.save();
 
+    await this.emailService.sendVerificationEmail(
+      student.email,
+      verificationToken,
+    );
+
     this.eventEmitter.emit(
       DomainEvents.STUDENT_REGISTERED,
       Object.assign(new StudentRegisteredPayload(), {
