@@ -22,17 +22,17 @@ export class StudentSavedCoursesController {
   constructor(private readonly service: StudentSavedCoursesService) {}
 
   @Post(':id/add')
-  add(@Req() req: { user: { id: string } }, @Param('id') courseId: string) {
+  add(@Req() req: { user: { id: string } }, @Param('id', new ParseObjectIdPipe()) courseId: string) {
     return this.service.add(req.user.id, courseId);
   }
 
   @Get(':id')
-  list(@Param('id') studentId: string) {
+  list(@Param('id', new ParseObjectIdPipe()) studentId: string) {
     return this.service.list(studentId);
   }
 
   @Delete(':id/:courseId')
-  remove(@Param('id') studentId: string, @Param('courseId') courseId: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) studentId: string, @Param('courseId') courseId: string) {
     return this.service.remove(studentId, courseId);
   }
 }

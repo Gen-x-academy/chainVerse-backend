@@ -28,7 +28,7 @@ export class TutorReportsAnalyticsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
@@ -43,7 +43,7 @@ export class TutorReportsAnalyticsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   update(
-    @Param('id') id: string,
+    @Param('id', new ParseObjectIdPipe()) id: string,
     @Body() payload: UpdateTutorReportsAnalyticsDto,
   ) {
     return this.service.update(id, payload);
@@ -52,7 +52,7 @@ export class TutorReportsAnalyticsController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.remove(id);
   }
 }

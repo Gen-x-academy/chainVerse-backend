@@ -28,7 +28,7 @@ export class CertificateSocialSharingController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
@@ -43,7 +43,7 @@ export class CertificateSocialSharingController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   update(
-    @Param('id') id: string,
+    @Param('id', new ParseObjectIdPipe()) id: string,
     @Body() payload: UpdateCertificateSocialSharingDto,
   ) {
     return this.service.update(id, payload);
@@ -52,7 +52,7 @@ export class CertificateSocialSharingController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.remove(id);
   }
 }

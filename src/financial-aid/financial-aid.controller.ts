@@ -62,21 +62,21 @@ export class FinancialAidController {
   @Get(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.STUDENT)
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.findUseCase.findById(id);
   }
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  update(@Param('id') id: string, @Body() payload: UpdateFinancialAidDto) {
+  update(@Param('id', new ParseObjectIdPipe()) id: string, @Body() payload: UpdateFinancialAidDto) {
     return this.reviewUseCase.execute(id, payload);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.deleteUseCase.execute(id);
   }
 }

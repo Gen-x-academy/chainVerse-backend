@@ -38,7 +38,7 @@ export class FaqManagementController {
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(600000)
   @ApiOperation({ summary: 'Get single FAQ entry (cached, 10 min TTL)' })
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
@@ -52,14 +52,14 @@ export class FaqManagementController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
-  update(@Param('id') id: string, @Body() payload: UpdateFaqManagementDto) {
+  update(@Param('id', new ParseObjectIdPipe()) id: string, @Body() payload: UpdateFaqManagementDto) {
     return this.service.update(id, payload);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.remove(id);
   }
 }

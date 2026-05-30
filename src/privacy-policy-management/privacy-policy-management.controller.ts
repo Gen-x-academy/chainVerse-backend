@@ -38,7 +38,7 @@ export class PrivacyPolicyManagementController {
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(3600000)
   @ApiOperation({ summary: 'Get privacy policy entry (cached, 1 hr TTL)' })
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
@@ -53,7 +53,7 @@ export class PrivacyPolicyManagementController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   update(
-    @Param('id') id: string,
+    @Param('id', new ParseObjectIdPipe()) id: string,
     @Body() payload: UpdatePrivacyPolicyManagementDto,
   ) {
     return this.service.update(id, payload);
@@ -62,7 +62,7 @@ export class PrivacyPolicyManagementController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.remove(id);
   }
 }

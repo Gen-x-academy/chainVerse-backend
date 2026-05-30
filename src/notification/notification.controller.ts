@@ -56,22 +56,22 @@ export class NotificationController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() payload: UpdateNotificationDto) {
+  update(@Param('id', new ParseObjectIdPipe()) id: string, @Body() payload: UpdateNotificationDto) {
     return this.service.update(id, payload);
   }
 
   @Patch(':id/read')
-  markAsRead(@Param('id') id: string) {
+  markAsRead(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.markAsRead(id);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.remove(id);
   }
 }

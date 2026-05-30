@@ -28,7 +28,7 @@ export class BadgeController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
@@ -47,14 +47,14 @@ export class BadgeController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  update(@Param('id') id: string, @Body() payload: UpdateBadgeDto) {
+  update(@Param('id', new ParseObjectIdPipe()) id: string, @Body() payload: UpdateBadgeDto) {
     return this.service.update(id, payload);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.remove(id);
   }
 }
@@ -90,7 +90,7 @@ export class CourseCertificationNftAchievementsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
@@ -105,7 +105,7 @@ export class CourseCertificationNftAchievementsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   update(
-    @Param('id') id: string,
+    @Param('id', new ParseObjectIdPipe()) id: string,
     @Body() payload: UpdateCourseCertificationNftAchievementsDto,
   ) {
     return this.service.update(id, payload);
@@ -114,68 +114,7 @@ export class CourseCertificationNftAchievementsController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  remove(@Param('id') id: string) {
-    return this.service.remove(id);
-  }
-}
-
-import { ApiBearerAuth } from '@nestjs/swagger';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
-import { CourseCertificationNftAchievementsService } from './course-certification-nft-achievements.service';
-import { CreateCourseCertificationNftAchievementsDto } from './dto/create-course-certification-nft-achievements.dto';
-import { UpdateCourseCertificationNftAchievementsDto } from './dto/update-course-certification-nft-achievements.dto';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
-import { Role } from '../common/enums/role.enum';
-import { Roles } from '../common/decorators/roles.decorator';
-
-@ApiBearerAuth('access-token')
-@Controller('courses/certification-nft')
-export class CourseCertificationNftAchievementsController {
-  constructor(
-    private readonly service: CourseCertificationNftAchievementsService,
-  ) {}
-
-  @Get()
-  findAll() {
-    return this.service.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
-  }
-
-  @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
-  create(@Body() payload: CreateCourseCertificationNftAchievementsDto) {
-    return this.service.create(payload);
-  }
-
-  @Patch(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
-  update(
-    @Param('id') id: string,
-    @Body() payload: UpdateCourseCertificationNftAchievementsDto,
-  ) {
-    return this.service.update(id, payload);
-  }
-
-  @Delete(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.MODERATOR)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.remove(id);
   }
 }
@@ -212,7 +151,7 @@ export class CourseCertificationNftAchievementsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
@@ -227,7 +166,7 @@ export class CourseCertificationNftAchievementsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   update(
-    @Param('id') id: string,
+    @Param('id', new ParseObjectIdPipe()) id: string,
     @Body() payload: UpdateCourseCertificationNftAchievementsDto,
   ) {
     return this.service.update(id, payload);
@@ -236,67 +175,7 @@ export class CourseCertificationNftAchievementsController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  remove(@Param('id') id: string) {
-    return this.service.remove(id);
-  }
-}
-import { ApiBearerAuth } from '@nestjs/swagger';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
-import { CourseCertificationNftAchievementsService } from './course-certification-nft-achievements.service';
-import { CreateCourseCertificationNftAchievementsDto } from './dto/create-course-certification-nft-achievements.dto';
-import { UpdateCourseCertificationNftAchievementsDto } from './dto/update-course-certification-nft-achievements.dto';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
-import { Role } from '../common/enums/role.enum';
-import { Roles } from '../common/decorators/roles.decorator';
-
-@ApiBearerAuth('access-token')
-@Controller('courses/certification-nft')
-export class CourseCertificationNftAchievementsController {
-  constructor(
-    private readonly service: CourseCertificationNftAchievementsService,
-  ) {}
-
-  @Get()
-  findAll() {
-    return this.service.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
-  }
-
-  @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
-  create(@Body() payload: CreateCourseCertificationNftAchievementsDto) {
-    return this.service.create(payload);
-  }
-
-  @Patch(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
-  update(
-    @Param('id') id: string,
-    @Body() payload: UpdateCourseCertificationNftAchievementsDto,
-  ) {
-    return this.service.update(id, payload);
-  }
-
-  @Delete(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.MODERATOR)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.remove(id);
   }
 }
@@ -333,7 +212,7 @@ export class CourseCertificationNftAchievementsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
@@ -348,7 +227,7 @@ export class CourseCertificationNftAchievementsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   update(
-    @Param('id') id: string,
+    @Param('id', new ParseObjectIdPipe()) id: string,
     @Body() payload: UpdateCourseCertificationNftAchievementsDto,
   ) {
     return this.service.update(id, payload);
@@ -357,7 +236,67 @@ export class CourseCertificationNftAchievementsController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
+    return this.service.remove(id);
+  }
+}
+import { ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { CourseCertificationNftAchievementsService } from './course-certification-nft-achievements.service';
+import { CreateCourseCertificationNftAchievementsDto } from './dto/create-course-certification-nft-achievements.dto';
+import { UpdateCourseCertificationNftAchievementsDto } from './dto/update-course-certification-nft-achievements.dto';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Role } from '../common/enums/role.enum';
+import { Roles } from '../common/decorators/roles.decorator';
+
+@ApiBearerAuth('access-token')
+@Controller('courses/certification-nft')
+export class CourseCertificationNftAchievementsController {
+  constructor(
+    private readonly service: CourseCertificationNftAchievementsService,
+  ) {}
+
+  @Get()
+  findAll() {
+    return this.service.findAll();
+  }
+
+  @Get(':id')
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
+    return this.service.findOne(id);
+  }
+
+  @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
+  create(@Body() payload: CreateCourseCertificationNftAchievementsDto) {
+    return this.service.create(payload);
+  }
+
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
+  update(
+    @Param('id', new ParseObjectIdPipe()) id: string,
+    @Body() payload: UpdateCourseCertificationNftAchievementsDto,
+  ) {
+    return this.service.update(id, payload);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.MODERATOR)
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.remove(id);
   }
 }
@@ -394,7 +333,7 @@ export class CourseCertificationNftAchievementsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
@@ -409,7 +348,7 @@ export class CourseCertificationNftAchievementsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   update(
-    @Param('id') id: string,
+    @Param('id', new ParseObjectIdPipe()) id: string,
     @Body() payload: UpdateCourseCertificationNftAchievementsDto,
   ) {
     return this.service.update(id, payload);
@@ -418,7 +357,68 @@ export class CourseCertificationNftAchievementsController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
+    return this.service.remove(id);
+  }
+}
+
+import { ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { CourseCertificationNftAchievementsService } from './course-certification-nft-achievements.service';
+import { CreateCourseCertificationNftAchievementsDto } from './dto/create-course-certification-nft-achievements.dto';
+import { UpdateCourseCertificationNftAchievementsDto } from './dto/update-course-certification-nft-achievements.dto';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Role } from '../common/enums/role.enum';
+import { Roles } from '../common/decorators/roles.decorator';
+
+@ApiBearerAuth('access-token')
+@Controller('courses/certification-nft')
+export class CourseCertificationNftAchievementsController {
+  constructor(
+    private readonly service: CourseCertificationNftAchievementsService,
+  ) {}
+
+  @Get()
+  findAll() {
+    return this.service.findAll();
+  }
+
+  @Get(':id')
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
+    return this.service.findOne(id);
+  }
+
+  @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
+  create(@Body() payload: CreateCourseCertificationNftAchievementsDto) {
+    return this.service.create(payload);
+  }
+
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
+  update(
+    @Param('id', new ParseObjectIdPipe()) id: string,
+    @Body() payload: UpdateCourseCertificationNftAchievementsDto,
+  ) {
+    return this.service.update(id, payload);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.MODERATOR)
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.remove(id);
   }
 }

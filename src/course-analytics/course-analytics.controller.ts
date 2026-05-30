@@ -20,7 +20,7 @@ export class CourseAnalyticsController {
   })
   @Roles(Role.TUTOR, Role.ADMIN)
   async getCourseAnalytics(
-    @Param('id') courseId: string,
+    @Param('id', new ParseObjectIdPipe()) courseId: string,
     @CurrentUser('sub') userId: string,
     @CurrentUser('role') role: string,
   ) {

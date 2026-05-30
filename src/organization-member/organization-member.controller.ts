@@ -36,7 +36,7 @@ export class OrganizationMemberController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard)
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
@@ -51,7 +51,7 @@ export class OrganizationMemberController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   updateRole(
-    @Param('id') id: string,
+    @Param('id', new ParseObjectIdPipe()) id: string,
     @Body() payload: UpdateOrganizationMemberDto,
   ) {
     return this.service.updateRole(id, payload);
@@ -60,7 +60,7 @@ export class OrganizationMemberController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  removeMember(@Param('id') id: string) {
+  removeMember(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.removeMember(id);
   }
 }

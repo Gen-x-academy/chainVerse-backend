@@ -44,19 +44,19 @@ export class SessionController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
   @Patch(':id/invalidate')
-  invalidate(@Param('id') id: string) {
+  invalidate(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.invalidate(id);
   }
 
   @Delete(':id')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.remove(id);
   }
 }

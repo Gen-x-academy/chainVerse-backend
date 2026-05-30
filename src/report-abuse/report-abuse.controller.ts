@@ -49,21 +49,21 @@ export class ReportAbuseController {
   @Get(':id')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
   @Patch(':id')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  update(@Param('id') id: string, @Body() payload: UpdateReportAbuseDto) {
+  update(@Param('id', new ParseObjectIdPipe()) id: string, @Body() payload: UpdateReportAbuseDto) {
     return this.service.update(id, payload);
   }
 
   @Delete(':id')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.remove(id);
   }
 }

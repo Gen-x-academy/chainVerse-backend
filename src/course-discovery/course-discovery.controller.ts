@@ -44,7 +44,7 @@ export class CourseDiscoveryController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a single course by ID' })
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.courseDiscoveryService.findOne(id);
   }
 
