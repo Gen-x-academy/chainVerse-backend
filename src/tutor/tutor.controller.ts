@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Post, Put, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { TutorService } from './tutor.service';
 import { CreateTutorDto } from './dto/create-tutor.dto';
 import { LoginTutorDto } from './dto/login-tutor.dto';
@@ -14,11 +15,13 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 export class TutorController {
   constructor(private readonly tutorService: TutorService) {}
 
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('create')
   create(@Body() dto: CreateTutorDto) {
     return this.tutorService.create(dto);
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('login')
   login(@Body() dto: LoginTutorDto) {
     return this.tutorService.login(dto);
@@ -29,6 +32,7 @@ export class TutorController {
     return this.tutorService.verifyEmail(dto);
   }
 
+  @Throttle({ default: { limit: 3, ttl: 15 * 60_000 } })
   @Post('forgot-password')
   forgetPassword(@Body() dto: ForgetTutorPasswordDto, @Req() req: Request) {
     return this.tutorService.forgetPassword(
