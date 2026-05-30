@@ -1,5 +1,5 @@
 import { Body, Controller, Post, Req } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { StudentAuthService } from './student-auth.service';
 import { CreateStudentDto } from './dto/create-student.dto';
@@ -18,16 +18,18 @@ export class StudentAuthController {
   constructor(private readonly studentAuthService: StudentAuthService) {}
 
   @Post('register')
-  @ApiOperation({ summary: 'Register a new student account' })
-  @ApiResponse({ status: 201, description: 'Account created successfully' })
+  @ApiOperation({ summary: 'Register a new student' })
+  @ApiBody({ type: CreateStudentDto })
+  @ApiResponse({ status: 201, description: 'Student registered. Verification email sent.' })
   @ApiResponse({ status: 400, description: 'Invalid input or missing fields' })
-  @ApiResponse({ status: 409, description: 'Email already registered' })
+  @ApiResponse({ status: 409, description: 'Email already registered.' })
   create(@Body() dto: CreateStudentDto) {
     return this.studentAuthService.create(dto);
   }
 
   @Post('verify-email')
   @ApiOperation({ summary: 'Verify student email with token' })
+  @ApiBody({ type: VerifyEmailDto })
   @ApiResponse({ status: 200, description: 'Email verified successfully' })
   @ApiResponse({ status: 400, description: 'Invalid or expired token' })
   verifyEmail(@Body() dto: VerifyEmailDto) {
@@ -36,6 +38,7 @@ export class StudentAuthController {
 
   @Post('resend-verification-email')
   @ApiOperation({ summary: 'Resend email verification link' })
+  @ApiBody({ type: ResendVerificationEmailDto })
   @ApiResponse({
     status: 200,
     description: 'Verification email sent if account exists',
@@ -50,6 +53,7 @@ export class StudentAuthController {
 
   @Post('login')
   @ApiOperation({ summary: 'Authenticate a student and receive tokens' })
+  @ApiBody({ type: LoginStudentDto })
   @ApiResponse({
     status: 200,
     description: 'Login successful, returns access and refresh tokens',
@@ -65,6 +69,7 @@ export class StudentAuthController {
 
   @Post('forgot-password')
   @ApiOperation({ summary: 'Request a password reset link' })
+  @ApiBody({ type: ForgetPasswordDto })
   @ApiResponse({
     status: 200,
     description: 'Reset link sent if account exists',
@@ -80,6 +85,7 @@ export class StudentAuthController {
 
   @Post('reset-password')
   @ApiOperation({ summary: 'Reset password using a valid reset token' })
+  @ApiBody({ type: ResetPasswordDto })
   @ApiResponse({ status: 200, description: 'Password reset successfully' })
   @ApiResponse({
     status: 400,
@@ -95,6 +101,7 @@ export class StudentAuthController {
 
   @Post('refresh-token')
   @ApiOperation({ summary: 'Rotate refresh token and get a new token pair' })
+  @ApiBody({ type: RefreshTokenDto })
   @ApiResponse({
     status: 200,
     description: 'New access and refresh tokens issued',
@@ -106,6 +113,7 @@ export class StudentAuthController {
 
   @Post('logout')
   @ApiOperation({ summary: 'Invalidate the current refresh token' })
+  @ApiBody({ type: RefreshTokenDto })
   @ApiResponse({ status: 200, description: 'Logged out successfully' })
   @ApiResponse({ status: 400, description: 'Missing refresh token' })
   logout(@Body() dto: RefreshTokenDto) {
