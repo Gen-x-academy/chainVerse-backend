@@ -10,7 +10,7 @@ import {
   Query,
   Req,
   UseGuards,
-} from '@nestjs/common';
+, ParseObjectIdPipe } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { UpdateNotificationDto } from './dto/update-notification.dto';

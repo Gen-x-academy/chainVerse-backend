@@ -8,7 +8,7 @@ import {
   Patch,
   Post,
   UseGuards,
-} from '@nestjs/common';
+, ParseObjectIdPipe } from '@nestjs/common';
 import { AdminCertificateNameChangeReviewService } from './admin-certificate-name-change-review.service';
 import { CreateAdminCertificateNameChangeReviewDto } from './dto/create-admin-certificate-name-change-review.dto';
 import { UpdateAdminCertificateNameChangeReviewDto } from './dto/update-admin-certificate-name-change-review.dto';

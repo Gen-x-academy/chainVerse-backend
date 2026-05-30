@@ -8,7 +8,7 @@ import {
   Patch,
   Post,
   UseGuards,
-} from '@nestjs/common';
+, ParseObjectIdPipe } from '@nestjs/common';
 import { TutorJwtAuthService } from './tutor-jwt-auth.service';
 import { CreateTutorJwtAuthDto } from './dto/create-tutor-jwt-auth.dto';
 import { UpdateTutorJwtAuthDto } from './dto/update-tutor-jwt-auth.dto';

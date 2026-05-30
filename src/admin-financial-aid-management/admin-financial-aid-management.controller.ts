@@ -8,7 +8,7 @@ import {
   Patch,
   Post,
   UseGuards,
-} from '@nestjs/common';
+, ParseObjectIdPipe } from '@nestjs/common';
 import { AdminFinancialAidManagementService } from './admin-financial-aid-management.service';
 import { CreateAdminFinancialAidManagementDto } from './dto/create-admin-financial-aid-management.dto';
 import { UpdateAdminFinancialAidManagementDto } from './dto/update-admin-financial-aid-management.dto';

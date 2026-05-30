@@ -9,7 +9,7 @@ import {
   Post,
   UseGuards,
   UseInterceptors,
-} from '@nestjs/common';
+, ParseObjectIdPipe } from '@nestjs/common';
 import { CacheInterceptor, CacheKey, CacheTTL } from '@nestjs/cache-manager';
 import { CoursePerformanceLeaderboardService } from './course-performance-leaderboard.service';
 import { LEADERBOARD_CACHE_KEY } from './course-performance-leaderboard.service';

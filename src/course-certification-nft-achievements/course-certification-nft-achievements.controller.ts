@@ -8,7 +8,7 @@ import {
   Patch,
   Post,
   UseGuards,
-} from '@nestjs/common';
+, ParseObjectIdPipe } from '@nestjs/common';
 import { CourseCertificationNftAchievementsService } from './course-certification-nft-achievements.service';
 import { CreateCourseCertificationNftAchievementsDto } from './dto/create-course-certification-nft-achievements.dto';
 import { UpdateCourseCertificationNftAchievementsDto } from './dto/update-course-certification-nft-achievements.dto';

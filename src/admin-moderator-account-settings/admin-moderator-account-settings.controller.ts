@@ -8,7 +8,7 @@ import {
   Patch,
   Post,
   UseGuards,
-} from '@nestjs/common';
+, ParseObjectIdPipe } from '@nestjs/common';
 import { AdminModeratorAccountSettingsService } from './admin-moderator-account-settings.service';
 import { CreateAdminModeratorAccountSettingsDto } from './dto/create-admin-moderator-account-settings.dto';
 import { UpdateAdminModeratorAccountSettingsDto } from './dto/update-admin-moderator-account-settings.dto';

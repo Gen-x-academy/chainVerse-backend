@@ -8,7 +8,7 @@ import {
   Patch,
   Post,
   UseGuards,
-} from '@nestjs/common';
+, ParseObjectIdPipe } from '@nestjs/common';
 import { TermsConditionsManagementService } from './terms-conditions-management.service';
 import { CreateTermsConditionsManagementDto } from './dto/create-terms-conditions-management.dto';
 import { UpdateTermsConditionsManagementDto } from './dto/update-terms-conditions-management.dto';

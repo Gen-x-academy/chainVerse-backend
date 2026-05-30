@@ -8,7 +8,7 @@ import {
   Patch,
   Post,
   UseGuards,
-} from '@nestjs/common';
+, ParseObjectIdPipe } from '@nestjs/common';
 import { PrivateTutoringBookingsService } from './private-tutoring-bookings.service';
 import { CreatePrivateTutoringBookingsDto } from './dto/create-private-tutoring-bookings.dto';
 import { UpdatePrivateTutoringBookingsDto } from './dto/update-private-tutoring-bookings.dto';

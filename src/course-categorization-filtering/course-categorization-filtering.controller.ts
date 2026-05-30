@@ -10,7 +10,7 @@ import {
   Query,
   UseGuards,
   UseInterceptors,
-} from '@nestjs/common';
+, ParseObjectIdPipe } from '@nestjs/common';
 import { CacheInterceptor, CacheKey, CacheTTL } from '@nestjs/cache-manager';
 import { CourseCategorizationFilteringService } from './course-categorization-filtering.service';
 import { COURSE_DISCOVERY_CACHE_KEY } from './course-categorization-filtering.service';

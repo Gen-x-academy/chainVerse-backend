@@ -9,7 +9,7 @@ import {
   Post,
   Req,
   UseGuards,
-} from '@nestjs/common';
+, ParseObjectIdPipe } from '@nestjs/common';
 import { ReportAbuseService } from './report-abuse.service';
 import { CreateReportAbuseDto } from './dto/create-report-abuse.dto';
 import { UpdateReportAbuseDto } from './dto/update-report-abuse.dto';

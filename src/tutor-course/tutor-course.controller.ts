@@ -9,7 +9,7 @@ import {
   Post,
   Query,
   UseGuards,
-} from '@nestjs/common';
+, ParseObjectIdPipe } from '@nestjs/common';
 import { TutorCourseService } from './tutor-course.service';
 import { CreateCourseDto } from '../admin-course/dto/create-course.dto';
 import { UpdateCourseDto } from '../admin-course/dto/update-course.dto';

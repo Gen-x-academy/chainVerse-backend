@@ -1,5 +1,5 @@
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, ParseObjectIdPipe } from '@nestjs/common';
 import { CourseDiscoveryService } from './course-discovery.service';
 import { SearchCoursesDto } from './dto/search-courses.dto';
 

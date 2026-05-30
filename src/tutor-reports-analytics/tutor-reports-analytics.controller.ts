@@ -8,7 +8,7 @@ import {
   Patch,
   Post,
   UseGuards,
-} from '@nestjs/common';
+, ParseObjectIdPipe } from '@nestjs/common';
 import { TutorReportsAnalyticsService } from './tutor-reports-analytics.service';
 import { CreateTutorReportsAnalyticsDto } from './dto/create-tutor-reports-analytics.dto';
 import { UpdateTutorReportsAnalyticsDto } from './dto/update-tutor-reports-analytics.dto';

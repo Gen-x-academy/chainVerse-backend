@@ -8,7 +8,7 @@ import {
   Patch,
   Post,
   UseGuards,
-} from '@nestjs/common';
+, ParseObjectIdPipe } from '@nestjs/common';
 import { GamificationPointsService } from './gamification-points.service';
 import { CreateGamificationPointsDto } from './dto/create-gamification-points.dto';
 import { UpdateGamificationPointsDto } from './dto/update-gamification-points.dto';

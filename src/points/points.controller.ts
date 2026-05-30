@@ -9,7 +9,7 @@ import {
   Post,
   Req,
   UseGuards,
-} from '@nestjs/common';
+, ParseObjectIdPipe } from '@nestjs/common';
 import { PointsService } from './points.service';
 import { CreatePointsDto } from './dto/create-points.dto';
 import { UpdatePointsDto } from './dto/update-points.dto';

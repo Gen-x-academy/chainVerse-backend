@@ -8,7 +8,7 @@ import {
   Patch,
   Post,
   UseGuards,
-} from '@nestjs/common';
+, ParseObjectIdPipe } from '@nestjs/common';
 import { CourseReportsAnalyticsService } from './course-reports-analytics.service';
 import { CreateCourseReportsAnalyticsDto } from './dto/create-course-reports-analytics.dto';
 import { UpdateCourseReportsAnalyticsDto } from './dto/update-course-reports-analytics.dto';

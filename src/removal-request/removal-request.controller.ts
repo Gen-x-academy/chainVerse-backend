@@ -9,7 +9,7 @@ import {
   Post,
   Req,
   UseGuards,
-} from '@nestjs/common';
+, ParseObjectIdPipe } from '@nestjs/common';
 import { RemovalRequestService } from './removal-request.service';
 import { CreateRemovalRequestDto } from './dto/create-removal-request.dto';
 import { UpdateRemovalRequestDto } from './dto/update-removal-request.dto';

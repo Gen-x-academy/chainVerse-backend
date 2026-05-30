@@ -1,4 +1,4 @@
-import { ArgumentMetadata, BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
+import { ArgumentMetadata, BadRequestException, Injectable, PipeTransform, ParseObjectIdPipe } from '@nestjs/common';
 import { isValidObjectId } from 'mongoose';
 
 @Injectable()

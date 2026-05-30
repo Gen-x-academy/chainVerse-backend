@@ -9,7 +9,7 @@ import {
   Post,
   UseGuards,
   UseInterceptors,
-} from '@nestjs/common';
+, ParseObjectIdPipe } from '@nestjs/common';
 import { CacheInterceptor, CacheKey, CacheTTL } from '@nestjs/cache-manager';
 import { PrivacyPolicyManagementService } from './privacy-policy-management.service';
 import { PRIVACY_POLICY_CACHE_KEY } from './privacy-policy-management.service';

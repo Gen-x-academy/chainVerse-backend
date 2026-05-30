@@ -9,7 +9,7 @@ import {
   Post,
   Req,
   UseGuards,
-} from '@nestjs/common';
+, ParseObjectIdPipe } from '@nestjs/common';
 import { StudentCartService } from './student-cart.service';
 import { UpdateStudentCartDto } from './dto/update-student-cart.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';

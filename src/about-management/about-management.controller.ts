@@ -8,7 +8,7 @@ import {
   Patch,
   Post,
   UseGuards,
-} from '@nestjs/common';
+, ParseObjectIdPipe } from '@nestjs/common';
 import { AboutManagementService } from './about-management.service';
 import { CreateAboutManagementDto } from './dto/create-about-management.dto';
 import { UpdateAboutManagementDto } from './dto/update-about-management.dto';
