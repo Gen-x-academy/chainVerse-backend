@@ -12,6 +12,7 @@ import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nes
 import { TutorService } from './tutor.service';
 import { CreateTutorDto } from './dto/create-tutor.dto';
 import { LoginTutorDto } from './dto/login-tutor.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { VerifyTutorEmailDto } from './dto/verify-tutor-email.dto';
 import { ForgetTutorPasswordDto } from './dto/forget-tutor-password.dto';
 import { ResetTutorPasswordDto } from './dto/reset-tutor-password.dto';
@@ -76,6 +77,24 @@ export class TutorController {
       req.ip,
       req.headers['user-agent'],
     );
+  }
+
+  @Post('refresh-token')
+  @ApiOperation({ summary: 'Rotate tutor refresh token and issue a new token pair' })
+  @ApiBody({ type: RefreshTokenDto })
+  @ApiResponse({ status: 200, description: 'New access and refresh tokens issued' })
+  @ApiResponse({ status: 401, description: 'Invalid or revoked refresh token' })
+  refreshToken(@Body() dto: RefreshTokenDto) {
+    return this.tutorService.refreshToken(dto);
+  }
+
+  @Post('logout')
+  @ApiOperation({ summary: 'Revoke the current tutor refresh token' })
+  @ApiBody({ type: RefreshTokenDto })
+  @ApiResponse({ status: 200, description: 'Logged out successfully' })
+  @ApiResponse({ status: 400, description: 'Missing refresh token' })
+  logout(@Body() dto: RefreshTokenDto) {
+    return this.tutorService.logout(dto);
   }
 
   @ApiBearerAuth('access-token')

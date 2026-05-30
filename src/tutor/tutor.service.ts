@@ -18,12 +18,17 @@ import { LoginTutorDto } from './dto/login-tutor.dto';
 import { VerifyTutorEmailDto } from './dto/verify-tutor-email.dto';
 import { UpdateTutorProfileDto } from './dto/update-tutor-profile.dto';
 import { ForgetTutorPasswordDto } from './dto/forget-tutor-password.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ResetTutorPasswordDto } from './dto/reset-tutor-password.dto';
 import { Tutor, TutorDocument } from './schemas/tutor.schema';
 import {
   PasswordResetToken,
   PasswordResetTokenDocument,
 } from './schemas/password-reset-token.schema';
+import {
+  RefreshToken,
+  RefreshTokenDocument,
+} from './schemas/refresh-token.schema';
 
 const ACCESS_TOKEN_EXPIRY = 3600;
 const REFRESH_TOKEN_EXPIRY = 604800;
