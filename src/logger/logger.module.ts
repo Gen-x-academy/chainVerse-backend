@@ -30,6 +30,7 @@ import { IncomingMessage } from 'http';
                 'req.headers.cookie',
                 'req.body.password',
                 'req.body.newPassword',
+                'req.body.confirmPassword',
                 'req.body.currentPassword',
                 'req.body.token',
                 'req.body.refreshToken',

@@ -333,7 +333,7 @@ export class StudentAuthService {
 
     if (!student.emailVerified) {
       throw new UnauthorizedException(
-        'Please verify your email before logging in',
+        'Please verify your email address before logging in.',
       );
     }
 
