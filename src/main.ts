@@ -65,5 +65,7 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const port = configService.get<number>('PORT') ?? 3000;
   await app.listen(port);
+  const pinoLogger = app.get(Logger);
+  pinoLogger.log(`Application is running on port ${port}`);
 }
 bootstrap();
