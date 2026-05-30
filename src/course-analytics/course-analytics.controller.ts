@@ -1,5 +1,5 @@
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards, ParseObjectIdPipe } from '@nestjs/common';
 import { CourseAnalyticsService } from './course-analytics.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -20,7 +20,7 @@ export class CourseAnalyticsController {
   })
   @Roles(Role.TUTOR, Role.ADMIN)
   async getCourseAnalytics(
-    @Param('id') courseId: string,
+    @Param('id', new ParseObjectIdPipe()) courseId: string,
     @CurrentUser('sub') userId: string,
     @CurrentUser('role') role: string,
   ) {

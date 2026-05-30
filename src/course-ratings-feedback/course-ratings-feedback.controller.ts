@@ -1,15 +1,5 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  Put,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Req, UseGuards, ParseObjectIdPipe } from '@nestjs/common';
 import { CourseRatingsFeedbackService } from './course-ratings-feedback.service';
 import { CreateCourseRatingsFeedbackDto } from './dto/create-course-ratings-feedback.dto';
 import { UpdateCourseRatingsFeedbackDto } from './dto/update-course-ratings-feedback.dto';
@@ -27,7 +17,7 @@ export class CourseRatingsFeedbackController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STUDENT)
   create(
-    @Param('id') courseId: string,
+    @Param('id', new ParseObjectIdPipe()) courseId: string,
     @Req() req: { user: { id: string } },
     @Body() payload: CreateCourseRatingsFeedbackDto,
   ) {
@@ -35,7 +25,7 @@ export class CourseRatingsFeedbackController {
   }
 
   @Get(':id/ratings')
-  findAllForCourse(@Param('id') courseId: string) {
+  findAllForCourse(@Param('id', new ParseObjectIdPipe()) courseId: string) {
     return this.service.findAllForCourse(courseId);
   }
 
@@ -43,7 +33,7 @@ export class CourseRatingsFeedbackController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STUDENT)
   findMyRating(
-    @Param('id') courseId: string,
+    @Param('id', new ParseObjectIdPipe()) courseId: string,
     @Req() req: { user: { id: string } },
   ) {
     return this.service.findByStudentAndCourse(req.user.id, courseId);
@@ -53,7 +43,7 @@ export class CourseRatingsFeedbackController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STUDENT)
   update(
-    @Param('id') courseId: string,
+    @Param('id', new ParseObjectIdPipe()) courseId: string,
     @Req() req: { user: { id: string } },
     @Body() payload: UpdateCourseRatingsFeedbackDto,
   ) {
@@ -63,7 +53,7 @@ export class CourseRatingsFeedbackController {
   @Delete(':id/rate')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STUDENT)
-  remove(@Param('id') courseId: string, @Req() req: { user: { id: string } }) {
+  remove(@Param('id', new ParseObjectIdPipe()) courseId: string, @Req() req: { user: { id: string } }) {
     return this.service.remove(courseId, req.user.id);
   }
 }

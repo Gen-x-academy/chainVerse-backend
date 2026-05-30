@@ -1,14 +1,5 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, ParseObjectIdPipe } from '@nestjs/common';
 import { ContactMessageService } from './contact-message.service';
 import { CreateContactMessageDto } from './dto/create-contact-message.dto';
 import { UpdateContactMessageDto } from './dto/update-contact-message.dto';
@@ -28,7 +19,7 @@ export class ContactMessageController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
@@ -40,14 +31,14 @@ export class ContactMessageController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
-  update(@Param('id') id: string, @Body() payload: UpdateContactMessageDto) {
+  update(@Param('id', new ParseObjectIdPipe()) id: string, @Body() payload: UpdateContactMessageDto) {
     return this.service.update(id, payload);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.remove(id);
   }
 }

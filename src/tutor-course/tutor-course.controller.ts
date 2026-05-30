@@ -1,15 +1,5 @@
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards, ParseObjectIdPipe } from '@nestjs/common';
 import { TutorCourseService } from './tutor-course.service';
 import { CreateCourseDto } from '../admin-course/dto/create-course.dto';
 import { UpdateCourseDto } from '../admin-course/dto/update-course.dto';
@@ -33,7 +23,7 @@ export class TutorCourseController {
   @ApiOperation({
     summary: 'Get a specific course by ID (must be owned by tutor)',
   })
-  findOne(@Param('id') id: string, @CurrentUser('sub') tutorId: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string, @CurrentUser('sub') tutorId: string) {
     return this.tutorCourseService.findOne(id, tutorId);
   }
 
@@ -51,7 +41,7 @@ export class TutorCourseController {
   @Patch(':id')
   @ApiOperation({ summary: 'Update a course (must be owned by tutor)' })
   update(
-    @Param('id') id: string,
+    @Param('id', new ParseObjectIdPipe()) id: string,
     @Body() dto: UpdateCourseDto,
     @CurrentUser('sub') tutorId: string,
   ) {
@@ -61,7 +51,7 @@ export class TutorCourseController {
   @Post(':id/submit-review')
   @ApiOperation({ summary: 'Submit a course for review' })
   submitForReview(
-    @Param('id') id: string,
+    @Param('id', new ParseObjectIdPipe()) id: string,
     @CurrentUser('sub') tutorId: string,
   ) {
     return this.tutorCourseService.submitForReview(id, tutorId);
@@ -69,20 +59,20 @@ export class TutorCourseController {
 
   @Patch(':id/publish')
   @ApiOperation({ summary: 'Publish an approved course' })
-  publish(@Param('id') id: string, @CurrentUser('sub') tutorId: string) {
+  publish(@Param('id', new ParseObjectIdPipe()) id: string, @CurrentUser('sub') tutorId: string) {
     return this.tutorCourseService.publish(id, tutorId);
   }
 
   @Patch(':id/unpublish')
   @ApiOperation({ summary: 'Unpublish a published course' })
-  unpublish(@Param('id') id: string, @CurrentUser('sub') tutorId: string) {
+  unpublish(@Param('id', new ParseObjectIdPipe()) id: string, @CurrentUser('sub') tutorId: string) {
     return this.tutorCourseService.unpublish(id, tutorId);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a course (must be owned by tutor)' })
   delete(
-    @Param('id') id: string,
+    @Param('id', new ParseObjectIdPipe()) id: string,
     @CurrentUser('sub') tutorId: string,
     @Query('reason') reason?: string,
   ) {
@@ -91,7 +81,7 @@ export class TutorCourseController {
 
   @Get(':id/enrollments')
   @ApiOperation({ summary: 'Get enrollments for a course' })
-  getEnrollments(@Param('id') id: string, @CurrentUser('sub') tutorId: string) {
+  getEnrollments(@Param('id', new ParseObjectIdPipe()) id: string, @CurrentUser('sub') tutorId: string) {
     return this.tutorCourseService.getEnrollments(id, tutorId);
   }
 }

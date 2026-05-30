@@ -26,12 +26,7 @@ import {
 } from './schemas/password-reset-token.schema';
 import { DomainEvents } from '../events/event-names';
 import { StudentRegisteredPayload } from '../events/payloads/student-registered.payload';
-import {
-  BadRequestException,
-  ConflictException,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 
 jest.mock('bcryptjs');
 jest.mock('crypto');

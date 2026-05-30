@@ -1,15 +1,5 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards, ParseObjectIdPipe } from '@nestjs/common';
 import { SessionService } from './session.service';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -44,19 +34,19 @@ export class SessionController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
   @Patch(':id/invalidate')
-  invalidate(@Param('id') id: string) {
+  invalidate(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.invalidate(id);
   }
 
   @Delete(':id')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.remove(id);
   }
 }

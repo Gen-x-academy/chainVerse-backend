@@ -1,14 +1,5 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, ParseObjectIdPipe } from '@nestjs/common';
 import { CertificateSocialSharingService } from './certificate-social-sharing.service';
 import { CreateCertificateSocialSharingDto } from './dto/create-certificate-social-sharing.dto';
 import { UpdateCertificateSocialSharingDto } from './dto/update-certificate-social-sharing.dto';
@@ -28,7 +19,7 @@ export class CertificateSocialSharingController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
@@ -43,7 +34,7 @@ export class CertificateSocialSharingController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   update(
-    @Param('id') id: string,
+    @Param('id', new ParseObjectIdPipe()) id: string,
     @Body() payload: UpdateCertificateSocialSharingDto,
   ) {
     return this.service.update(id, payload);
@@ -52,7 +43,7 @@ export class CertificateSocialSharingController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.remove(id);
   }
 }

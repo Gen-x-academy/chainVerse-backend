@@ -1,15 +1,5 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards, ParseObjectIdPipe } from '@nestjs/common';
 import { RemovalRequestService } from './removal-request.service';
 import { CreateRemovalRequestDto } from './dto/create-removal-request.dto';
 import { UpdateRemovalRequestDto } from './dto/update-removal-request.dto';
@@ -45,21 +35,21 @@ export class RemovalRequestController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
   @Patch(':id/moderate')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  moderate(@Param('id') id: string, @Body() payload: UpdateRemovalRequestDto) {
+  moderate(@Param('id', new ParseObjectIdPipe()) id: string, @Body() payload: UpdateRemovalRequestDto) {
     return this.service.moderate(id, payload);
   }
 
   @Delete(':id')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.remove(id);
   }
 }
