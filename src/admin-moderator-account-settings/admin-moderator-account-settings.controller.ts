@@ -1,5 +1,6 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, ParseObjectIdPipe } from '@nestjs/common';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { AdminModeratorAccountSettingsService } from './admin-moderator-account-settings.service';
 import { CreateAdminModeratorAccountSettingsDto } from './dto/create-admin-moderator-account-settings.dto';
 import { UpdateAdminModeratorAccountSettingsDto } from './dto/update-admin-moderator-account-settings.dto';

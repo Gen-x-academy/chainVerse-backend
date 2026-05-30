@@ -81,7 +81,7 @@ export class StudentAuthController {
   forgetPassword(@Body() dto: ForgetPasswordDto, @Req() req: Request) {
     return this.studentAuthService.forgetPassword(
       dto,
-      req.ip,
+      (req as any).ip,
       req.headers['user-agent'],
     );
   }
@@ -97,7 +97,7 @@ export class StudentAuthController {
   resetPassword(@Body() dto: ResetPasswordDto, @Req() req: Request) {
     return this.studentAuthService.resetPassword(
       dto,
-      req.ip,
+      (req as any).ip,
       req.headers['user-agent'],
     );
   }

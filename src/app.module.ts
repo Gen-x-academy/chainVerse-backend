@@ -49,17 +49,14 @@ import { AboutManagementModule } from './about-management/about-management.modul
 import { AdminFinancialAidManagementModule } from './admin-financial-aid-management/admin-financial-aid-management.module';
 import { AdminModeratorAccountSettingsModule } from './admin-moderator-account-settings/admin-moderator-account-settings.module';
 import { CertificateSocialSharingModule } from './certificate-social-sharing/certificate-social-sharing.module';
-import { ContactMessageModule } from './contact-message/contact-message.module';
 import { CourseCertificationNftAchievementsModule } from './course-certification-nft-achievements/course-certification-nft-achievements.module';
 import { CourseCategorizationFilteringModule } from './course-categorization-filtering/course-categorization-filtering.module';
-import { CoursePerformanceLeaderboardModule } from './course-performance-leaderboard/course-performance-leaderboard.module';
 import { CourseReportsAnalyticsModule } from './course-reports-analytics/course-reports-analytics.module';
 import { IdempotencyModule } from './idempotency/idempotency.module';
 import { PrivacyPolicyManagementModule } from './privacy-policy-management/privacy-policy-management.module';
 import { PrivateTutoringBookingsModule } from './private-tutoring-bookings/private-tutoring-bookings.module';
 import { RemovalRequestModule } from './removal-request/removal-request.module';
 import { ReportAbuseModule } from './report-abuse/report-abuse.module';
-import { SessionModule } from './session/session.module';
 import { StudentAccountSettingsModule } from './student-account-settings/student-account-settings.module';
 import { StudentCertificateNameChangeRequestModule } from './student-certificate-name-change-request/student-certificate-name-change-request.module';
 import { StudentReportsAnalyticsModule } from './student-reports-analytics/student-reports-analytics.module';
@@ -67,7 +64,6 @@ import { TermsConditionsManagementModule } from './terms-conditions-management/t
 import { TutorAccountSettingsModule } from './tutor-account-settings/tutor-account-settings.module';
 import { TutorJwtAuthModule } from './tutor-jwt-auth/tutor-jwt-auth.module';
 import { TutorReportsAnalyticsModule } from './tutor-reports-analytics/tutor-reports-analytics.module';
-import { AppCacheModule } from './cache/app-cache.module';
 
 @Module({
   imports: [

@@ -1,5 +1,6 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, ParseObjectIdPipe } from '@nestjs/common';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { GamificationPointsService } from './gamification-points.service';
 import { CreateGamificationPointsDto } from './dto/create-gamification-points.dto';
 import { UpdateGamificationPointsDto } from './dto/update-gamification-points.dto';
