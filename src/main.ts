@@ -27,6 +27,9 @@ async function bootstrap() {
   // URI-based versioning — controllers opt in with @Version(); existing routes are unaffected
   app.enableVersioning({ type: VersioningType.URI });
 
+  // Global API prefix — exclude /health so load-balancers reach it without the prefix
+  app.setGlobalPrefix('api', { exclude: ['/health'] });
+
   // Security headers
   app.use(helmet());
 
@@ -68,5 +71,7 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const port = configService.get<number>('PORT') ?? 3000;
   await app.listen(port);
+  const pinoLogger = app.get(Logger);
+  pinoLogger.log(`Application is running on port ${port}`);
 }
 bootstrap();
