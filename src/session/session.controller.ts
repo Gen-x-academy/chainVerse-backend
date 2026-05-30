@@ -18,7 +18,7 @@ import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 
 @ApiBearerAuth('access-token')
-@Controller('sessions')
+@Controller(['sessions', 'session'])
 @UseGuards(JwtAuthGuard)
 export class SessionController {
   constructor(private readonly service: SessionService) {}

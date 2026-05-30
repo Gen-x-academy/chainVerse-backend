@@ -16,6 +16,8 @@ import { MetricsModule } from './metrics/metrics.module';
 import { TracingModule } from './tracing/tracing.module';
 import { EmailModule } from './email/email.module';
 import { StellarModule } from './stellar/stellar.module';
+import { AppCacheModule } from './cache/app-cache.module';
+import { SessionModule } from './session/session.module';
 
 // Course modules
 import { AdminCourseModule } from './admin-course/admin-course.module';
@@ -96,6 +98,7 @@ import { AppCacheModule } from './cache/app-cache.module';
       }),
       inject: [ConfigService],
     }),
+    AppCacheModule,
     // MongoDB connection — reads mongoUri from app.config.ts which maps MONGO_URI
     MongooseModule.forRootAsync({
       useFactory: (config: ConfigService) => ({
@@ -109,6 +112,7 @@ import { AppCacheModule } from './cache/app-cache.module';
     MetricsModule,
     TracingModule,
     EmailModule,
+    SessionModule,
     // Tutor modules
     TutorModule,
     // Course modules
