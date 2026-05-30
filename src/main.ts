@@ -22,8 +22,8 @@ async function bootstrap() {
   // Compress all responses (#416)
   app.use(compression());
 
-  // Global API prefix (#415)
-  app.setGlobalPrefix('api');
+  // Global API prefix (#415) — exclude /health so Docker/LB probes work without prefix
+  app.setGlobalPrefix('api', { exclude: ['health', 'health/ready'] });
 
   // Security headers (X-Content-Type-Options, X-Frame-Options, HSTS, etc.)
   app.use(helmet());
