@@ -17,6 +17,7 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 export class StudentAuthController {
   constructor(private readonly studentAuthService: StudentAuthService) {}
 
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('register')
   @ApiOperation({ summary: 'Register a new student' })
   @ApiBody({ type: CreateStudentDto })
@@ -51,6 +52,7 @@ export class StudentAuthController {
     return this.studentAuthService.resendVerificationEmail(dto);
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('login')
   @ApiOperation({ summary: 'Authenticate a student and receive tokens' })
   @ApiBody({ type: LoginStudentDto })
@@ -67,6 +69,7 @@ export class StudentAuthController {
     return this.studentAuthService.login(dto);
   }
 
+  @Throttle({ default: { limit: 3, ttl: 15 * 60_000 } })
   @Post('forgot-password')
   @ApiOperation({ summary: 'Request a password reset link' })
   @ApiBody({ type: ForgetPasswordDto })
