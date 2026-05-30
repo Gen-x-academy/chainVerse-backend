@@ -18,11 +18,11 @@ async function bootstrap() {
   app.use(express.json({ limit: '1mb' }));
   app.use(express.urlencoded({ limit: '1mb', extended: true }));
 
-  // Compress responses larger than 1 KB with gzip level 6
-  app.use(compression({ level: 6, threshold: 1024 }));
+  // Compress all responses
+  app.use(compression());
 
-  // Global API prefix (#415) — exclude /health so Docker/LB probes work without prefix
-  app.setGlobalPrefix('api', { exclude: ['health', 'health/ready'] });
+  // Global API prefix — exclude /health so load-balancers reach it without the prefix
+  app.setGlobalPrefix('api', { exclude: ['/health'] });
 
   // Security headers
   app.use(helmet());
