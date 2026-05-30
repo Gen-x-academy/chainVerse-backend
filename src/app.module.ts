@@ -16,6 +16,8 @@ import { MetricsModule } from './metrics/metrics.module';
 import { TracingModule } from './tracing/tracing.module';
 import { EmailModule } from './email/email.module';
 import { StellarModule } from './stellar/stellar.module';
+import { AppCacheModule } from './cache/app-cache.module';
+import { SessionModule } from './session/session.module';
 
 // Course modules
 import { AdminCourseModule } from './admin-course/admin-course.module';
@@ -41,6 +43,8 @@ import { NotificationModule } from './notification/notification.module';
 import { CoursePerformanceLeaderboardModule } from './course-performance-leaderboard/course-performance-leaderboard.module';
 import { FinancialAidModule } from './financial-aid/financial-aid.module';
 import { StudentAuthModule } from './student-auth/student-auth.module';
+import { ContactMessageModule } from './contact-message/contact-message.module';
+import { ReportsModule } from './reports/reports.module';
 import { AboutManagementModule } from './about-management/about-management.module';
 import { AdminFinancialAidManagementModule } from './admin-financial-aid-management/admin-financial-aid-management.module';
 import { AdminModeratorAccountSettingsModule } from './admin-moderator-account-settings/admin-moderator-account-settings.module';
@@ -96,6 +100,7 @@ import { AppCacheModule } from './cache/app-cache.module';
       }),
       inject: [ConfigService],
     }),
+    AppCacheModule,
     // MongoDB connection — reads mongoUri from app.config.ts which maps MONGO_URI
     MongooseModule.forRootAsync({
       useFactory: (config: ConfigService) => ({
@@ -109,6 +114,7 @@ import { AppCacheModule } from './cache/app-cache.module';
     MetricsModule,
     TracingModule,
     EmailModule,
+    SessionModule,
     // Tutor modules
     TutorModule,
     // Course modules
@@ -145,6 +151,10 @@ import { AppCacheModule } from './cache/app-cache.module';
     NotificationModule,
     // Financial Aid
     FinancialAidModule,
+    // Contact
+    ContactMessageModule,
+    // Reporting
+    ReportsModule,
     // Stellar
     StellarModule,
     // About

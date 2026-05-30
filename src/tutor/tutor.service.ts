@@ -1,10 +1,4 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
@@ -147,6 +141,11 @@ export class TutorService {
     tutor.verificationTokenExpiry =
       Date.now() + VERIFICATION_TOKEN_EXPIRY * 1000;
     await tutor.save();
+
+    await this.emailService.sendVerificationEmail(
+      tutor.email,
+      verificationToken,
+    );
 
     return {
       message: 'Account created. Please verify your email.',

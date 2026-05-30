@@ -1,5 +1,5 @@
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, ParseObjectIdPipe } from '@nestjs/common';
 import { CourseDiscoveryService } from './course-discovery.service';
 import { SearchCoursesDto } from './dto/search-courses.dto';
 
@@ -44,7 +44,7 @@ export class CourseDiscoveryController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a single course by ID' })
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.courseDiscoveryService.findOne(id);
   }
 
