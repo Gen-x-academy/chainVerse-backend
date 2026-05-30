@@ -1,13 +1,5 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
-import {
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Delete, Get, Param, Post, Req, UseGuards, ParseObjectIdPipe } from '@nestjs/common';
 import { StudentSavedCoursesService } from './student-saved-courses.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -22,17 +14,17 @@ export class StudentSavedCoursesController {
   constructor(private readonly service: StudentSavedCoursesService) {}
 
   @Post(':id/add')
-  add(@Req() req: { user: { id: string } }, @Param('id') courseId: string) {
+  add(@Req() req: { user: { id: string } }, @Param('id', new ParseObjectIdPipe()) courseId: string) {
     return this.service.add(req.user.id, courseId);
   }
 
   @Get(':id')
-  list(@Param('id') studentId: string) {
+  list(@Param('id', new ParseObjectIdPipe()) studentId: string) {
     return this.service.list(studentId);
   }
 
   @Delete(':id/:courseId')
-  remove(@Param('id') studentId: string, @Param('courseId') courseId: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) studentId: string, @Param('courseId') courseId: string) {
     return this.service.remove(studentId, courseId);
   }
 }

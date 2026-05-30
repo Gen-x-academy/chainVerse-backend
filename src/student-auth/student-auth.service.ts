@@ -1,10 +1,4 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
@@ -165,6 +159,11 @@ export class StudentAuthService {
     student.verificationTokenExpiry =
       Date.now() + VERIFICATION_TOKEN_EXPIRY * 1000;
     await student.save();
+
+    await this.emailService.sendVerificationEmail(
+      student.email,
+      verificationToken,
+    );
 
     this.eventEmitter.emit(
       DomainEvents.STUDENT_REGISTERED,

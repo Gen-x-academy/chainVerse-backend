@@ -1,15 +1,5 @@
 import { ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, UseInterceptors, ParseObjectIdPipe } from '@nestjs/common';
 import { CacheInterceptor, CacheKey, CacheTTL } from '@nestjs/cache-manager';
 import { CoursePerformanceLeaderboardService } from './course-performance-leaderboard.service';
 import { LEADERBOARD_CACHE_KEY } from './course-performance-leaderboard.service';
@@ -38,7 +28,7 @@ export class CoursePerformanceLeaderboardController {
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(300000)
   @ApiOperation({ summary: 'Get single leaderboard entry (cached, 5 min TTL)' })
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
@@ -53,7 +43,7 @@ export class CoursePerformanceLeaderboardController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   update(
-    @Param('id') id: string,
+    @Param('id', new ParseObjectIdPipe()) id: string,
     @Body() payload: UpdateCoursePerformanceLeaderboardDto,
   ) {
     return this.service.update(id, payload);
@@ -62,7 +52,7 @@ export class CoursePerformanceLeaderboardController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.remove(id);
   }
 }
