@@ -1,5 +1,6 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards, ParseObjectIdPipe } from '@nestjs/common';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { PointsService } from './points.service';
 import { CreatePointsDto } from './dto/create-points.dto';
 import { UpdatePointsDto } from './dto/update-points.dto';

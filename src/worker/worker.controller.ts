@@ -5,7 +5,6 @@ import { extname } from 'node:path';
 import { mkdirSync } from 'node:fs';
 import { WorkerService } from './worker.service';
 import { UploadWorkerFileDto } from './dto/upload-worker-file.dto';
-import { ProcessedFile } from './worker.service';
 
 interface MulterFile {
   originalname: string;

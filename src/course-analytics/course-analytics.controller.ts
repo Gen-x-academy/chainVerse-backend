@@ -1,11 +1,12 @@
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Controller, Get, Param, UseGuards, ParseObjectIdPipe } from '@nestjs/common';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { CourseAnalyticsService } from './course-analytics.service';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { Role } from '../../common/enums/role.enum';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { Role } from '../common/enums/role.enum';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Course Analytics')

@@ -1,5 +1,6 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, ParseObjectIdPipe } from '@nestjs/common';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { StudentAccountSettingsService } from './student-account-settings.service';
 import { CreateStudentAccountSettingsDto } from './dto/create-student-account-settings.dto';
 import { UpdateStudentAccountSettingsDto } from './dto/update-student-account-settings.dto';

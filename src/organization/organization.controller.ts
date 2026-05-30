@@ -1,5 +1,6 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, ParseObjectIdPipe } from '@nestjs/common';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { OrganizationService } from './organization.service';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';

@@ -9,8 +9,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Body, Controller, Get, Param, Post, Put, Req, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { TutorService } from './tutor.service';
 import { CreateTutorDto } from './dto/create-tutor.dto';
@@ -67,7 +65,7 @@ export class TutorController {
   forgetPassword(@Body() dto: ForgetTutorPasswordDto, @Req() req: Request) {
     return this.tutorService.forgetPassword(
       dto,
-      req.ip,
+      (req as any).ip,
       req.headers['user-agent'],
     );
   }
@@ -80,7 +78,7 @@ export class TutorController {
   resetPassword(@Body() dto: ResetTutorPasswordDto, @Req() req: Request) {
     return this.tutorService.resetPassword(
       dto,
-      req.ip,
+      (req as any).ip,
       req.headers['user-agent'],
     );
   }

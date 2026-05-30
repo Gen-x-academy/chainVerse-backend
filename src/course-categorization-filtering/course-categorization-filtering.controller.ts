@@ -1,8 +1,8 @@
 import { ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards, UseInterceptors, ParseObjectIdPipe } from '@nestjs/common';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { CacheInterceptor, CacheKey, CacheTTL } from '@nestjs/cache-manager';
 import { CourseCategorizationFilteringService } from './course-categorization-filtering.service';
-import { COURSE_DISCOVERY_CACHE_KEY } from './course-categorization-filtering.service';
 import { CreateCourseCategorizationFilteringDto } from './dto/create-course-categorization-filtering.dto';
 import { UpdateCourseCategorizationFilteringDto } from './dto/update-course-categorization-filtering.dto';
 import { SearchCourseDto } from './dto/search-course.dto';
@@ -18,7 +18,7 @@ export class CourseCategorizationFilteringController {
 
   @Get()
   @UseInterceptors(CacheInterceptor)
-  @CacheKey(COURSE_DISCOVERY_CACHE_KEY)
+  @CacheKey('course-discovery')
   @CacheTTL(300000)
   @ApiOperation({ summary: 'List all courses (cached, 5 min TTL)' })
   findAll() {

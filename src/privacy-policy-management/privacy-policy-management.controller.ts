@@ -1,8 +1,8 @@
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, UseInterceptors, ParseObjectIdPipe } from '@nestjs/common';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, UseInterceptors } from '@nestjs/common';
 import { CacheInterceptor, CacheKey, CacheTTL } from '@nestjs/cache-manager';
 import { PrivacyPolicyManagementService } from './privacy-policy-management.service';
-import { PRIVACY_POLICY_CACHE_KEY } from './privacy-policy-management.service';
 import { CreatePrivacyPolicyManagementDto } from './dto/create-privacy-policy-management.dto';
 import { UpdatePrivacyPolicyManagementDto } from './dto/update-privacy-policy-management.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -17,7 +17,7 @@ export class PrivacyPolicyManagementController {
 
   @Get()
   @UseInterceptors(CacheInterceptor)
-  @CacheKey(PRIVACY_POLICY_CACHE_KEY)
+  @CacheKey('privacy-policy')
   @CacheTTL(3600000)
   @ApiOperation({ summary: 'Get privacy policy (cached, 1 hr TTL)' })
   findAll() {

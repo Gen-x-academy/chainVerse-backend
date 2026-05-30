@@ -1,5 +1,6 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, ParseObjectIdPipe } from '@nestjs/common';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { ContactMessageService } from './contact-message.service';
 import { CreateContactMessageDto } from './dto/create-contact-message.dto';
 import { UpdateContactMessageDto } from './dto/update-contact-message.dto';
