@@ -1,15 +1,5 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Req,
-  UseGuards,
-, ParseObjectIdPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards, ParseObjectIdPipe } from '@nestjs/common';
 import { StudentCartService } from './student-cart.service';
 import { UpdateStudentCartDto } from './dto/update-student-cart.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';

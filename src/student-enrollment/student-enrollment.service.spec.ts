@@ -1,10 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
-import {
-  BadRequestException,
-  ConflictException,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { StudentEnrollmentService } from './student-enrollment.service';
 import { Enrollment } from './schemas/enrollment.schema';
 import { Course } from '../admin-course/schemas/course.schema';

@@ -1,14 +1,5 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  UseGuards,
-, ParseObjectIdPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, ParseObjectIdPipe } from '@nestjs/common';
 import { CertificateSocialSharingService } from './certificate-social-sharing.service';
 import { CreateCertificateSocialSharingDto } from './dto/create-certificate-social-sharing.dto';
 import { UpdateCertificateSocialSharingDto } from './dto/update-certificate-social-sharing.dto';

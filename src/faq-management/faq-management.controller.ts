@@ -1,15 +1,5 @@
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  UseGuards,
-  UseInterceptors,
-, ParseObjectIdPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, UseInterceptors, ParseObjectIdPipe } from '@nestjs/common';
 import { CacheInterceptor, CacheKey, CacheTTL } from '@nestjs/cache-manager';
 import { FaqManagementService } from './faq-management.service';
 import { FAQ_CACHE_KEY } from './faq-management.service';

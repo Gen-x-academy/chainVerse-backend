@@ -1,14 +1,5 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  UseGuards,
-, ParseObjectIdPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, ParseObjectIdPipe } from '@nestjs/common';
 import { AdminFinancialAidManagementService } from './admin-financial-aid-management.service';
 import { CreateAdminFinancialAidManagementDto } from './dto/create-admin-financial-aid-management.dto';
 import { UpdateAdminFinancialAidManagementDto } from './dto/update-admin-financial-aid-management.dto';
@@ -58,16 +49,7 @@ export class AdminFinancialAidManagementController {
 }
 
 import { ApiBearerAuth } from '@nestjs/swagger';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, ParseObjectIdPipe } from '@nestjs/common';
 import { AdminFinancialAidManagementService } from './admin-financial-aid-management.service';
 import { CreateAdminFinancialAidManagementDto } from './dto/create-admin-financial-aid-management.dto';
 import { UpdateAdminFinancialAidManagementDto } from './dto/update-admin-financial-aid-management.dto';
@@ -116,16 +98,7 @@ export class AdminFinancialAidManagementController {
   }
 }
 import { ApiBearerAuth } from '@nestjs/swagger';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, ParseObjectIdPipe } from '@nestjs/common';
 import { AdminFinancialAidManagementService } from './admin-financial-aid-management.service';
 import { CreateAdminFinancialAidManagementDto } from './dto/create-admin-financial-aid-management.dto';
 import { UpdateAdminFinancialAidManagementDto } from './dto/update-admin-financial-aid-management.dto';

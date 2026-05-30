@@ -1,14 +1,5 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  UseGuards,
-, ParseObjectIdPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, ParseObjectIdPipe } from '@nestjs/common';
 import { TermsConditionsManagementService } from './terms-conditions-management.service';
 import { CreateTermsConditionsManagementDto } from './dto/create-terms-conditions-management.dto';
 import { UpdateTermsConditionsManagementDto } from './dto/update-terms-conditions-management.dto';
