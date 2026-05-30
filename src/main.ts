@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
 import helmet from 'helmet';
@@ -20,6 +20,12 @@ async function bootstrap() {
 
   // Compress all responses
   app.use(compression());
+
+  // Global API prefix
+  app.setGlobalPrefix('api');
+
+  // URI-based versioning — controllers opt in with @Version(); existing routes are unaffected
+  app.enableVersioning({ type: VersioningType.URI });
 
   // Global API prefix — exclude /health so load-balancers reach it without the prefix
   app.setGlobalPrefix('api', { exclude: ['/health'] });
