@@ -9,16 +9,17 @@ export class EmailService {
   private transporter: Transporter | null = null;
 
   constructor(private readonly configService: ConfigService) {
-    const host = this.configService.get<string>('smtpHost');
-    const port = this.configService.get<number>('smtpPort');
-    const user = this.configService.get<string>('emailUser');
-    const pass = this.configService.get<string>('emailPass');
+    const host = this.configService.get<string>('smtp.host');
+    const port = this.configService.get<number>('smtp.port');
+    const user = this.configService.get<string>('email.user');
+    const pass = this.configService.get<string>('email.pass');
+    const secure = this.configService.get<boolean>('smtp.secure') ?? false;
 
     if (host && port && user && pass) {
-      this.transporter = nodemailer.createTransporter({
+      this.transporter = nodemailer.createTransport({
         host,
         port,
-        secure: this.configService.get<boolean>('smtpSecure') ?? false,
+        secure,
         auth: { user, pass },
       });
     } else {
@@ -30,7 +31,7 @@ export class EmailService {
 
   async send(to: string, subject: string, text: string): Promise<void> {
     const from =
-      this.configService.get<string>('emailFrom') ??
+      this.configService.get<string>('email.from') ??
       'noreply@chainverse.academy';
     if (this.transporter) {
       await this.transporter.sendMail({ from, to, subject, text });
@@ -45,21 +46,22 @@ export class EmailService {
   async sendPasswordReset(
     to: string,
     resetToken: string,
-    baseUrl: string,
+    baseUrl?: string,
   ): Promise<void> {
     const from =
-      this.configService.get<string>('emailFrom') ??
+      this.configService.get<string>('email.from') ??
       'noreply@chainverse.academy';
-    const resetLink = `${baseUrl}/reset-password?token=${resetToken}`;
+    const resetBaseUrl =
+      baseUrl ?? this.configService.get<string>('baseUrl') ??
+      'http://localhost:3000';
+    const resetLink = `${resetBaseUrl}/reset-password?token=${resetToken}`;
 
     const mailOptions = {
       from,
       to,
-      subject: 'Password Reset Request',
-      text: `You requested a password reset. Click the link to reset your password: ${resetLink}\n\nIf you did not request this, please ignore this email.`,
-      html: `<p>You requested a password reset.</p>
-<p><a href="${resetLink}">Click here to reset your password</a></p>
-<p>If you did not request this, please ignore this email.</p>`,
+      subject: 'Reset your ChainVerse password',
+      text: `Click here to reset your password: ${resetLink}\n\nExpires in 15 minutes.`,
+      html: `Click <a href="${resetLink}">here</a> to reset your password. Expires in 15 minutes.`,
     };
 
     if (this.transporter) {
