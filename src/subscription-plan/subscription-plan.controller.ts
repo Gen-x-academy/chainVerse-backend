@@ -18,7 +18,7 @@ import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 
 @ApiBearerAuth('access-token')
-@Controller('subscription-plans')
+@Controller(['subscription-plans', 'subscription-plan', 'v1/subscription-plan'])
 export class SubscriptionPlanController {
   constructor(private readonly service: SubscriptionPlanService) {}
 

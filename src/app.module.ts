@@ -43,6 +43,8 @@ import { NotificationModule } from './notification/notification.module';
 import { CoursePerformanceLeaderboardModule } from './course-performance-leaderboard/course-performance-leaderboard.module';
 import { FinancialAidModule } from './financial-aid/financial-aid.module';
 import { StudentAuthModule } from './student-auth/student-auth.module';
+import { ContactMessageModule } from './contact-message/contact-message.module';
+import { ReportsModule } from './reports/reports.module';
 import { AboutManagementModule } from './about-management/about-management.module';
 import { AdminFinancialAidManagementModule } from './admin-financial-aid-management/admin-financial-aid-management.module';
 import { AdminModeratorAccountSettingsModule } from './admin-moderator-account-settings/admin-moderator-account-settings.module';
@@ -149,6 +151,10 @@ import { AppCacheModule } from './cache/app-cache.module';
     NotificationModule,
     // Financial Aid
     FinancialAidModule,
+    // Contact
+    ContactMessageModule,
+    // Reporting
+    ReportsModule,
     // Stellar
     StellarModule,
     // About

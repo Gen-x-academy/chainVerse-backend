@@ -148,6 +148,11 @@ export class TutorService {
       Date.now() + VERIFICATION_TOKEN_EXPIRY * 1000;
     await tutor.save();
 
+    await this.emailService.sendVerificationEmail(
+      tutor.email,
+      verificationToken,
+    );
+
     return {
       message: 'Account created. Please verify your email.',
       user: this.sanitizeTutor(tutor),
