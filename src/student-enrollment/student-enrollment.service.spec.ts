@@ -300,6 +300,30 @@ describe('StudentEnrollmentService', () => {
     });
   });
 
+  describe('isEnrolled', () => {
+    it('returns true when enrollment record exists', async () => {
+      enrollmentModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue({ studentId: 'student1', courseId: 'course1' }),
+      });
+
+      const result = await service.isEnrolled('student1', 'course1');
+      expect(result).toBe(true);
+      expect(enrollmentModel.findOne).toHaveBeenCalledWith({
+        studentId: 'student1',
+        courseId: 'course1',
+      });
+    });
+
+    it('returns false when no enrollment record exists', async () => {
+      enrollmentModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(null),
+      });
+
+      const result = await service.isEnrolled('student1', 'course1');
+      expect(result).toBe(false);
+    });
+  });
+
   describe('getMyCourses', () => {
     it('should return empty array if no enrollments', async () => {
       const studentId = 'student1';
