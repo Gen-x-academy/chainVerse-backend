@@ -3,6 +3,7 @@ import { StellarService } from './stellar.service';
 
 @Global()
 @Module({
+  controllers: [StellarController],
   providers: [StellarService],
   exports: [StellarService],
 })
