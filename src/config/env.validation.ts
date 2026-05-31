@@ -73,4 +73,36 @@ export const envValidationSchema = Joi.object({
   RATE_LIMIT_SKIP_SUCCESS: Joi.boolean().default(false),
   RATE_LIMIT_SKIP_FAILED: Joi.boolean().default(false),
   RATE_LIMIT_KEY_PREFIX: Joi.string().default('rl:'),
+
+  // ── Stellar ───────────────────────────────────────────────────────────────
+  STELLAR_NETWORK: Joi.string().allow('').optional(),
+  STELLAR_HORIZON_URL: Joi.string().allow('').optional(),
+  STELLAR_RPC_URL: Joi.string().allow('').optional(),
+  STELLAR_NETWORK_PASSPHRASE: Joi.string().allow('').optional(),
+  STELLAR_BACKEND_SECRET: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+    otherwise: Joi.allow('').optional(),
+  }),
+  STELLAR_BACKEND_PUBLIC: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+    otherwise: Joi.allow('').optional(),
+  }),
+
+  // Soroban contract addresses — required in production so the app refuses to
+  // start if a contract was never deployed or the address was forgotten.
+  CONTRACT_CERTIFICATES: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+    otherwise: Joi.allow('').optional(),
+  }),
+  CONTRACT_REWARD: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+    otherwise: Joi.allow('').optional(),
+  }),
+  CONTRACT_ESCROW: Joi.string().allow('').optional(),
+  CONTRACT_CHV_TOKEN: Joi.string().allow('').optional(),
+  CONTRACT_COURSE_REGISTRY: Joi.string().allow('').optional(),
 }).options({ allowUnknown: true });

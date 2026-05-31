@@ -1,29 +1,29 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Server, StrKey } from '@stellar/stellar-sdk';
+import { Horizon, StrKey } from '@stellar/stellar-sdk';
 
 @Injectable()
 export class StellarService {
-  private server: Server;
+  private readonly server: Horizon.Server;
 
   constructor(private readonly config: ConfigService) {
-    this.server = new Server(this.config.get<string>('stellar.horizonUrl'));
+    const url =
+      this.config.get<string>('STELLAR_HORIZON_URL') ??
+      'https://horizon-testnet.stellar.org';
+    this.server = new Horizon.Server(url);
   }
 
   async getAccount(publicKey: string) {
     return this.server.loadAccount(publicKey);
   }
 
-  async isValidPublicKey(key: string): Promise<boolean> {
+  isValidPublicKey(key: string): boolean {
     return StrKey.isValidEd25519PublicKey(key);
-  async submitTransaction(transaction: StellarSdk.Transaction) {
-    try {
-      const response = await this.server.submitTransaction(transaction);
-      return response;
-    } catch (error) {
-      this.logger.error(`Failed to submit transaction: ${error.message}`);
-      throw error;
-    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async submitTransaction(transaction: any) {
+    return this.server.submitTransaction(transaction);
   }
 
   async verifyPayment(input: {
@@ -32,7 +32,10 @@ export class StellarService {
     courseId: string;
   }): Promise<{ verified: boolean; transactionId: string; timestamp: string }> {
     const { transactionHash } = input;
-    const tx = await this.server.transactions().transaction(transactionHash).call();
+    const tx = await this.server
+      .transactions()
+      .transaction(transactionHash)
+      .call();
 
     return {
       verified: Boolean(tx?.successful),
@@ -41,7 +44,7 @@ export class StellarService {
     };
   }
 
-  getServer() {
+  getServer(): Horizon.Server {
     return this.server;
   }
 }
