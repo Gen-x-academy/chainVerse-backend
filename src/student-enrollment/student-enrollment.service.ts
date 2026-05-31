@@ -19,7 +19,8 @@ export class StudentEnrollmentService {
     private readonly courseModel: Model<CourseDocument>,
     @InjectModel(CartItem.name)
     private readonly cartItemModel: Model<CartItemDocument>,
-    private readonly eventEmitter: EventEmitter2,
+    private readonly stellarService: StellarService,
+    private readonly stellarService: StellarService,
   ) {}
 
   async enrollFree(studentId: string, courseId: string): Promise<Enrollment> {
@@ -77,6 +78,7 @@ export class StudentEnrollmentService {
   async checkoutCart(
     studentId: string,
     paymentMethod?: string,
+    transactionHash?: string,
   ): Promise<{ enrolled: string[]; failed: string[]; totalAmount: number }> {
     const cartItems = await this.cartItemModel.find({ studentId }).exec();
     if (cartItems.length === 0) {
@@ -123,13 +125,12 @@ export class StudentEnrollmentService {
         }
 
         const enrollment = new this.enrollmentModel({
-          studentId,
-          courseId: item.courseId,
-          type: 'free',
-          amountPaid: 0,
+          type: course.price > 0 ? 'paid' : 'free',
+          amountPaid: course.price,
           status: 'completed',
           paymentMethod,
-        });
+          transactionHash: transactionHash,
+);
 
         await enrollment.save();
 
