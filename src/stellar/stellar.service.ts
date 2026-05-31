@@ -34,6 +34,21 @@ export class StellarService {
     }
   }
 
+  async verifyPayment(input: {
+    transactionHash: string;
+    expectedAmount: string;
+    courseId: string;
+  }): Promise<{ verified: boolean; transactionId: string; timestamp: string }> {
+    const { transactionHash } = input;
+    const tx = await this.server.transactions().transaction(transactionHash).call();
+
+    return {
+      verified: Boolean(tx?.successful),
+      transactionId: transactionHash,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
   getServer() {
     return this.server;
   }
