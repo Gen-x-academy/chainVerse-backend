@@ -2,6 +2,7 @@
 # --- Runner Stage ---
 FROM node:20-alpine AS runner
 WORKDIR /app
+ENV NODE_ENV=production
 # Create non-root user and group
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 COPY package*.json ./

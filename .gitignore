@@ -22,3 +22,6 @@ build/
 # IDE/editor settings
 .vscode/
 .idea/
+
+# Submission artifacts
+*.submission*.json
