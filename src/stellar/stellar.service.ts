@@ -1,40 +1,20 @@
-import { Injectable, Logger } from '@nestjs/common';
-import * as StellarSdk from '@stellar/stellar-sdk';
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Server, StrKey } from '@stellar/stellar-sdk';
 
 @Injectable()
 export class StellarService {
-  private readonly logger = new Logger(StellarService.name);
-  private server: StellarSdk.Horizon.Server;
+  private server: Server;
 
-  constructor() {
-    this.server = new StellarSdk.Horizon.Server(
-      'https://horizon-testnet.stellar.org',
-    );
+  constructor(private readonly config: ConfigService) {
+    this.server = new Server(this.config.get<string>('stellar.horizonUrl'));
   }
 
-  async getAccount(accountId: string) {
-    try {
-      const account = await this.server.loadAccount(accountId);
-      return account;
-    } catch (error) {
-      this.logger.error(
-        `Failed to load account ${accountId}: ${error.message}`,
-      );
-      throw error;
-    }
+  async getAccount(publicKey: string) {
+    return this.server.loadAccount(publicKey);
   }
 
-  async submitTransaction(transaction: StellarSdk.Transaction) {
-    try {
-      const response = await this.server.submitTransaction(transaction);
-      return response;
-    } catch (error) {
-      this.logger.error(`Failed to submit transaction: ${error.message}`);
-      throw error;
-    }
-  }
-
-  getServer() {
-    return this.server;
+  async isValidPublicKey(key: string): Promise<boolean> {
+    return StrKey.isValidEd25519PublicKey(key);
   }
 }
