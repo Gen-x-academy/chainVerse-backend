@@ -13,7 +13,7 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 // Auth endpoints are more sensitive to brute-force: tighten to 10 req/min
 @Throttle({ default: { limit: 10, ttl: 60_000 } })
 @ApiTags('Student Auth')
-@Controller('student')
+@Controller('auth/student')
 export class StudentAuthController {
   constructor(private readonly studentAuthService: StudentAuthService) {}
 

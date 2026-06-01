@@ -176,6 +176,76 @@ describe('StudentAuthService', () => {
     jest.clearAllMocks();
   });
 
+  describe('create (register)', () => {
+    const createDto: CreateStudentDto = {
+      firstName: 'Jane',
+      lastName: 'Doe',
+      email: 'jane@example.com',
+      password: 'password123',
+    };
+
+    it('happy path — saves student, hashes password, emits event', async () => {
+      jest
+        .spyOn(studentModel, 'findOne')
+        .mockReturnValue(mockQuery(null) as any);
+
+      const savedStudent = {
+        ...mockStudent,
+        email: createDto.email,
+        id: 'new-id-123',
+      };
+
+      function MockStudentModel(dto: any) {
+        Object.assign(this, dto);
+        this.save = jest.fn().mockResolvedValue(savedStudent);
+      }
+      MockStudentModel.findOne = jest.fn().mockReturnValue(mockQuery(null));
+      (service as any).studentModel = MockStudentModel;
+
+      jest.spyOn(jwtService, 'sign').mockReturnValue('mock.access.token');
+
+      const result = await service.create(createDto);
+
+      expect(bcrypt.hash).toHaveBeenCalled();
+      expect(result.user.email).toBe(createDto.email);
+      expect(eventEmitter.emit).toHaveBeenCalled();
+    });
+
+    it('throws ConflictException for duplicate email', async () => {
+      jest
+        .spyOn(studentModel, 'findOne')
+        .mockReturnValue(mockQuery(mockStudent) as any);
+
+      await expect(service.create(createDto)).rejects.toThrow(
+        ConflictException,
+      );
+      expect(bcrypt.hash).not.toHaveBeenCalled();
+    });
+
+    it('calls bcrypt.hash with the plaintext password', async () => {
+      jest
+        .spyOn(studentModel, 'findOne')
+        .mockReturnValue(mockQuery(null) as any);
+
+      const savedStudent = { ...mockStudent, id: 'new-id-456' };
+      function MockStudentModel2(dto: any) {
+        Object.assign(this, dto);
+        this.save = jest.fn().mockResolvedValue(savedStudent);
+      }
+      MockStudentModel2.findOne = jest.fn().mockReturnValue(mockQuery(null));
+      (service as any).studentModel = MockStudentModel2;
+
+      jest.spyOn(jwtService, 'sign').mockReturnValue('mock.token');
+
+      await service.create(createDto);
+
+      expect(bcrypt.hash).toHaveBeenCalledWith(
+        createDto.password,
+        expect.any(Number),
+      );
+    });
+  });
+
   describe('verifyEmail', () => {
     const verifyEmailDto: VerifyEmailDto = {
       token: 'valid.jwt.token',

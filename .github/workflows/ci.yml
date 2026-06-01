@@ -63,10 +63,6 @@ jobs:
   unit:
     name: Unit tests
     runs-on: ubuntu-latest
-    needs: lint
-    env:
-      JWT_SECRET: ${{ secrets.JWT_SECRET || 'ci-unit-test-secret-key-32chars!!' }}
-      NODE_ENV: test
     steps:
       - uses: actions/checkout@v4
 
@@ -80,28 +76,26 @@ jobs:
         run: npm ci
 
       - name: Run unit tests
-        run: npm run test
+        run: npm run test -- --forceExit
 
-      - name: Upload test results on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: unit-test-results
-          path: |
-            coverage/
-            junit.xml
-          retention-days: 7
-
-  # -----------------------------------------------------------------------
-  # 4. E2E tests
-  # -----------------------------------------------------------------------
   e2e:
     name: E2E tests
     runs-on: ubuntu-latest
     needs: build
+    services:
+      mongo:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd 'mongosh --eval "db.adminCommand(\"ping\")"'
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
       JWT_SECRET: ${{ secrets.JWT_SECRET || 'ci-e2e-test-secret-key-32chars!!' }}
       NODE_ENV: test
+      MONGO_URI: mongodb://localhost:27017/chainverse_test
     steps:
       - uses: actions/checkout@v4
 
@@ -115,13 +109,4 @@ jobs:
         run: npm ci
 
       - name: Run e2e tests
-        run: npm run test:e2e
-
-      - name: Upload e2e test results on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: e2e-test-results
-          path: |
-            test/
-          retention-days: 7
+        run: npm run test:e2e -- --forceExit

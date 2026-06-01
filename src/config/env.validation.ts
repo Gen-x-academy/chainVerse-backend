@@ -92,6 +92,8 @@ export const envValidationSchema = Joi.object({
     otherwise: Joi.allow('').optional(),
   }),
 
+  // Soroban contract addresses — required in production so the app refuses to
+  // start if a contract was never deployed or the address was forgotten.
   // Soroban contract addresses — required in production
   CONTRACT_CERTIFICATES: Joi.string().when('NODE_ENV', {
     is: 'production',
