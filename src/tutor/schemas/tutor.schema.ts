@@ -86,6 +86,5 @@ export class Tutor {
 
 export const TutorSchema = SchemaFactory.createForClass(Tutor);
 
-// Index for efficient lookups
-TutorSchema.index({ email: 1 });
+TutorSchema.index({ email: 1 }, { unique: true });
 TutorSchema.index({ accountStatus: 1 });

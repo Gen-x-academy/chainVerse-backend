@@ -123,6 +123,69 @@ describe('StellarService', () => {
     });
   });
 
+  describe('isValidPublicKey', () => {
+    it('returns true for a valid G... Stellar public key', () => {
+      const validKey = 'GAHJJJKMOKYE4RVPZEWZTKH5FVI4PA3VL7GK2LFNUBSGBV4UHEIPZXB';
+      expect(service.isValidPublicKey(validKey)).toBe(true);
+    });
+
+    it('returns false for a random string', () => {
+      expect(service.isValidPublicKey('not-a-stellar-key')).toBe(false);
+    });
+
+    it('returns false for an empty string', () => {
+      expect(service.isValidPublicKey('')).toBe(false);
+    });
+  });
+
+  describe('verifyPayment', () => {
+    beforeEach(() => {
+      const mockTxBuilder = {
+        transaction: jest.fn().mockReturnThis(),
+        call: jest.fn(),
+      };
+      mockServer.transactions = jest.fn().mockReturnValue(mockTxBuilder);
+    });
+
+    it('returns { verified: true } when Horizon reports the transaction as successful', async () => {
+      mockServer.transactions().call.mockResolvedValue({ successful: true });
+
+      const result = await service.verifyPayment({
+        transactionHash: 'abc123',
+        expectedAmount: '10',
+        courseId: 'course-1',
+      });
+
+      expect(result.verified).toBe(true);
+      expect(result.transactionId).toBe('abc123');
+      expect(typeof result.timestamp).toBe('string');
+    });
+
+    it('returns { verified: false } when transaction is not successful', async () => {
+      mockServer.transactions().call.mockResolvedValue({ successful: false });
+
+      const result = await service.verifyPayment({
+        transactionHash: 'abc123',
+        expectedAmount: '10',
+        courseId: 'course-1',
+      });
+
+      expect(result.verified).toBe(false);
+    });
+
+    it('returns { verified: false } when Horizon returns null', async () => {
+      mockServer.transactions().call.mockResolvedValue(null);
+
+      const result = await service.verifyPayment({
+        transactionHash: 'missing-hash',
+        expectedAmount: '10',
+        courseId: 'course-1',
+      });
+
+      expect(result.verified).toBe(false);
+    });
+  });
+
   describe('submitTransaction', () => {
     it('should submit transaction successfully (happy path)', async () => {
       const mockTx = {} as StellarSdk.Transaction;

@@ -79,6 +79,8 @@ export const envValidationSchema = Joi.object({
   STELLAR_HORIZON_URL: Joi.string().allow('').optional(),
   STELLAR_RPC_URL: Joi.string().allow('').optional(),
   STELLAR_NETWORK_PASSPHRASE: Joi.string().allow('').optional(),
+
+  // Backend signing account — required in production, optional elsewhere
   STELLAR_BACKEND_SECRET: Joi.string().when('NODE_ENV', {
     is: 'production',
     then: Joi.required(),
@@ -92,6 +94,7 @@ export const envValidationSchema = Joi.object({
 
   // Soroban contract addresses — required in production so the app refuses to
   // start if a contract was never deployed or the address was forgotten.
+  // Soroban contract addresses — required in production
   CONTRACT_CERTIFICATES: Joi.string().when('NODE_ENV', {
     is: 'production',
     then: Joi.required(),

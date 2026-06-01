@@ -47,6 +47,5 @@ export class Student {
 
 export const StudentSchema = SchemaFactory.createForClass(Student);
 
-// Explicit indexes for query performance (unique constraint alone is not enough)
-StudentSchema.index({ email: 1 });
+StudentSchema.index({ email: 1 }, { unique: true });
 StudentSchema.index({ emailVerified: 1 });
