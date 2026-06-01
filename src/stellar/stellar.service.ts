@@ -1,5 +1,16 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Horizon, StrKey } from '@stellar/stellar-sdk';
+
+@Injectable()
+export class StellarService {
+  private server: Horizon.Server;
+
+  constructor(private readonly config: ConfigService) {
+    const url =
+      this.config.get<string>('STELLAR_HORIZON_URL') ??
+      'https://horizon-testnet.stellar.org';
+    this.server = new Horizon.Server(url);
 import { Horizon, Keypair, StrKey } from '@stellar/stellar-sdk';
 
 @Injectable()
