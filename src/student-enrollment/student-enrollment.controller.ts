@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, Req, UseGuards, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Get, Param, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -42,6 +42,6 @@ export class StudentEnrollmentController {
     @Param('courseId') courseId: string,
   ) {
     const enrolled = await this.service.isEnrolled(req.user.id, courseId);
-    return { isEnrolled: enrolled };
+    return { enrolled, courseId, studentId: req.user.id };
   }
 }

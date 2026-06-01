@@ -1,4 +1,5 @@
 import { Global, Module } from '@nestjs/common';
+import { StellarController } from './stellar.controller';
 import { StellarService } from './stellar.service';
 
 @Global()
