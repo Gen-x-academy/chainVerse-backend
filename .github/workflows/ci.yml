@@ -76,6 +76,21 @@ jobs:
   unit:
     name: Unit tests
     runs-on: ubuntu-latest
+    needs: lint
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      JWT_SECRET: ${{ secrets.JWT_SECRET || 'ci-unit-test-secret-key-32chars!!' }}
+      NODE_ENV: test
+      REDIS_URL: redis://localhost:6379
     steps:
       - uses: actions/checkout@v4
 
@@ -121,10 +136,20 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
     env:
       JWT_SECRET: ${{ secrets.JWT_SECRET || 'ci-e2e-test-secret-key-32chars!!' }}
       NODE_ENV: test
       MONGO_URI: mongodb://localhost:27017/chainverse_test
+      REDIS_URL: redis://localhost:6379
     steps:
       - uses: actions/checkout@v4
 

@@ -5,7 +5,7 @@
 
 set -euo pipefail
 
-BASE_URL="${1:-http://localhost:3000/api/v1}"
+BASE_URL="${1:-${SMOKE_TEST_URL:-http://localhost:3000/api/v1}}"
 PASS=0
 FAIL=0
 
