@@ -28,6 +28,9 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
+      - name: Run npm audit
+        run: npm audit --audit-level=high
+
   # -----------------------------------------------------------------------
   # 2. Build
   # -----------------------------------------------------------------------
@@ -56,6 +59,16 @@ jobs:
           name: dist
           path: dist/
           retention-days: 7
+
+  docker-build:
+    name: Docker build
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build container image
+        run: docker build -t chainverse-backend-ci .
 
   # -----------------------------------------------------------------------
   # 3. Unit tests + coverage
@@ -142,3 +155,23 @@ jobs:
 
       - name: Run e2e tests
         run: npm run test:e2e -- --forceExit
+
+      - name: Upload e2e test results on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results
+          path: |
+            test/
+          retention-days: 7
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: [build, unit, e2e, docker-build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Confirm deploy target
+        run: echo "Deploying chainVerse-backend from main"
