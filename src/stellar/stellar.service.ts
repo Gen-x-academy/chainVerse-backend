@@ -4,6 +4,7 @@ import { Horizon, StrKey } from '@stellar/stellar-sdk';
 
 @Injectable()
 export class StellarService {
+  private readonly server: Horizon.Server;
   private server: Horizon.Server;
 
   constructor(private readonly config: ConfigService) {
@@ -32,6 +33,8 @@ export class StellarService {
     return StrKey.isValidEd25519PublicKey(key);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async submitTransaction(transaction: any) {
   async submitTransaction(transaction: Parameters<Horizon.Server['submitTransaction']>[0]) {
     return this.server.submitTransaction(transaction);
   }
