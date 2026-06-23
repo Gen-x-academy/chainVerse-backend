@@ -63,12 +63,12 @@ jobs:
   docker-build:
     name: Docker build
     runs-on: ubuntu-latest
-    needs: lint
+    needs: [unit, e2e]
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build container image
-        run: docker build -t chainverse-backend-ci .
+      - name: Build Docker image
+        run: docker build -t chainverse-backend:ci .
 
   # -----------------------------------------------------------------------
   # 3. Unit tests + coverage
