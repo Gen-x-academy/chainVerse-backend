@@ -23,7 +23,7 @@ RUN npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
 
-# Ensure files in /app are owned by the non-root user
+# ensure app files are owned by the non-root user
 RUN chown -R appuser:appgroup /app
 
 USER appuser
