@@ -21,7 +21,7 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 RUN apk --no-cache add curl
 
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci --only=production
 
 COPY --from=builder /app/dist ./dist
 
