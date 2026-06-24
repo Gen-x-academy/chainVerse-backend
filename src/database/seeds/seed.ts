@@ -23,7 +23,8 @@ import { courseSeeds } from './course.seed';
 
 dotenv.config();
 
-const MONGO_URI = process.env.MONGO_URI ?? 'mongodb://localhost:27017/chain-verse';
+const MONGO_URI =
+  process.env.MONGO_URI ?? 'mongodb://localhost:27017/chain-verse';
 
 // ── Inline schemas (mirrors production schemas without NestJS decorators) ─────
 

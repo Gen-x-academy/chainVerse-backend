@@ -8,10 +8,22 @@ export const SEED_STUDENT = {
   password: 'SecurePass123!',
 };
 
-export interface SeededStudent {
+interface SeededStudent {
   accessToken: string;
   refreshToken: string;
   userId: string;
+}
+
+interface CreateResponse {
+  status: number;
+  body: {
+    accessToken: string;
+    refreshToken: string;
+    user: {
+      id: string;
+      email: string;
+    };
+  };
 }
 
 /**
@@ -32,12 +44,12 @@ export async function seedVerifiedStudent(
     );
   }
 
-  const { accessToken, refreshToken, user } = createRes.body;
+  const { accessToken, refreshToken, user } =
+    createRes.body as CreateResponse['body'];
 
-  // Request a verification token via the resend endpoint
   const resendRes = await request(server)
     .post('/student/resend-verification-email')
-    .send({ email: user.email });
+    .send({ email: (user as any)?.email });
 
   if (resendRes.status !== 201 && resendRes.status !== 200) {
     throw new Error(
@@ -45,10 +57,7 @@ export async function seedVerifiedStudent(
     );
   }
 
-  // In test mode, the verification token is leaked in the notification event
-  // For this helper, we'll use a workaround by directly getting the token from the student record
-  // In a real scenario, the token would be sent via email
-  const verificationToken = await getVerificationTokenFromDB(user.id);
+  const verificationToken = await getVerificationTokenFromDB((user as any)?.id);
 
   const verifyRes = await request(server)
     .post('/student/verify-email')
@@ -60,7 +69,7 @@ export async function seedVerifiedStudent(
     );
   }
 
-  return { accessToken, refreshToken, userId: user.id };
+  return { accessToken, refreshToken, userId: (user as any).id };
 }
 
 /**
@@ -68,8 +77,6 @@ export async function seedVerifiedStudent(
  * In production, this would come from an email.
  */
 async function getVerificationTokenFromDB(userId: string): Promise<string> {
-  // This is a test helper that accesses the database directly
-  // We use the NestJS app to get the model
   const { MongoClient } = await import('mongodb');
   const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
   const mongoDb = process.env.MONGODB_DB || 'chainverse-test';
@@ -78,11 +85,13 @@ async function getVerificationTokenFromDB(userId: string): Promise<string> {
   try {
     await client.connect();
     const db = client.db(mongoDb);
-    const student = await db.collection('students').findOne({ _id: userId });
+    const student = (await db
+      .collection('students')
+      .findOne({ _id: userId })) as any;
     if (!student || !student.verificationToken) {
       throw new Error('Verification token not found');
     }
-    return student.verificationToken;
+    return student.verificationToken as string;
   } finally {
     await client.close();
   }

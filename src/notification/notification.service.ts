@@ -28,10 +28,7 @@ export class NotificationService {
     return notification.save();
   }
 
-  async findAll(
-    page = 1,
-    limit = 10,
-  ): Promise<PaginatedResult<Notification>> {
+  async findAll(page = 1, limit = 10): Promise<PaginatedResult<Notification>> {
     const skip = (page - 1) * limit;
     const [data, total] = await Promise.all([
       this.notificationModel.find().skip(skip).limit(limit).exec(),
@@ -47,11 +44,7 @@ export class NotificationService {
   ): Promise<PaginatedResult<Notification>> {
     const skip = (page - 1) * limit;
     const [data, total] = await Promise.all([
-      this.notificationModel
-        .find({ userId })
-        .skip(skip)
-        .limit(limit)
-        .exec(),
+      this.notificationModel.find({ userId }).skip(skip).limit(limit).exec(),
       this.notificationModel.countDocuments({ userId }).exec(),
     ]);
     return { data, total, page, limit, totalPages: Math.ceil(total / limit) };

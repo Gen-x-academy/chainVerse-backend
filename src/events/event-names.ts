@@ -10,6 +10,9 @@ export const DomainEvents = {
   /** Fired after a student is enrolled in a course. */
   STUDENT_ENROLLED: 'student.enrolled',
 
+  /** Fired when a student requests a verification email resend (distinct from initial registration). */
+  VERIFICATION_EMAIL_RESENT: 'student.verification-email-resent',
+
   /** Fired after an admin/moderator approves a financial-aid application. */
   FINANCIAL_AID_APPROVED: 'financial-aid.approved',
 

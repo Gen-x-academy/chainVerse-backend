@@ -4,8 +4,9 @@ import * as os from 'os';
 import * as path from 'path';
 
 export default async function globalTeardown() {
-  const mongod = (globalThis as Record<string, unknown>)
-    .__MONGOD__ as MongoMemoryServer | undefined;
+  const mongod = (globalThis as Record<string, unknown>).__MONGOD__ as
+    | MongoMemoryServer
+    | undefined;
   if (mongod) {
     await mongod.stop();
   }

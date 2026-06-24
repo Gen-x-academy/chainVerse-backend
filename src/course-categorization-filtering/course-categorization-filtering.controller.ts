@@ -1,19 +1,8 @@
 import { ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { CacheInterceptor, CacheKey, CacheTTL } from '@nestjs/cache-manager';
 import { CourseCategorizationFilteringService } from './course-categorization-filtering.service';
-import { COURSE_DISCOVERY_CACHE_KEY } from './course-categorization-filtering.service';
 import { CreateCourseCategorizationFilteringDto } from './dto/create-course-categorization-filtering.dto';
 import { UpdateCourseCategorizationFilteringDto } from './dto/update-course-categorization-filtering.dto';
 import { SearchCourseDto } from './dto/search-course.dto';
@@ -29,7 +18,7 @@ export class CourseCategorizationFilteringController {
 
   @Get()
   @UseInterceptors(CacheInterceptor)
-  @CacheKey(COURSE_DISCOVERY_CACHE_KEY)
+  @CacheKey('course-discovery')
   @CacheTTL(300000)
   @ApiOperation({ summary: 'List all courses (cached, 5 min TTL)' })
   findAll() {
@@ -70,7 +59,7 @@ export class CourseCategorizationFilteringController {
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(300000)
   @ApiOperation({ summary: 'Get single course entry (cached, 5 min TTL)' })
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
@@ -85,7 +74,7 @@ export class CourseCategorizationFilteringController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   update(
-    @Param('id') id: string,
+    @Param('id', new ParseObjectIdPipe()) id: string,
     @Body() payload: UpdateCourseCategorizationFilteringDto,
   ) {
     return this.service.update(id, payload);
@@ -94,7 +83,7 @@ export class CourseCategorizationFilteringController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.remove(id);
   }
 }

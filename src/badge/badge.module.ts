@@ -13,5 +13,3 @@ import { Badge, BadgeSchema } from './schemas/badge.schema';
   exports: [BadgeService],
 })
 export class BadgeModule {}
-
-

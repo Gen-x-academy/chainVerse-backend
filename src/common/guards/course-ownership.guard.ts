@@ -42,7 +42,9 @@ export class CourseOwnershipGuard implements CanActivate {
 
     // Check if user owns the course
     if (course.tutorId !== userId) {
-      throw new ForbiddenException('You do not have permission to access this course');
+      throw new ForbiddenException(
+        'You do not have permission to access this course',
+      );
     }
 
     // Attach course to request for use in handler

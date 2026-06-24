@@ -21,7 +21,7 @@ export class Course {
   @Prop({ required: true, min: 0 })
   price: number;
 
-  @Prop({ default: null })
+  @Prop({ type: String, default: null })
   thumbnailUrl: string | null;
 
   @Prop({ type: [String], default: [] })
@@ -41,13 +41,13 @@ export class Course {
   @Prop({ default: 'beginner' })
   level: 'beginner' | 'intermediate' | 'advanced' | 'all-levels';
 
-  @Prop({ default: null })
+  @Prop({ type: String, default: null })
   duration: string | null; // e.g., "10 hours", "6 weeks"
 
   @Prop({ default: 0 })
   durationHours: number; // Numeric duration in hours for filtering
 
-  @Prop({ default: null })
+  @Prop({ type: String, default: null })
   language: string | null; // e.g., "English"
 
   @Prop({ default: false })
@@ -93,10 +93,8 @@ export class Course {
     }>;
   }>;
 
-  // Enrollment tracking
-  @Prop({ type: [String], default: [] })
-  enrolledStudents: string[];
-
+  // Enrollment tracking — student IDs are stored in the Enrollment collection,
+  // not here, to avoid exceeding MongoDB's 16 MB document limit at scale.
   @Prop({ default: 0 })
   totalEnrollments: number;
 
@@ -155,6 +153,6 @@ CourseSchema.index({ price: 1 });
 CourseSchema.index({ averageRating: 1 });
 CourseSchema.index({ totalEnrollments: 1 });
 CourseSchema.index({ tags: 1 });
-CourseSchema.index({ title: 'text', description: 'text' });
+CourseSchema.index({ title: 'text', description: 'text', tags: 'text' });
 
 applySoftDeleteSchema(CourseSchema);

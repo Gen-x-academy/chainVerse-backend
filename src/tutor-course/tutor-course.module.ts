@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TutorCourseController } from './tutor-course.controller';
+import { TutorCourseService } from './tutor-course.service';
 import { AdminCourseService } from '../admin-course/admin-course.service';
 import { Course, CourseSchema } from '../admin-course/schemas/course.schema';
 import { Tutor, TutorSchema } from '../tutor/schemas/tutor.schema';
@@ -13,7 +14,7 @@ import { Tutor, TutorSchema } from '../tutor/schemas/tutor.schema';
     ]),
   ],
   controllers: [TutorCourseController],
-  providers: [AdminCourseService],
-  exports: [AdminCourseService],
+  providers: [TutorCourseService, AdminCourseService],
+  exports: [TutorCourseService],
 })
 export class TutorCourseModule {}

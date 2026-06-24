@@ -1,4 +1,5 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { StudentCertificateNameChangeRequestService } from './student-certificate-name-change-request.service';
 import { CreateStudentCertificateNameChangeRequestDto } from './dto/create-student-certificate-name-change-request.dto';
@@ -11,7 +12,9 @@ import { Roles } from '../common/decorators/roles.decorator';
 @ApiBearerAuth('access-token')
 @Controller('student/certificates/name-change-request')
 export class StudentCertificateNameChangeRequestController {
-  constructor(private readonly service: StudentCertificateNameChangeRequestService) {}
+  constructor(
+    private readonly service: StudentCertificateNameChangeRequestService,
+  ) {}
 
   @Get()
   findAll() {
@@ -19,7 +22,7 @@ export class StudentCertificateNameChangeRequestController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
@@ -33,14 +36,17 @@ export class StudentCertificateNameChangeRequestController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
-  update(@Param('id') id: string, @Body() payload: UpdateStudentCertificateNameChangeRequestDto) {
+  update(
+    @Param('id', new ParseObjectIdPipe()) id: string,
+    @Body() payload: UpdateStudentCertificateNameChangeRequestDto,
+  ) {
     return this.service.update(id, payload);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.remove(id);
   }
 }

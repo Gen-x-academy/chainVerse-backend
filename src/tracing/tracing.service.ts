@@ -67,15 +67,18 @@ export class TracingService {
       },
       error(err: Error): void {
         const durationMs = Date.now() - startedAt;
-        logger.error({
-          event: 'span.error',
-          traceId,
-          spanId,
-          name,
-          durationMs,
-          errorMessage: err.message,
-          attributes,
-        }, err.stack);
+        logger.error(
+          {
+            event: 'span.error',
+            traceId,
+            spanId,
+            name,
+            durationMs,
+            errorMessage: err.message,
+            attributes,
+          },
+          err.stack,
+        );
       },
     };
   }

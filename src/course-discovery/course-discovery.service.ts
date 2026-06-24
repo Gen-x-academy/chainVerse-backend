@@ -82,12 +82,7 @@ export class CourseDiscoveryService {
     const skip = dto.skip || 0;
 
     const [courses, total] = await Promise.all([
-      this.courseModel
-        .find(query)
-        .sort(sort)
-        .limit(limit)
-        .skip(skip)
-        .exec(),
+      this.courseModel.find(query).sort(sort).limit(limit).skip(skip).exec(),
       this.courseModel.countDocuments(query).exec(),
     ]);
 
@@ -175,9 +170,11 @@ export class CourseDiscoveryService {
     }
 
     // Increment view count
-    await this.courseModel.findByIdAndUpdate(id, {
-      $inc: { viewCount: 1 },
-    }).exec();
+    await this.courseModel
+      .findByIdAndUpdate(id, {
+        $inc: { viewCount: 1 },
+      })
+      .exec();
 
     return this.sanitizeCourse(course);
   }

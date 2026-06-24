@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -64,9 +59,7 @@ export class StudentSavedCoursesService {
     return { studentId, courses: saved.map((s) => s.courseId) };
   }
 
-  async list(
-    studentId: string,
-  ): Promise<{
+  async list(studentId: string): Promise<{
     studentId: string;
     courses: Array<{ courseId: string; course: unknown }>;
   }> {

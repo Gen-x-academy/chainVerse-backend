@@ -57,7 +57,11 @@ export class SearchCoursesDto {
   @IsOptional()
   minRating?: number;
 
-  @ApiProperty({ example: 'price-asc', enum: ['price-asc', 'price-desc', 'rating', 'popular', 'newest'], required: false })
+  @ApiProperty({
+    example: 'price-asc',
+    enum: ['price-asc', 'price-desc', 'rating', 'popular', 'newest'],
+    required: false,
+  })
   @IsEnum(['price-asc', 'price-desc', 'rating', 'popular', 'newest'])
   @IsOptional()
   sortBy?: 'price-asc' | 'price-desc' | 'rating' | 'popular' | 'newest';

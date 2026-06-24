@@ -109,7 +109,9 @@ describe('Admin Auth CRUD + Permissions (e2e)', () => {
         .send({ title: 'Tutor-created entry' })
         .expect((r) => {
           if (r.status !== 200 && r.status !== 201) {
-            throw new Error(`Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`);
+            throw new Error(
+              `Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`,
+            );
           }
         });
 
@@ -124,7 +126,9 @@ describe('Admin Auth CRUD + Permissions (e2e)', () => {
         .send({ title: 'Moderator-created entry' })
         .expect((r) => {
           if (r.status !== 200 && r.status !== 201) {
-            throw new Error(`Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`);
+            throw new Error(
+              `Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`,
+            );
           }
         });
 
@@ -138,7 +142,9 @@ describe('Admin Auth CRUD + Permissions (e2e)', () => {
         .send(SAMPLE_PAYLOAD)
         .expect((r) => {
           if (r.status !== 200 && r.status !== 201) {
-            throw new Error(`Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`);
+            throw new Error(
+              `Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`,
+            );
           }
         });
 
@@ -155,7 +161,9 @@ describe('Admin Auth CRUD + Permissions (e2e)', () => {
   // ---------------------------------------------------------------------------
   describe('GET /admin/auth/:id', () => {
     it('returns the created item by id', async () => {
-      const res = await request(server).get(`/admin/auth/${createdId}`).expect(200);
+      const res = await request(server)
+        .get(`/admin/auth/${createdId}`)
+        .expect(200);
 
       expect(res.body.id).toBe(createdId);
       expect(res.body.title).toBe(SAMPLE_PAYLOAD.title);
@@ -170,7 +178,10 @@ describe('Admin Auth CRUD + Permissions (e2e)', () => {
   // ---------------------------------------------------------------------------
   describe('PATCH /admin/auth/:id – authentication + role enforcement', () => {
     it('rejects unauthenticated requests with 401', () =>
-      request(server).patch(`/admin/auth/${createdId}`).send({ title: 'Hacked' }).expect(401));
+      request(server)
+        .patch(`/admin/auth/${createdId}`)
+        .send({ title: 'Hacked' })
+        .expect(401));
 
     it('rejects a student token with 403', () =>
       request(server)
@@ -186,7 +197,9 @@ describe('Admin Auth CRUD + Permissions (e2e)', () => {
         .send({ title: 'Updated Title', description: 'Updated by e2e' })
         .expect((r) => {
           if (r.status !== 200 && r.status !== 201) {
-            throw new Error(`Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`);
+            throw new Error(
+              `Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`,
+            );
           }
         });
 
@@ -195,7 +208,9 @@ describe('Admin Auth CRUD + Permissions (e2e)', () => {
     });
 
     it('reflects the update on a subsequent GET', async () => {
-      const res = await request(server).get(`/admin/auth/${createdId}`).expect(200);
+      const res = await request(server)
+        .get(`/admin/auth/${createdId}`)
+        .expect(200);
       expect(res.body.title).toBe('Updated Title');
     });
   });
@@ -225,7 +240,9 @@ describe('Admin Auth CRUD + Permissions (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect((r) => {
           if (r.status !== 200 && r.status !== 201) {
-            throw new Error(`Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`);
+            throw new Error(
+              `Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`,
+            );
           }
         });
 

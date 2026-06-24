@@ -4,7 +4,9 @@ import { UpdateAdminFinancialAidManagementDto } from './dto/update-admin-financi
 
 @Injectable()
 export class AdminFinancialAidManagementService {
-  private readonly items: Array<{ id: string } & CreateAdminFinancialAidManagementDto> = [];
+  private readonly items: Array<
+    { id: string } & CreateAdminFinancialAidManagementDto
+  > = [];
 
   findAll() {
     return this.items;

@@ -1,13 +1,4 @@
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  HttpException,
-  HttpStatus,
-  Logger,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, HttpException, HttpStatus, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { AllExceptionsFilter } from './http-exception.filter';
 
 function buildHost(url = '/test', headers: Record<string, string> = {}) {
@@ -86,7 +77,10 @@ describe('AllExceptionsFilter', () => {
 
       expect(status).toHaveBeenCalledWith(400);
       expect(json).toHaveBeenCalledWith(
-        expect.objectContaining({ statusCode: 400, message: 'Email is required' }),
+        expect.objectContaining({
+          statusCode: 400,
+          message: 'Email is required',
+        }),
       );
     });
 
@@ -179,7 +173,10 @@ describe('AllExceptionsFilter', () => {
 
   it('handles a plain HttpException with a string response', () => {
     const { host, status, json } = buildHost();
-    filter.catch(new HttpException('Custom message', HttpStatus.BAD_GATEWAY), host);
+    filter.catch(
+      new HttpException('Custom message', HttpStatus.BAD_GATEWAY),
+      host,
+    );
 
     expect(status).toHaveBeenCalledWith(502);
     expect(json.mock.calls[0][0].message).toBe('Custom message');
@@ -194,7 +191,11 @@ describe('AllExceptionsFilter', () => {
 
     expect(status).toHaveBeenCalledWith(422);
     expect(json).toHaveBeenCalledWith(
-      expect.objectContaining({ statusCode: 422, message: 'Custom', error: 'My Error' }),
+      expect.objectContaining({
+        statusCode: 422,
+        message: 'Custom',
+        error: 'My Error',
+      }),
     );
   });
 

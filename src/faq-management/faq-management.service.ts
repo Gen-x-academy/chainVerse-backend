@@ -1,23 +1,38 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { InjectModel } from '@nestjs/mongoose';
 import { CreateFaqManagementDto } from './dto/create-faq-management.dto';
 import { UpdateFaqManagementDto } from './dto/update-faq-management.dto';
+import { FaqManagement } from './schemas/faq-management.schema';
 
 export const FAQ_CACHE_KEY = '/faq';
 
 @Injectable()
 export class FaqManagementService {
-  private readonly items: Array<{ id: string } & CreateFaqManagementDto> = [];
+  private faqModel: any;
+  private cache: Cache;
 
-  constructor(@Inject(CACHE_MANAGER) private readonly cache: Cache) {}
+  constructor() {}
 
-  findAll() {
-    return this.items;
+  @Inject('FaqManagementModel')
+  setFaqModel: (model: any) => void = (model: any) => {
+    this.faqModel = model;
+  };
+
+  @Inject(CACHE_MANAGER)
+  setCache: (cache: Cache) => void = (cache: Cache) => {
+    this.cache = cache;
+  };
+
+  async findAll() {
+    return this.faqModel.find({ isActive: true }).sort({ order: 1 }).exec();
   }
 
-  findOne(id: string) {
-    const item = this.items.find((entry) => entry.id === id);
+  async findOne(id: string) {
+    const item = await this.faqModel
+      .findOne({ _id: id, isActive: true })
+      .exec();
     if (!item) {
       throw new NotFoundException('FaqManagement item not found');
     }
@@ -25,26 +40,33 @@ export class FaqManagementService {
   }
 
   async create(payload: CreateFaqManagementDto) {
-    const created = { id: crypto.randomUUID(), ...payload };
-    this.items.push(created);
+    const created = new this.faqModel(payload);
+    await created.save();
     await this.cache.del(FAQ_CACHE_KEY);
     return created;
   }
 
   async update(id: string, payload: UpdateFaqManagementDto) {
-    const item = this.findOne(id);
-    Object.assign(item, payload);
+    const updated = await this.faqModel
+      .findByIdAndUpdate(id, payload, { new: true })
+      .exec();
+
+    if (!updated) {
+      throw new NotFoundException('FaqManagement item not found');
+    }
+
     await this.cache.del(FAQ_CACHE_KEY);
     await this.cache.del(`${FAQ_CACHE_KEY}/${id}`);
-    return item;
+    return updated;
   }
 
   async remove(id: string) {
-    const index = this.items.findIndex((entry) => entry.id === id);
-    if (index === -1) {
+    const result = await this.faqModel.findByIdAndDelete(id).exec();
+
+    if (!result) {
       throw new NotFoundException('FaqManagement item not found');
     }
-    this.items.splice(index, 1);
+
     await this.cache.del(FAQ_CACHE_KEY);
     await this.cache.del(`${FAQ_CACHE_KEY}/${id}`);
     return { id, deleted: true };

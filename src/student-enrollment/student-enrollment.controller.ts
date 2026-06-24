@@ -1,15 +1,8 @@
-import {
-  Controller,
-  Post,
-  Get,
-  Param,
-  Req,
-  UseGuards,
-  BadRequestException,
-} from '@nestjs/common';
+import { Controller, Post, Get, Param, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { EnrollmentGuard } from '../common/guards/enrollment.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 import { StudentEnrollmentService } from './student-enrollment.service';
@@ -45,10 +38,26 @@ export class StudentEnrollmentController {
 
   @ApiOperation({ summary: 'Check if student is enrolled in a course' })
   @Get('is-enrolled/:courseId')
-  isEnrolled(
+  async isEnrolled(
     @Req() req: { user: { id: string } },
     @Param('courseId') courseId: string,
   ) {
-    return this.service.isEnrolled(req.user.id, courseId);
+    const enrolled = await this.service.isEnrolled(req.user.id, courseId);
+    return { enrolled, courseId, studentId: req.user.id };
+  }
+
+  @ApiOperation({
+    summary: 'Access course content — requires active enrollment',
+  })
+  @Get('content/:courseId')
+  @UseGuards(EnrollmentGuard)
+  getCourseContent(
+    @Req() req: { user: { id: string } },
+    @Param('courseId') courseId: string,
+  ) {
+    return this.service.getMyCourses(req.user.id).then((courses) => {
+      const entry = courses.find((c) => c.enrollment.courseId === courseId);
+      return entry ?? { courseId, message: 'Content access granted' };
+    });
   }
 }

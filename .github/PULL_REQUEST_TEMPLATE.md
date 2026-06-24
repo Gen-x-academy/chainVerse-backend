@@ -1,19 +1,26 @@
-## Description  
-<!-- Provide a brief summary of the changes in this PR. -->  
+## What does this PR do?
 
-## Related Issues  
-<!-- Link related issues using `Closes #issue_number` or `Fixes #issue_number` -->  
+<!-- Provide a clear summary of the changes and why they are needed. -->
 
-## Changes Made  
-- [ ] List key changes made in this PR.  
+## Related issue(s)
 
-## How to Test  
-<!-- Describe how a reviewer can test these changes. Include commands if needed. -->  
+Closes #
 
-## Screenshots (if applicable)  
-<!-- Upload screenshots or GIFs to show UI-related changes. -->  
+## Type of change
 
-## Checklist  
-- [ ] My code follows the project's coding style.  
-- [ ] I have tested these changes locally.  
-- [ ] Documentation has been updated where necessary.  
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Breaking change
+- [ ] Documentation
+
+## How has this been tested?
+
+- [ ] Unit tests
+- [ ] E2E tests
+- [ ] Manual testing
+
+## Checklist
+
+- [ ] Tests pass locally
+- [ ] Swagger docs updated
+- [ ] `.env.example` updated (if new env vars added)

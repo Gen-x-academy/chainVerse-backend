@@ -9,7 +9,8 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 export class SearchCourseDto {
   /** Free-text keyword(s) matched against title, description and metadata. */
   @ApiPropertyOptional({
-    description: 'Free-text keyword search across title, description and metadata',
+    description:
+      'Free-text keyword search across title, description and metadata',
     example: 'blockchain',
   })
   query?: string;

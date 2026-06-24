@@ -1,8 +1,21 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test as NestTest, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import request from 'supertest';
-import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
+import request from 'supertest';
+import { Server } from 'http';
+
+interface AuthResponse {
+  message: string;
+  user?: {
+    email: string;
+    emailVerified: boolean;
+    id?: string;
+  };
+  accessToken?: string;
+  refreshToken?: string;
+  verificationToken?: string;
+  resetToken?: string;
+}
 
 /**
  * End-to-end journey tests for the student authentication flow.
@@ -12,27 +25,25 @@ import { AppModule } from '../src/app.module';
  * mimicking a real user session progressing through the journey.
  */
 describe('Student Auth – Full Journey (e2e)', () => {
-  let app: INestApplication<App>;
-  let server: App;
+  let app: INestApplication;
+  let server: Server;
 
   // Tokens and one-time codes captured across the journey
-  let verificationToken: string;
   let accessToken: string;
   let refreshToken: string;
-  let resetToken: string;
 
   const BASE_EMAIL = 'journey.student@example.com';
   const BASE_PASSWORD = 'JourneyPass1!';
   const VERIFICATION_EMAIL = 'verify.student@example.com';
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
+    const moduleFixture: TestingModule = await NestTest.createTestingModule({
       imports: [AppModule],
     }).compile();
 
     app = moduleFixture.createNestApplication();
     await app.init();
-    server = app.getHttpServer() as unknown as App;
+    server = app.getHttpServer() as Server;
   });
 
   afterAll(async () => {
@@ -60,16 +71,18 @@ describe('Student Auth – Full Journey (e2e)', () => {
           }
         });
 
-      expect(res.body.message).toMatch(/verify your email/i);
-      expect(res.body.user.email).toBe(BASE_EMAIL);
-      expect(res.body.user.emailVerified).toBe(false);
+      expect(res.body.message as string).toMatch(/verify your email/i);
+      expect((res.body.user as AuthResponse['user'])?.email).toBe(BASE_EMAIL);
+      expect((res.body.user as AuthResponse['user'])?.emailVerified).toBe(
+        false,
+      );
       expect(typeof res.body.accessToken).toBe('string');
       expect(typeof res.body.refreshToken).toBe('string');
       // Verification token is no longer returned in response for security
       expect(res.body.verificationToken).toBeUndefined();
 
-      accessToken = res.body.accessToken;
-      refreshToken = res.body.refreshToken;
+      accessToken = res.body.accessToken as string;
+      refreshToken = res.body.refreshToken as string;
     });
 
     it('rejects a duplicate email with 409', () =>
@@ -175,21 +188,44 @@ describe('Student Auth – Full Journey (e2e)', () => {
         .expect(400));
 
     it('verifies the email with a valid JWT token', async () => {
-      // For testing, we need to get a verification token from the database
-      // In production, this would come from an email
-      // Here we simulate by using the resend endpoint and capturing from notification
-      const res = await request(server)
-        .post('/student/verify-email')
-        .send({ token: verificationToken })
-        .expect((r) => {
-          if (r.status !== 200 && r.status !== 201) {
-            throw new Error(
-              `Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`,
-            );
-          }
-        });
+      // Get verification token from database for testing
+      const { MongoClient } = await import('mongodb');
+      const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
+      const mongoDb = process.env.MONGODB_DB || 'chainverse-test';
+      const client = new MongoClient(mongoUri);
 
-      expect(res.body.message).toMatch(/verified/i);
+      try {
+        await client.connect();
+        const db = client.db(mongoDb);
+
+        // Get the student
+        const student = await db
+          .collection('students')
+          .findOne({ email: BASE_EMAIL });
+        if (!student) {
+          throw new Error('Student not found');
+        }
+
+        // Get the verification token from student record
+        if (!student.verificationToken) {
+          throw new Error('Verification token not found');
+        }
+
+        const res = await request(server)
+          .post('/student/verify-email')
+          .send({ token: student.verificationToken })
+          .expect((r) => {
+            if (r.status !== 200 && r.status !== 201) {
+              throw new Error(
+                `Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`,
+              );
+            }
+          });
+
+        expect(res.body.message).toMatch(/verified/i);
+      } finally {
+        await client.close();
+      }
     });
   });
 
@@ -531,6 +567,142 @@ describe('Student Auth – Full Journey (e2e)', () => {
         });
 
       expect(res.body.user.email).toBe(BASE_EMAIL);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Protected routes - ensure they reject unauthenticated requests
+  // ---------------------------------------------------------------------------
+  describe('Protected routes', () => {
+    it('rejects requests to protected student endpoints without authentication', async () => {
+      // Test various protected endpoints
+      const protectedEndpoints = [
+        '/student/account-settings',
+        '/student/enrollments',
+        '/student/saved-courses',
+      ];
+
+      for (const endpoint of protectedEndpoints) {
+        await request(server).get(endpoint).expect(401);
+      }
+    });
+
+    it('rejects requests with invalid JWT token', async () => {
+      const invalidToken = 'invalid.jwt.token';
+
+      await request(server)
+        .get('/student/account-settings')
+        .set('Authorization', `Bearer ${invalidToken}`)
+        .expect(401);
+    });
+
+    it('rejects requests with expired JWT token', async () => {
+      // Create an expired token manually
+      const expiredToken =
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiZXhwIjoxNjEwNjI4MDAwfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+
+      await request(server)
+        .get('/student/account-settings')
+        .set('Authorization', `Bearer ${expiredToken}`)
+        .expect(401);
+    });
+
+    it('allows requests with valid JWT token', async () => {
+      // Use the access token from login
+      const res = await request(server)
+        .get('/student/account-settings')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect((r) => {
+          // Should not be 401, may be 200, 404, or other status depending on implementation
+          if (r.status === 401) {
+            throw new Error('Valid token was rejected');
+          }
+        });
+
+      // The exact response depends on the endpoint implementation
+      // We just verify it's not an authentication error
+      expect(res.status).not.toBe(401);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Token rotation tests
+  // ---------------------------------------------------------------------------
+  describe('Token rotation security', () => {
+    it('prevents reuse of consumed refresh tokens', async () => {
+      // Get a fresh login token
+      const loginRes = await request(server)
+        .post('/student/login')
+        .send({ email: BASE_EMAIL, password: 'NewSecurePass1!' })
+        .expect((r) => {
+          if (r.status !== 200 && r.status !== 201) {
+            throw new Error(
+              `Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`,
+            );
+          }
+        });
+
+      const freshRefreshToken = loginRes.body.refreshToken;
+
+      // Use the refresh token once
+      await request(server)
+        .post('/student/refresh-token')
+        .send({ refreshToken: freshRefreshToken })
+        .expect((r) => {
+          if (r.status !== 200 && r.status !== 201) {
+            throw new Error(
+              `Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`,
+            );
+          }
+        });
+
+      // Try to reuse the same token - should be rejected
+      await request(server)
+        .post('/student/refresh-token')
+        .send({ refreshToken: freshRefreshToken })
+        .expect(401);
+    });
+
+    it('invalidates entire token family on replay attack', async () => {
+      // Get a fresh login token
+      const loginRes = await request(server)
+        .post('/student/login')
+        .send({ email: BASE_EMAIL, password: 'NewSecurePass1!' })
+        .expect((r) => {
+          if (r.status !== 200 && r.status !== 201) {
+            throw new Error(
+              `Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`,
+            );
+          }
+        });
+
+      const freshRefreshToken = loginRes.body.refreshToken;
+
+      // First refresh - get new token
+      const firstRefresh = await request(server)
+        .post('/student/refresh-token')
+        .send({ refreshToken: freshRefreshToken })
+        .expect((r) => {
+          if (r.status !== 200 && r.status !== 201) {
+            throw new Error(
+              `Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`,
+            );
+          }
+        });
+
+      const newRefreshToken = firstRefresh.body.refreshToken;
+
+      // Replay the old token - should invalidate the family
+      await request(server)
+        .post('/student/refresh-token')
+        .send({ refreshToken: freshRefreshToken })
+        .expect(401);
+
+      // The new token should also be invalid now
+      await request(server)
+        .post('/student/refresh-token')
+        .send({ refreshToken: newRefreshToken })
+        .expect(401);
     });
   });
 });

@@ -80,7 +80,9 @@ describe('CourseCategorizationFilteringService', () => {
         metadata: { category: 'web3' },
       });
       expect(item.description).toBe('desc');
-      expect((item.metadata as Record<string, unknown>)['category']).toBe('web3');
+      expect((item.metadata as Record<string, unknown>)['category']).toBe(
+        'web3',
+      );
     });
 
     it('invalidates the discovery cache key after creation', async () => {
@@ -159,7 +161,11 @@ describe('CourseCategorizationFilteringService', () => {
       {
         title: 'Intro to Blockchain',
         description: 'Learn the basics of blockchain technology',
-        metadata: { category: 'web3', level: 'beginner', tags: ['defi', 'nft'] },
+        metadata: {
+          category: 'web3',
+          level: 'beginner',
+          tags: ['defi', 'nft'],
+        },
       },
       {
         title: 'Advanced DeFi',

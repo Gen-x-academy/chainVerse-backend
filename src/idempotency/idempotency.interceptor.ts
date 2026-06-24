@@ -1,10 +1,4 @@
-import {
-  CallHandler,
-  ExecutionContext,
-  Injectable,
-  NestInterceptor,
-  BadRequestException,
-} from '@nestjs/common';
+import { CallHandler, ExecutionContext, Injectable, NestInterceptor, BadRequestException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable, from, switchMap, tap } from 'rxjs';
 import { Request, Response } from 'express';
@@ -33,10 +27,10 @@ export class IdempotencyInterceptor implements NestInterceptor {
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
-    const isIdempotent = this.reflector.getAllAndOverride<boolean>(IDEMPOTENT_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const isIdempotent = this.reflector.getAllAndOverride<boolean>(
+      IDEMPOTENT_KEY,
+      [context.getHandler(), context.getClass()],
+    );
 
     if (!isIdempotent) return next.handle();
 
@@ -44,7 +38,9 @@ export class IdempotencyInterceptor implements NestInterceptor {
     const req = http.getRequest<Request & { user?: { id: string } }>();
     const res = http.getResponse<Response>();
 
-    const idempotencyKey = req.headers['x-idempotency-key'] as string | undefined;
+    const idempotencyKey = req.headers['x-idempotency-key'] as
+      | string
+      | undefined;
 
     if (!idempotencyKey) {
       throw new BadRequestException({
@@ -58,6 +54,13 @@ export class IdempotencyInterceptor implements NestInterceptor {
     return from(this.idempotencyService.find(idempotencyKey, userId)).pipe(
       switchMap((cached) => {
         if (cached) {
+          // Path validation: reject if path does not match
+          if ((cached as any).path && (cached as any).path !== req.path) {
+            throw new BadRequestException({
+              message: 'Idempotency-Key reuse for different endpoint',
+              errorCode: ErrorCode.VAL_IDEMPOTENCY_KEY_PATH_MISMATCH,
+            });
+          }
           res.status(cached.statusCode).json(cached.responseBody);
           // Return an empty observable – response is already sent.
           return new Observable((subscriber) => subscriber.complete());

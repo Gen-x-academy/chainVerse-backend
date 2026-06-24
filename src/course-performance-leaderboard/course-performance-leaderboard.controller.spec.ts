@@ -85,7 +85,9 @@ describe('CoursePerformanceLeaderboardController', () => {
     });
 
     it('propagates NotFoundException', async () => {
-      await expect(controller.remove('ghost')).rejects.toThrow(NotFoundException);
+      await expect(controller.remove('ghost')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

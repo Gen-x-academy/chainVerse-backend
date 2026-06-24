@@ -10,6 +10,12 @@ export interface AppConfig {
   email: {
     user: string | undefined;
     pass: string | undefined;
+    from: string | undefined;
+  };
+  smtp: {
+    host: string | undefined;
+    port: number;
+    secure: boolean;
   };
   google: {
     clientId: string | undefined;
@@ -36,10 +42,12 @@ export default (): AppConfig => ({
   nodeEnv: process.env.NODE_ENV ?? 'development',
   port: parseInt(process.env.PORT ?? '3000', 10),
   logLevel: process.env.LOG_LEVEL ?? 'info',
-  mongoUri:
-    process.env.MONGO_URI ?? 'mongodb://localhost:27017/chain-verse',
+  mongoUri: process.env.MONGO_URI ?? 'mongodb://localhost:27017/chain-verse',
   jwtSecret: process.env.JWT_SECRET!,
-  downloadTokenExpiry: parseInt(process.env.DOWNLOAD_TOKEN_EXPIRY ?? '3600', 10),
+  downloadTokenExpiry: parseInt(
+    process.env.DOWNLOAD_TOKEN_EXPIRY ?? '3600',
+    10,
+  ),
   bulkDownloadTokenExpiry: parseInt(
     process.env.BULK_DOWNLOAD_TOKEN_EXPIRY ?? '7200',
     10,
@@ -48,6 +56,12 @@ export default (): AppConfig => ({
   email: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
+    from: process.env.EMAIL_FROM,
+  },
+  smtp: {
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT ?? '587', 10),
+    secure: process.env.SMTP_SECURE === 'true',
   },
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID,
@@ -70,7 +84,10 @@ export default (): AppConfig => ({
       max: parseInt(process.env.RATE_LIMIT_AUTH_MAX ?? '100', 10),
     },
     premium: {
-      windowMs: parseInt(process.env.RATE_LIMIT_PREMIUM_WINDOW_MS ?? '60000', 10),
+      windowMs: parseInt(
+        process.env.RATE_LIMIT_PREMIUM_WINDOW_MS ?? '60000',
+        10,
+      ),
       max: parseInt(process.env.RATE_LIMIT_PREMIUM_MAX ?? '200', 10),
     },
     admin: {

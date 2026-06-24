@@ -1,13 +1,32 @@
 import { Injectable } from '@nestjs/common';
 import { UploadWorkerFileDto } from './dto/upload-worker-file.dto';
 
+export interface ProcessedFile {
+  id: string;
+  originalName: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+  title: string | null;
+  description: string | null;
+  tags: string[];
+  uploadedAt: string;
+}
+
+interface MulterFile {
+  originalname: string;
+  filename: string;
+  mimetype: string;
+  size: number;
+}
+
 @Injectable()
 export class WorkerService {
-  processUpload(file: Express.Multer.File, payload: UploadWorkerFileDto) {
+  processUpload(file: MulterFile, payload: UploadWorkerFileDto): ProcessedFile {
     const tags = payload.tags
       ? payload.tags
           .split(',')
-          .map((tag) => tag.trim())
+          .map((tag: string) => tag.trim())
           .filter(Boolean)
       : [];
 
@@ -17,7 +36,6 @@ export class WorkerService {
       filename: file.filename,
       mimeType: file.mimetype,
       size: file.size,
-      path: file.path,
       title: payload.title ?? null,
       description: payload.description ?? null,
       tags,

@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { UpdateStudentCartDto } from './dto/update-student-cart.dto';
@@ -52,9 +47,7 @@ export class StudentCartService {
     return cartItem.save();
   }
 
-  async getCart(
-    studentId: string,
-  ): Promise<{
+  async getCart(studentId: string): Promise<{
     studentId: string;
     items: Array<{ cartItem: CartItem; course: unknown }>;
     totalItems: number;
@@ -62,24 +55,27 @@ export class StudentCartService {
   }> {
     const items = await this.cartItemModel.find({ studentId }).exec();
 
-    // Fetch course details for each cart item
-    const itemsWithDetails = await Promise.all(
-      items.map(async (item) => {
-        const course = await this.courseModel.findById(item.courseId).exec();
-        return {
-          cartItem: item,
-          course: course
-            ? {
-                id: course.id,
-                title: course.title,
-                price: course.price,
-                thumbnailUrl: course.thumbnailUrl,
-                tutorName: course.tutorName,
-              }
-            : null,
-        };
-      }),
+    const courseIds = items.map((i) => i.courseId);
+    const courses = await this.courseModel
+      .find({ _id: { $in: courseIds } })
+      .exec();
+    const courseMap = new Map(
+      courses.map((c) => [
+        c.id,
+        {
+          id: c.id,
+          title: c.title,
+          price: c.price,
+          thumbnailUrl: c.thumbnailUrl,
+          tutorName: c.tutorName,
+        },
+      ]),
     );
+
+    const itemsWithDetails = items.map((item) => ({
+      cartItem: item,
+      course: courseMap.get(item.courseId) ?? null,
+    }));
 
     const validItems = itemsWithDetails.filter((i) => i.course !== null);
     const totalPrice = validItems.reduce((sum, item) => {
@@ -117,12 +113,6 @@ export class StudentCartService {
     message: string;
     deleted: boolean;
   }> {
-    // Validate course exists
-    const course = await this.courseModel.findById(courseId).exec();
-    if (!course) {
-      throw new NotFoundException('Course not found');
-    }
-
     const result = await this.cartItemModel
       .findOneAndDelete({ studentId, courseId })
       .exec();

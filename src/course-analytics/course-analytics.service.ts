@@ -114,18 +114,24 @@ export class CourseAnalyticsService {
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
     // Get enrollment stats
-    const [totalEnrollments, last7DaysEnrollments, last30DaysEnrollments] = await Promise.all([
-      this.enrollmentModel.countDocuments({ courseId }).exec(),
-      this.enrollmentModel.countDocuments({ courseId, createdAt: { $gte: sevenDaysAgo } }).exec(),
-      this.enrollmentModel.countDocuments({ courseId, createdAt: { $gte: thirtyDaysAgo } }).exec(),
-    ]);
+    const [totalEnrollments, last7DaysEnrollments, last30DaysEnrollments] =
+      await Promise.all([
+        this.enrollmentModel.countDocuments({ courseId }).exec(),
+        this.enrollmentModel
+          .countDocuments({ courseId, createdAt: { $gte: sevenDaysAgo } })
+          .exec(),
+        this.enrollmentModel
+          .countDocuments({ courseId, createdAt: { $gte: thirtyDaysAgo } })
+          .exec(),
+      ]);
 
     // Get revenue stats
-    const [totalRevenue, last7DaysRevenue, last30DaysRevenue] = await Promise.all([
-      this.getRevenueForCourse(courseId),
-      this.getRevenueForCourse(courseId, sevenDaysAgo),
-      this.getRevenueForCourse(courseId, thirtyDaysAgo),
-    ]);
+    const [totalRevenue, last7DaysRevenue, last30DaysRevenue] =
+      await Promise.all([
+        this.getRevenueForCourse(courseId),
+        this.getRevenueForCourse(courseId, sevenDaysAgo),
+        this.getRevenueForCourse(courseId, thirtyDaysAgo),
+      ]);
 
     // Get rating distribution
     const ratings = await this.ratingModel.find({ courseId }).exec();
@@ -143,12 +149,17 @@ export class CourseAnalyticsService {
 
     // Calculate enrollment trend
     const previous30Days = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
-    const previous30DaysEnrollments = await this.enrollmentModel.countDocuments({
-      courseId,
-      createdAt: { $gte: previous30Days, $lt: thirtyDaysAgo },
-    }).exec();
+    const previous30DaysEnrollments = await this.enrollmentModel
+      .countDocuments({
+        courseId,
+        createdAt: { $gte: previous30Days, $lt: thirtyDaysAgo },
+      })
+      .exec();
 
-    const trend = this.calculateTrend(last30DaysEnrollments, previous30DaysEnrollments);
+    const trend = this.calculateTrend(
+      last30DaysEnrollments,
+      previous30DaysEnrollments,
+    );
 
     // Get wishlist and cart counts
     const [totalWishlists, totalCarts] = await Promise.all([
@@ -181,7 +192,10 @@ export class CourseAnalyticsService {
         total: totalRevenue,
         last7Days: last7DaysRevenue,
         last30Days: last30DaysRevenue,
-        averagePerEnrollment: totalEnrollments > 0 ? Math.round((totalRevenue / totalEnrollments) * 100) / 100 : 0,
+        averagePerEnrollment:
+          totalEnrollments > 0
+            ? Math.round((totalRevenue / totalEnrollments) * 100) / 100
+            : 0,
       },
       ratingDistribution,
       recentReviews: recentReviews.map((r) => ({
@@ -212,7 +226,9 @@ export class CourseAnalyticsService {
     // Get course performance data
     const coursesPerformance = await Promise.all(
       courses.map(async (course) => {
-        const enrollments = await this.enrollmentModel.countDocuments({ courseId: course.id }).exec();
+        const enrollments = await this.enrollmentModel
+          .countDocuments({ courseId: course.id })
+          .exec();
         const revenue = await this.getRevenueForCourse(course.id);
         return {
           courseId: course.id,
@@ -226,15 +242,21 @@ export class CourseAnalyticsService {
     );
 
     // Calculate totals
-    const totalStudents = await this.enrollmentModel.distinct('studentId', {
-      courseId: { $in: courses.map((c) => c.id) },
-    }).then((ids) => ids.length);
+    const totalStudents = await this.enrollmentModel
+      .distinct('studentId', {
+        courseId: { $in: courses.map((c) => c.id) },
+      })
+      .then((ids) => ids.length);
 
-    const totalRevenue = coursesPerformance.reduce((sum, c) => sum + c.revenue, 0);
+    const totalRevenue = coursesPerformance.reduce(
+      (sum, c) => sum + c.revenue,
+      0,
+    );
     const totalReviews = courses.reduce((sum, c) => sum + c.totalReviews, 0);
-    const avgRating = courses.length > 0
-      ? courses.reduce((sum, c) => sum + c.averageRating, 0) / courses.length
-      : 0;
+    const avgRating =
+      courses.length > 0
+        ? courses.reduce((sum, c) => sum + c.averageRating, 0) / courses.length
+        : 0;
 
     // Get recent enrollments across all courses
     const recentEnrollments = await this.enrollmentModel
@@ -293,15 +315,19 @@ export class CourseAnalyticsService {
       totalStudents,
     ] = await Promise.all([
       this.courseModel.countDocuments().exec(),
-      this.courseModel.countDocuments({ status: 'published', deletedAt: null }).exec(),
+      this.courseModel
+        .countDocuments({ status: 'published', deletedAt: null })
+        .exec(),
       this.enrollmentModel.countDocuments().exec(),
       this.getTotalPlatformRevenue(),
       this.enrollmentModel.distinct('studentId').then((ids) => ids.length),
     ]);
 
-    const recentEnrollments = await this.enrollmentModel.countDocuments({
-      createdAt: { $gte: thirtyDaysAgo },
-    }).exec();
+    const recentEnrollments = await this.enrollmentModel
+      .countDocuments({
+        createdAt: { $gte: thirtyDaysAgo },
+      })
+      .exec();
 
     // Get top courses by enrollment
     const topCourses = await this.courseModel
@@ -369,7 +395,10 @@ export class CourseAnalyticsService {
     };
   }
 
-  private async getRevenueForCourse(courseId: string, since?: Date): Promise<number> {
+  private async getRevenueForCourse(
+    courseId: string,
+    since?: Date,
+  ): Promise<number> {
     const query: Record<string, unknown> = { courseId };
     if (since) {
       query.createdAt = { $gte: since };
@@ -380,11 +409,16 @@ export class CourseAnalyticsService {
   }
 
   private async getTotalPlatformRevenue(): Promise<number> {
-    const enrollments = await this.enrollmentModel.find({ type: 'paid' }).exec();
+    const enrollments = await this.enrollmentModel
+      .find({ type: 'paid' })
+      .exec();
     return enrollments.reduce((sum, e) => sum + e.amountPaid, 0);
   }
 
-  private calculateTrend(current: number, previous: number): 'up' | 'down' | 'stable' {
+  private calculateTrend(
+    current: number,
+    previous: number,
+  ): 'up' | 'down' | 'stable' {
     if (previous === 0) return current > 0 ? 'up' : 'stable';
     const change = (current - previous) / previous;
     if (change > 0.1) return 'up';
@@ -392,7 +426,9 @@ export class CourseAnalyticsService {
     return 'stable';
   }
 
-  private async getEarningsOverTime(courseIds: string[]): Promise<Array<{ period: string; amount: number }>> {
+  private async getEarningsOverTime(
+    courseIds: string[],
+  ): Promise<Array<{ period: string; amount: number }>> {
     const now = new Date();
     const periods = [];
 
@@ -400,15 +436,20 @@ export class CourseAnalyticsService {
       const startDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const endDate = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
 
-      const enrollments = await this.enrollmentModel.find({
-        courseId: { $in: courseIds },
-        createdAt: { $gte: startDate, $lte: endDate },
-        type: 'paid',
-      }).exec();
+      const enrollments = await this.enrollmentModel
+        .find({
+          courseId: { $in: courseIds },
+          createdAt: { $gte: startDate, $lte: endDate },
+          type: 'paid',
+        })
+        .exec();
 
       const amount = enrollments.reduce((sum, e) => sum + e.amountPaid, 0);
       periods.push({
-        period: startDate.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+        period: startDate.toLocaleDateString('en-US', {
+          month: 'short',
+          year: '2-digit',
+        }),
         amount,
       });
     }

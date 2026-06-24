@@ -62,12 +62,16 @@ describe('FaqManagementController', () => {
   describe('update', () => {
     it('returns the updated FAQ', async () => {
       const item = await service.create({ question: 'Q' } as any);
-      const updated = await controller.update(item.id, { question: 'New Q' } as any);
-      expect((updated as any).question).toBe('New Q');
+      const updated = await controller.update(item.id, {
+        question: 'New Q',
+      } as any);
+      expect(updated.question).toBe('New Q');
     });
 
     it('propagates NotFoundException for an unknown id', async () => {
-      await expect(controller.update('ghost', {})).rejects.toThrow(NotFoundException);
+      await expect(controller.update('ghost', {})).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -79,7 +83,9 @@ describe('FaqManagementController', () => {
     });
 
     it('propagates NotFoundException for an unknown id', async () => {
-      await expect(controller.remove('ghost')).rejects.toThrow(NotFoundException);
+      await expect(controller.remove('ghost')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

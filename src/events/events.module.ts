@@ -1,16 +1,13 @@
 import { Module } from '@nestjs/common';
 import { NotificationModule } from '../notification/notification.module';
 import { PointsModule } from '../points/points.module';
+import { EmailModule } from '../email/email.module';
 import { NotificationListener } from './listeners/notification.listener';
 import { PointsListener } from './listeners/points.listener';
+import { RewardListener } from './listeners/reward.listener';
 
-/**
- * Owns all event listeners.  Importing NotificationModule and PointsModule
- * gives the listeners access to their services without creating any direct
- * dependency between those domain modules themselves.
- */
 @Module({
-  imports: [NotificationModule, PointsModule],
-  providers: [NotificationListener, PointsListener],
+  imports: [NotificationModule, PointsModule, EmailModule],
+  providers: [NotificationListener, PointsListener, RewardListener],
 })
 export class EventsModule {}

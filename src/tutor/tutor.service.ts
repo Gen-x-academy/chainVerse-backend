@@ -1,31 +1,34 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as crypto from 'crypto';
+import * as bcrypt from 'bcryptjs';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EmailService } from '../email/email.service';
 import { CreateTutorDto } from './dto/create-tutor.dto';
 import { LoginTutorDto } from './dto/login-tutor.dto';
 import { VerifyTutorEmailDto } from './dto/verify-tutor-email.dto';
 import { UpdateTutorProfileDto } from './dto/update-tutor-profile.dto';
 import { ForgetTutorPasswordDto } from './dto/forget-tutor-password.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { ResetTutorPasswordDto } from './dto/reset-tutor-password.dto';
 import { Tutor, TutorDocument } from './schemas/tutor.schema';
 import {
   PasswordResetToken,
   PasswordResetTokenDocument,
 } from './schemas/password-reset-token.schema';
+import {
+  RefreshToken,
+  RefreshTokenDocument,
+} from './schemas/refresh-token.schema';
 
 const ACCESS_TOKEN_EXPIRY = 3600;
 const REFRESH_TOKEN_EXPIRY = 604800;
 const VERIFICATION_TOKEN_EXPIRY = 86400; // 24 hours
 const RESET_TOKEN_EXPIRY = 900; // 15 minutes in seconds
+const BCRYPT_SALT_ROUNDS = 10;
 
 @Injectable()
 export class TutorService {
@@ -34,87 +37,66 @@ export class TutorService {
     private readonly tutorModel: Model<TutorDocument>,
     @InjectModel(PasswordResetToken.name)
     private readonly passwordResetTokenModel: Model<PasswordResetTokenDocument>,
+    @InjectModel(RefreshToken.name)
+    private readonly refreshTokenModel: Model<RefreshTokenDocument>,
     private readonly eventEmitter: EventEmitter2,
     private readonly configService: ConfigService,
+    private readonly emailService: EmailService,
+    private readonly jwtService: JwtService,
   ) {}
 
-  private get jwtSecret(): string {
-    return this.configService.get<string>('jwtSecret') ?? '';
+  private async hashPassword(password: string): Promise<string> {
+    return bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
   }
 
-  private hashPassword(password: string): string {
-    const salt = crypto.randomBytes(16).toString('hex');
-    const hash = crypto
-      .pbkdf2Sync(password, salt, 10000, 64, 'sha512')
-      .toString('hex');
-    return `${salt}:${hash}`;
-  }
-
-  private verifyPassword(password: string, stored: string): boolean {
-    const [salt, hash] = stored.split(':');
-    const verify = crypto
-      .pbkdf2Sync(password, salt, 10000, 64, 'sha512')
-      .toString('hex');
-    return hash === verify;
-  }
-
-  private createJwt(
-    payload: Record<string, unknown>,
-    expiresIn: number,
-  ): string {
-    const header = Buffer.from(
-      JSON.stringify({ alg: 'HS256', typ: 'JWT' }),
-    ).toString('base64url');
-    const now = Math.floor(Date.now() / 1000);
-    const body = Buffer.from(
-      JSON.stringify({ ...payload, iat: now, exp: now + expiresIn }),
-    ).toString('base64url');
-    const sig = crypto
-      .createHmac('sha256', this.jwtSecret)
-      .update(`${header}.${body}`)
-      .digest('base64url');
-    return `${header}.${body}.${sig}`;
-  }
-
-  verifyJwt(token: string): Record<string, unknown> {
-    const parts = token.split('.');
-    if (parts.length !== 3) throw new Error('Malformed token');
-    const [header, body, sig] = parts;
-    const expected = crypto
-      .createHmac('sha256', this.jwtSecret)
-      .update(`${header}.${body}`)
-      .digest('base64url');
-    if (sig !== expected) throw new Error('Invalid token signature');
-    const decoded = JSON.parse(
-      Buffer.from(body, 'base64url').toString(),
-    ) as Record<string, unknown>;
-    if ((decoded.exp as number) < Math.floor(Date.now() / 1000))
-      throw new Error('Token expired');
-    return decoded;
+  private async verifyPassword(
+    password: string,
+    storedHash: string,
+  ): Promise<boolean> {
+    return bcrypt.compare(password, storedHash);
   }
 
   private createVerificationToken(tutorId: string, email: string): string {
-    return this.createJwt(
+    return this.jwtService.sign(
       { sub: tutorId, email, type: 'email_verification' },
-      VERIFICATION_TOKEN_EXPIRY,
+      { expiresIn: VERIFICATION_TOKEN_EXPIRY },
     );
   }
 
-  private async generateTokenPair(tutor: TutorDocument) {
-    const family = crypto.randomUUID();
-    const accessToken = this.createJwt(
+  private async generateTokenPair(tutor: TutorDocument, tokenFamily?: string) {
+    const family = tokenFamily ?? crypto.randomUUID();
+    const accessToken = this.jwtService.sign(
       { sub: tutor.id, email: tutor.email, role: tutor.role },
-      ACCESS_TOKEN_EXPIRY,
+      { expiresIn: ACCESS_TOKEN_EXPIRY },
     );
-    const refreshToken = this.createJwt(
+    const refreshToken = this.jwtService.sign(
       {
         sub: tutor.id,
         type: 'refresh',
+        family,
         jti: crypto.randomBytes(16).toString('hex'),
       },
-      REFRESH_TOKEN_EXPIRY,
+      { expiresIn: REFRESH_TOKEN_EXPIRY },
     );
+
+    await new this.refreshTokenModel({
+      userId: tutor.id,
+      tokenHash: this.hashToken(refreshToken),
+      family,
+      expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRY * 1000),
+      revoked: false,
+    }).save();
+
     return { accessToken, refreshToken, expiresIn: ACCESS_TOKEN_EXPIRY };
+  }
+
+  verifyJwt(token: string): Record<string, unknown> {
+    try {
+      return this.jwtService.verify<Record<string, unknown>>(token);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Invalid token';
+      throw new Error(message);
+    }
   }
 
   private sanitizeTutor(tutor: TutorDocument) {
@@ -165,7 +147,7 @@ export class TutorService {
       firstName: dto.firstName,
       lastName: dto.lastName,
       email: dto.email,
-      passwordHash: this.hashPassword(dto.password),
+      passwordHash: await this.hashPassword(dto.password),
     }).save();
 
     const verificationToken = this.createVerificationToken(
@@ -177,6 +159,11 @@ export class TutorService {
     tutor.verificationTokenExpiry =
       Date.now() + VERIFICATION_TOKEN_EXPIRY * 1000;
     await tutor.save();
+
+    await this.emailService.sendVerificationEmail(
+      tutor.email,
+      verificationToken,
+    );
 
     return {
       message: 'Account created. Please verify your email.',
@@ -235,7 +222,7 @@ export class TutorService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    if (!this.verifyPassword(dto.password, tutor.passwordHash)) {
+    if (!(await this.verifyPassword(dto.password, tutor.passwordHash))) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
@@ -257,6 +244,63 @@ export class TutorService {
       user: this.sanitizeTutor(tutor),
       ...tokens,
     };
+  }
+
+  async refreshToken(dto: RefreshTokenDto) {
+    if (!dto.refreshToken) {
+      throw new BadRequestException('Refresh token is required');
+    }
+
+    let payload: Record<string, unknown>;
+    try {
+      payload = this.verifyJwt(dto.refreshToken);
+    } catch {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    if (payload.type !== 'refresh') {
+      throw new UnauthorizedException('Invalid refresh token type');
+    }
+
+    const tokenHash = this.hashToken(dto.refreshToken);
+    const stored = await this.refreshTokenModel
+      .findOne({ tokenHash, revoked: false })
+      .exec();
+
+    if (!stored) {
+      const family = payload.family as string | undefined;
+      if (family) {
+        await this.refreshTokenModel
+          .updateMany({ family, revoked: false }, { revoked: true })
+          .exec();
+      }
+      throw new UnauthorizedException(
+        'Refresh token has been revoked or already used',
+      );
+    }
+
+    stored.revoked = true;
+    await stored.save();
+
+    const tutor = await this.tutorModel.findById(stored.userId).exec();
+    if (!tutor) {
+      throw new NotFoundException('Tutor not found');
+    }
+
+    return this.generateTokenPair(tutor, stored.family);
+  }
+
+  async logout(dto: RefreshTokenDto) {
+    if (!dto.refreshToken) {
+      throw new BadRequestException('Refresh token is required');
+    }
+
+    const tokenHash = this.hashToken(dto.refreshToken);
+    await this.refreshTokenModel
+      .updateOne({ tokenHash }, { revoked: true })
+      .exec();
+
+    return { message: 'Logged out successfully' };
   }
 
   private hashToken(token: string): string {
@@ -304,8 +348,10 @@ export class TutorService {
     tutor.resetTokenExpiry = expiresAt.getTime();
     await tutor.save();
 
-    // In production, send email with reset link containing the token
-    console.log(`[Password Reset] Token for ${tutor.email}: ${resetToken}`);
+    // Send password reset email (token must only travel to user's inbox)
+    const baseUrl =
+      this.configService.get<string>('baseUrl') ?? 'http://localhost:3000';
+    await this.emailService.sendPasswordReset(tutor.email, resetToken, baseUrl);
 
     return { message: 'If the email exists, a reset link has been sent' };
   }
@@ -349,7 +395,7 @@ export class TutorService {
     }
 
     // Update password securely
-    tutor.passwordHash = this.hashPassword(dto.newPassword);
+    tutor.passwordHash = await this.hashPassword(dto.newPassword);
     tutor.resetToken = null;
     tutor.resetTokenExpiry = null;
     await tutor.save();

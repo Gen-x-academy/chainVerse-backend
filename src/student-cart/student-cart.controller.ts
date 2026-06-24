@@ -1,15 +1,6 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { StudentCartService } from './student-cart.service';
 import { UpdateStudentCartDto } from './dto/update-student-cart.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -25,10 +16,7 @@ export class StudentCartController {
   constructor(private readonly service: StudentCartService) {}
 
   @Post('cart/:id/add')
-  add(
-    @Req() req: { user: { id: string } },
-    @Param('id') courseId: string,
-  ) {
+  add(@Req() req: { user: { id: string } }, @Param('id', new ParseObjectIdPipe()) courseId: string) {
     return this.service.add(req.user.id, courseId);
   }
 
@@ -39,7 +27,7 @@ export class StudentCartController {
 
   @Patch(':id/cart')
   update(
-    @Param('id') courseId: string,
+    @Param('id', new ParseObjectIdPipe()) courseId: string,
     @Req() req: { user: { id: string } },
     @Body() payload: UpdateStudentCartDto,
   ) {
@@ -47,10 +35,7 @@ export class StudentCartController {
   }
 
   @Delete(':id/cart')
-  remove(
-    @Param('id') courseId: string,
-    @Req() req: { user: { id: string } },
-  ) {
+  remove(@Param('id', new ParseObjectIdPipe()) courseId: string, @Req() req: { user: { id: string } }) {
     return this.service.remove(req.user.id, courseId);
   }
 }

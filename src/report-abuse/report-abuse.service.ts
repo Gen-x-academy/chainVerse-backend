@@ -3,7 +3,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateReportAbuseDto } from './dto/create-report-abuse.dto';
 import { UpdateReportAbuseDto } from './dto/update-report-abuse.dto';
-import { AbuseReport, AbuseReportDocument } from './schemas/report-abuse.schema';
+import {
+  AbuseReport,
+  AbuseReportDocument,
+} from './schemas/report-abuse.schema';
 
 @Injectable()
 export class ReportAbuseService {
