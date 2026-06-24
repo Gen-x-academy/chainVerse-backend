@@ -19,7 +19,7 @@ ENV NODE_ENV=production
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci --only=production
 
 COPY --from=builder /app/dist ./dist
 
