@@ -598,13 +598,60 @@ describe('StudentAuthService', () => {
       jest
         .spyOn(refreshTokenModel, 'findOne')
         .mockReturnValue(mockQuery(null) as any);
-      jest.spyOn(refreshTokenModel, 'deleteMany').mockReturnValue({
+
+      await expect(service.refreshToken(refreshDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should revoke the entire family when a revoked token is used', async () => {
+      const revokedToken = {
+        ...mockRefreshToken,
+        isRevoked: true,
+      };
+      jest
+        .spyOn(jwtService, 'verify')
+        .mockReturnValue({ family: 'family-123' });
+      jest
+        .spyOn(refreshTokenModel, 'findOne')
+        .mockReturnValue(mockQuery(revokedToken) as any);
+      const updateManySpy = jest.spyOn(refreshTokenModel, 'updateMany').mockReturnValue({
         exec: jest.fn().mockResolvedValue(true),
       } as any);
 
       await expect(service.refreshToken(refreshDto)).rejects.toThrow(
         UnauthorizedException,
       );
+      expect(updateManySpy).toHaveBeenCalledWith(
+        { tokenFamily: 'family-123' },
+        { isRevoked: true },
+      );
+    });
+
+    it('should mark the token as revoked on a successful refresh', async () => {
+      const validToken = {
+        ...mockRefreshToken,
+        isRevoked: false,
+        save: jest.fn().mockResolvedValue(true),
+      };
+      jest
+        .spyOn(jwtService, 'verify')
+        .mockReturnValue({ family: 'family-123' });
+      jest
+        .spyOn(refreshTokenModel, 'findOne')
+        .mockReturnValue(mockQuery(validToken) as any);
+      jest
+        .spyOn(studentModel, 'findById')
+        .mockReturnValue(mockQuery(mockStudent) as any);
+      jest.spyOn(service as any, 'generateTokenPair').mockResolvedValue({
+        accessToken: 'new.access.token',
+        refreshToken: 'new.refresh.token',
+        expiresIn: 3600,
+      });
+
+      await service.refreshToken(refreshDto);
+      expect(validToken.isRevoked).toBe(true);
+      expect(validToken.save).toHaveBeenCalled();
     });
   });
 

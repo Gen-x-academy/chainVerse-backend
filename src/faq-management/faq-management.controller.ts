@@ -17,7 +17,7 @@ export class FaqManagementController {
 
   @Get()
   @UseInterceptors(CacheInterceptor)
-  @CacheKey('faq')
+  @CacheKey('/api/v1/faq')
   @CacheTTL(600000)
   @ApiOperation({ summary: 'List all FAQs (cached, 10 min TTL)' })
   findAll() {
