@@ -25,6 +25,9 @@ RUN npm ci --only=production
 
 COPY --from=builder /app/dist ./dist
 
+# ensure app files are owned by the non-root user
+RUN chown -R appuser:appgroup /app
+
 USER appuser
 
 EXPOSE 3000
