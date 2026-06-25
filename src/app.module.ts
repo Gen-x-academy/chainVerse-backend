@@ -9,7 +9,7 @@ import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis'
 import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import appConfig from './config/app.config';
-import { envValidationSchema } from './config/env.validation';
+import { envValidationSchema } from './common/config/env.validation';
 import { AppService } from './app.service';
 import { WorkerModule } from './worker/worker.module';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';

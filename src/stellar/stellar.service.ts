@@ -1,17 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Horizon, StrKey } from '@stellar/stellar-sdk';
-
-@Injectable()
-export class StellarService {
-  private readonly server: Horizon.Server;
-  private server: Horizon.Server;
-
-  constructor(private readonly config: ConfigService) {
-    const url =
-      this.config.get<string>('STELLAR_HORIZON_URL') ??
-      'https://horizon-testnet.stellar.org';
-    this.server = new Horizon.Server(url);
 import { Horizon, Keypair, StrKey } from '@stellar/stellar-sdk';
 
 @Injectable()
@@ -33,9 +21,9 @@ export class StellarService {
     return StrKey.isValidEd25519PublicKey(key);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async submitTransaction(transaction: any) {
-  async submitTransaction(transaction: Parameters<Horizon.Server['submitTransaction']>[0]) {
+  async submitTransaction(
+    transaction: Parameters<Horizon.Server['submitTransaction']>[0],
+  ) {
     return this.server.submitTransaction(transaction);
   }
 
@@ -90,7 +78,11 @@ export class StellarService {
     };
   }
 
-  async createAccount(): Promise<{ publicKey: string; funded: boolean; message: string }> {
+  async createAccount(): Promise<{
+    publicKey: string;
+    funded: boolean;
+    message: string;
+  }> {
     const keypair = Keypair.random();
     const publicKey = keypair.publicKey();
 
