@@ -156,7 +156,7 @@ export class StudentEnrollmentService {
           amountPaid: course.price,
           status: 'completed',
           paymentMethod,
-          transactionHash,
+          transactionHash: transactionHash,
         });
 
         await enrollment.save();

@@ -13,13 +13,24 @@ describe('FaqManagementController', () => {
   let controller: FaqManagementController;
   let service: FaqManagementService;
 
+  const mockFaq = { id: '1', question: 'Q', answer: 'A', isActive: true, order: 0 };
+
   beforeEach(async () => {
     mockCache.del.mockReset();
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [FaqManagementController],
       providers: [
-        FaqManagementService,
+        {
+          provide: FaqManagementService,
+          useValue: {
+            findAll: jest.fn().mockResolvedValue([mockFaq]),
+            findOne: jest.fn().mockResolvedValue(mockFaq),
+            create: jest.fn().mockResolvedValue(mockFaq),
+            update: jest.fn().mockResolvedValue({ ...mockFaq, question: 'New Q' }),
+            remove: jest.fn().mockResolvedValue({ id: '1', deleted: true }),
+          },
+        },
         { provide: CACHE_MANAGER, useValue: mockCache },
       ],
     })
@@ -34,42 +45,42 @@ describe('FaqManagementController', () => {
   });
 
   describe('findAll', () => {
-    it('delegates to service.findAll', () => {
-      const spy = jest.spyOn(service, 'findAll').mockReturnValue([]);
-      expect(controller.findAll()).toEqual([]);
-      expect(spy).toHaveBeenCalled();
+    it('delegates to service.findAll', async () => {
+      expect(await controller.findAll()).toEqual([mockFaq]);
+      expect(service.findAll).toHaveBeenCalled();
     });
   });
 
   describe('findOne', () => {
     it('returns the FAQ for a valid id', async () => {
-      const item = await service.create({ question: 'Q' } as any);
-      expect(controller.findOne(item.id)).toMatchObject({ id: item.id });
+      expect(await controller.findOne('1')).toEqual(mockFaq);
+      expect(service.findOne).toHaveBeenCalledWith('1');
     });
 
-    it('throws NotFoundException for an unknown id', () => {
-      expect(() => controller.findOne('ghost')).toThrow(NotFoundException);
+    it('throws NotFoundException for an unknown id', async () => {
+      jest.spyOn(service, 'findOne').mockRejectedValue(new NotFoundException());
+      await expect(controller.findOne('ghost')).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('create', () => {
     it('returns the newly created FAQ', async () => {
       const result = await controller.create({ question: 'What?' } as any);
-      expect(result.id).toBeDefined();
+      expect(result).toEqual(mockFaq);
+      expect(service.create).toHaveBeenCalledWith({ question: 'What?' });
     });
   });
 
   describe('update', () => {
     it('returns the updated FAQ', async () => {
-      const item = await service.create({ question: 'Q' } as any);
-      const updated = await controller.update(item.id, {
-        question: 'New Q',
-      } as any);
-      expect(updated.question).toBe('New Q');
+      const result = await controller.update('1', { question: 'New Q' } as any);
+      expect(result.question).toBe('New Q');
+      expect(service.update).toHaveBeenCalledWith('1', { question: 'New Q' });
     });
 
     it('propagates NotFoundException for an unknown id', async () => {
-      await expect(controller.update('ghost', {})).rejects.toThrow(
+      jest.spyOn(service, 'update').mockRejectedValue(new NotFoundException());
+      await expect(controller.update('ghost', {} as any)).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -77,12 +88,13 @@ describe('FaqManagementController', () => {
 
   describe('remove', () => {
     it('returns deletion confirmation', async () => {
-      const item = await service.create({ question: 'Q' } as any);
-      const result = await controller.remove(item.id);
-      expect(result).toEqual({ id: item.id, deleted: true });
+      const result = await controller.remove('1');
+      expect(result).toEqual({ id: '1', deleted: true });
+      expect(service.remove).toHaveBeenCalledWith('1');
     });
 
     it('propagates NotFoundException for an unknown id', async () => {
+      jest.spyOn(service, 'remove').mockRejectedValue(new NotFoundException());
       await expect(controller.remove('ghost')).rejects.toThrow(
         NotFoundException,
       );

@@ -21,6 +21,7 @@ export class StellarService {
     return StrKey.isValidEd25519PublicKey(key);
   }
 
+  async submitTransaction(transaction: Parameters<Horizon.Server['submitTransaction']>[0]) {
   async submitTransaction(
     transaction: Parameters<Horizon.Server['submitTransaction']>[0],
   ) {

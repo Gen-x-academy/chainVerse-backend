@@ -41,6 +41,12 @@ export class Student {
   @Prop({ default: 'student' })
   role: string;
 
+  @Prop({ type: Number, default: 0 })
+  loginAttempts: number;
+
+  @Prop({ type: Date, default: null })
+  lockedUntil: Date | null;
+
   createdAt?: Date;
   updatedAt?: Date;
 }

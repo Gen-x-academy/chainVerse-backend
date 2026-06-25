@@ -1,5 +1,6 @@
 import { Controller, Post, Get, Param, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { EnrollmentGuard } from '../common/guards/enrollment.guard';
@@ -19,7 +20,7 @@ export class StudentEnrollmentController {
   @Post('free/:courseId')
   enrollFree(
     @Req() req: { user: { id: string } },
-    @Param('courseId') courseId: string,
+    @Param('courseId', new ParseObjectIdPipe()) courseId: string,
   ) {
     return this.service.enrollFree(req.user.id, courseId);
   }
@@ -40,7 +41,7 @@ export class StudentEnrollmentController {
   @Get('is-enrolled/:courseId')
   async isEnrolled(
     @Req() req: { user: { id: string } },
-    @Param('courseId') courseId: string,
+    @Param('courseId', new ParseObjectIdPipe()) courseId: string,
   ) {
     const enrolled = await this.service.isEnrolled(req.user.id, courseId);
     return { enrolled, courseId, studentId: req.user.id };
@@ -53,7 +54,7 @@ export class StudentEnrollmentController {
   @UseGuards(EnrollmentGuard)
   getCourseContent(
     @Req() req: { user: { id: string } },
-    @Param('courseId') courseId: string,
+    @Param('courseId', new ParseObjectIdPipe()) courseId: string,
   ) {
     return this.service.getMyCourses(req.user.id).then((courses) => {
       const entry = courses.find((c) => c.enrollment.courseId === courseId);

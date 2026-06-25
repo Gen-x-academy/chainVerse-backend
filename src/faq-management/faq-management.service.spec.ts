@@ -11,15 +11,21 @@ import {
 
 const mockCache = { del: jest.fn() };
 
-const mockFaqModel = {
-  find: jest.fn(),
-  findOne: jest.fn(),
-  create: jest.fn(),
-  findByIdAndUpdate: jest.fn(),
-  findByIdAndDelete: jest.fn(),
+const mockFaqModelInstance = {
   save: jest.fn(),
-  exec: jest.fn(),
 };
+
+// Constructor function that can be used with `new`
+const mockFaqModel: any = jest.fn().mockImplementation(function (this: any, payload: any) {
+  Object.assign(this, payload);
+  this.save = mockFaqModelInstance.save;
+});
+
+mockFaqModel.find = jest.fn();
+mockFaqModel.findOne = jest.fn();
+mockFaqModel.findByIdAndUpdate = jest.fn();
+mockFaqModel.findByIdAndDelete = jest.fn();
+mockFaqModel.create = jest.fn();
 
 describe('FaqManagementService', () => {
   let service: FaqManagementService;
@@ -29,7 +35,12 @@ describe('FaqManagementService', () => {
     mockCache.del.mockReset();
 
     // Reset all mock functions
-    Object.values(mockFaqModel).forEach((mock) => mock.mockReset());
+    mockFaqModel.find.mockReset();
+    mockFaqModel.findOne.mockReset();
+    mockFaqModel.findByIdAndUpdate.mockReset();
+    mockFaqModel.findByIdAndDelete.mockReset();
+    mockFaqModelInstance.save.mockReset();
+    mockFaqModel.mockClear();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -120,12 +131,11 @@ describe('FaqManagementService', () => {
       const payload = { question: 'Q1', answer: 'A1' };
       const createdFaq = { _id: '1', ...payload, isActive: true, order: 0 };
 
-      const mockSavedFaq = { save: jest.fn().mockResolvedValue(createdFaq) };
-      mockFaqModel.create.mockReturnValue(mockSavedFaq);
+      mockFaqModelInstance.save.mockResolvedValue(createdFaq);
 
       const result = await service.create(payload);
       expect(result).toEqual(createdFaq);
-      expect(mockFaqModel.create).toHaveBeenCalledWith(payload);
+      expect(mockFaqModel).toHaveBeenCalledWith(payload);
       expect(mockCache.del).toHaveBeenCalledWith(FAQ_CACHE_KEY);
     });
   });

@@ -23,7 +23,7 @@ export class NotificationController {
   }
 
   @Get()
-  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   findAll(@Query('page') page?: string, @Query('limit') limit?: string) {
     return this.service.findAll(
