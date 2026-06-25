@@ -1,6 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AppLoggerModule } from './logger/logger.module';
 import { JwtModule } from '@nestjs/jwt';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -8,7 +9,7 @@ import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis'
 import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import appConfig from './config/app.config';
-import { envValidationSchema } from './config/env.validation';
+import { envValidationSchema } from './common/config/env.validation';
 import { AppService } from './app.service';
 import { WorkerModule } from './worker/worker.module';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
@@ -153,6 +154,7 @@ import { TutorReportsAnalyticsModule } from './tutor-reports-analytics/tutor-rep
       }),
       inject: [ConfigService],
     }),
+    AppLoggerModule,
     WorkerModule,
     MetricsModule,
     TracingModule,

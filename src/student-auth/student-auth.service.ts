@@ -323,11 +323,20 @@ export class StudentAuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
+    if (student.lockedUntil && student.lockedUntil > new Date()) {
+      throw new UnauthorizedException('Account temporarily locked. Try again later.');
+    }
+
     const passwordValid = await this.verifyPassword(
       dto.password,
       student.passwordHash,
     );
     if (!passwordValid) {
+      student.loginAttempts += 1;
+      if (student.loginAttempts >= 5) {
+        student.lockedUntil = new Date(Date.now() + 15 * 60 * 1000);
+      }
+      await student.save();
       throw new UnauthorizedException('Invalid email or password');
     }
 
@@ -336,6 +345,10 @@ export class StudentAuthService {
         'Please verify your email address before logging in.',
       );
     }
+
+    student.loginAttempts = 0;
+    student.lockedUntil = null;
+    await student.save();
 
     const tokens = await this.generateTokenPair(student);
 
@@ -486,19 +499,24 @@ export class StudentAuthService {
     const stored = await this.refreshTokenModel.findOne({ tokenHash }).exec();
 
     if (!stored) {
-      // Token not in DB — possible replay of an already-rotated token.
-      // Revoke the entire token family to invalidate any sessions derived from it.
-      const family = payload.family as string | undefined;
-      if (family) {
-        await this.refreshTokenModel.deleteMany({ tokenFamily: family }).exec();
-      }
       throw new UnauthorizedException(
         'Refresh token has been revoked or already used',
       );
     }
 
-    // Rotate: delete consumed token, issue new pair in the same family
-    await this.refreshTokenModel.deleteOne({ tokenHash }).exec();
+    if (stored.isRevoked) {
+      // Token is already revoked: revoke ALL tokens in the family (theft detected)
+      await this.refreshTokenModel
+        .updateMany({ tokenFamily: stored.tokenFamily }, { isRevoked: true })
+        .exec();
+      throw new UnauthorizedException(
+        'Refresh token has been revoked or already used',
+      );
+    }
+
+    // Mark old token revoked
+    stored.isRevoked = true;
+    await stored.save();
 
     const student = await this.studentModel.findById(stored.studentId).exec();
     if (!student) {

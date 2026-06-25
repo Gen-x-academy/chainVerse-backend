@@ -1,11 +1,27 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { IsString, IsNotEmpty, Validate } from 'class-validator';
+import { IsStellarPublicKey } from '../common/validators/is-stellar-public-key.validator';
 import { StellarService } from './stellar.service';
+import { VerifyPaymentDto } from './dto/verify-payment.dto';
 
-interface VerifyPaymentDto {
+export class VerifyPaymentDto {
+  @IsString()
+  @IsNotEmpty()
   transactionHash: string;
+
+  @IsString()
+  @IsNotEmpty()
   expectedAmount: string;
+
+  @IsString()
+  @IsNotEmpty()
   courseId: string;
+}
+
+export class WalletPublicKeyDto {
+  @Validate(IsStellarPublicKey)
+  publicKey: string;
 }
 
 @ApiTags('Stellar')

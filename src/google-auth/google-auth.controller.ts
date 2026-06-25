@@ -8,11 +8,15 @@ export class GoogleAuthController {
   constructor(private readonly service: GoogleAuthService) {}
 
   @Post('student/register/google-auth')
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Post('register/google-auth')
   register(@Body() payload: GoogleAuthDto) {
     return this.service.register(payload);
   }
 
   @Post('student/login/google-auth')
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Post('login/google-auth')
   login(@Body() payload: GoogleAuthDto) {
     return this.service.login(payload);
   }

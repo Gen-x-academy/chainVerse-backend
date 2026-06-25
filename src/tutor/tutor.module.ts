@@ -7,10 +7,7 @@ import {
   PasswordResetToken,
   PasswordResetTokenSchema,
 } from './schemas/password-reset-token.schema';
-import {
-  RefreshToken,
-  RefreshTokenSchema,
-} from './schemas/refresh-token.schema';
+import { RefreshToken, RefreshTokenSchema } from './schemas/refresh-token.schema';
 import { EmailModule } from '../email/email.module';
 
 @Module({
