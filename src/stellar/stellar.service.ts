@@ -30,20 +30,57 @@ export class StellarService {
 
   async verifyPayment(input: {
     transactionHash: string;
-    expectedAmount: string;
-    courseId: string;
+    expectedAmount: string | number;
+    expectedDestination: string;
+    courseId?: string;
   }): Promise<{ verified: boolean; transactionId: string; timestamp: string }> {
-    const { transactionHash } = input;
-    const tx = await this.server
-      .transactions()
-      .transaction(transactionHash)
-      .call();
+    const { transactionHash, expectedAmount, expectedDestination } = input;
 
-    return {
-      verified: Boolean(tx?.successful),
-      transactionId: transactionHash,
-      timestamp: new Date().toISOString(),
-    };
+    try {
+      const tx = await this.server
+        .transactions()
+        .transaction(transactionHash)
+        .call();
+
+      if (!tx?.successful) {
+        return {
+          verified: false,
+          transactionId: transactionHash,
+          timestamp: new Date().toISOString(),
+        };
+      }
+
+      const operations = await this.server
+        .operations()
+        .forTransaction(transactionHash)
+        .call();
+
+      const expectedAmountString = expectedAmount.toString();
+      const paymentOp = Array.isArray(operations?.records)
+        ? operations.records.find(
+            (op: any) =>
+              [
+                'payment',
+                'path_payment_strict_receive',
+                'path_payment_strict_send',
+              ].includes(op.type) &&
+              op.to === expectedDestination &&
+              op.amount === expectedAmountString,
+          )
+        : undefined;
+
+      return {
+        verified: Boolean(paymentOp),
+        transactionId: transactionHash,
+        timestamp: new Date().toISOString(),
+      };
+    } catch {
+      return {
+        verified: false,
+        transactionId: transactionHash,
+        timestamp: new Date().toISOString(),
+      };
+    }
   }
 
   async getBalance(publicKey: string): Promise<{
