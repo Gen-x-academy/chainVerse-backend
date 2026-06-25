@@ -3,6 +3,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, Validate } from 'class-validator';
 import { IsStellarPublicKey } from '../common/validators/is-stellar-public-key.validator';
 import { StellarService } from './stellar.service';
+import { VerifyPaymentDto } from './dto/verify-payment.dto';
 
 export class VerifyPaymentDto {
   @IsString()
