@@ -44,6 +44,10 @@ export class OrganizationMemberService {
     return this.memberModel.find({ userId }).exec();
   }
 
+  async findAll(): Promise<OrganizationMember[]> {
+    return this.memberModel.find().exec();
+  }
+
   async findOne(id: string): Promise<OrganizationMemberDocument> {
     const member = await this.memberModel.findById(id).exec();
     if (!member) {
