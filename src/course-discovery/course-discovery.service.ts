@@ -57,7 +57,8 @@ export class CourseDiscoveryService {
     }
 
     // Build sort option
-    const sort: Record<string, number> = {};
+    const hasTextSearch = !!dto.query;
+    const sort: Record<string, unknown> = {};
     switch (dto.sortBy) {
       case 'price-asc':
         sort.price = 1;
@@ -75,14 +76,28 @@ export class CourseDiscoveryService {
         sort.createdAt = -1;
         break;
       default:
-        sort.createdAt = -1;
+        // When text search is active, sort by text relevance score;
+        // otherwise fall back to newest-first.
+        if (hasTextSearch) {
+          sort.score = { $meta: 'textScore' };
+        } else {
+          sort.createdAt = -1;
+        }
     }
 
     const limit = dto.limit || 20;
     const skip = dto.skip || 0;
 
+    // Include textScore metadata in the projection when using $text search
+    const projection = hasTextSearch ? { score: { $meta: 'textScore' } } : {};
+
     const [courses, total] = await Promise.all([
-      this.courseModel.find(query).sort(sort).limit(limit).skip(skip).exec(),
+      this.courseModel
+        .find(query, projection)
+        .sort(sort)
+        .limit(limit)
+        .skip(skip)
+        .exec(),
       this.courseModel.countDocuments(query).exec(),
     ]);
 
