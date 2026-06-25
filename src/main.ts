@@ -13,6 +13,10 @@ async function bootstrap() {
 
   app.useLogger(app.get(Logger));
 
+  app.setGlobalPrefix('api', { exclude: ['/health'] });
+  app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
+
+  // Security headers (X-Content-Type-Options, X-Frame-Options, HSTS, etc.)
   // Body size limits for security
   const express = await import('express');
   app.use(express.json({ limit: '1mb' }));
@@ -60,7 +64,7 @@ async function bootstrap() {
       .build();
 
     const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api', app, document);
+    SwaggerModule.setup('docs', app, document);
   }
 
   app.enableShutdownHooks();
