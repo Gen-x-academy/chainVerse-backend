@@ -1,6 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AppLoggerModule } from './logger/logger.module';
 import { JwtModule } from '@nestjs/jwt';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -153,6 +154,7 @@ import { TutorReportsAnalyticsModule } from './tutor-reports-analytics/tutor-rep
       }),
       inject: [ConfigService],
     }),
+    AppLoggerModule,
     WorkerModule,
     MetricsModule,
     TracingModule,
