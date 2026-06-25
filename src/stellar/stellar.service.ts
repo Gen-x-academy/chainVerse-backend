@@ -1,17 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Horizon, StrKey } from '@stellar/stellar-sdk';
-
-@Injectable()
-export class StellarService {
-  private readonly server: Horizon.Server;
-  private server: Horizon.Server;
-
-  constructor(private readonly config: ConfigService) {
-    const url =
-      this.config.get<string>('STELLAR_HORIZON_URL') ??
-      'https://horizon-testnet.stellar.org';
-    this.server = new Horizon.Server(url);
 import { Horizon, Keypair, StrKey } from '@stellar/stellar-sdk';
 
 @Injectable()
@@ -33,28 +21,65 @@ export class StellarService {
     return StrKey.isValidEd25519PublicKey(key);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async submitTransaction(transaction: any) {
-  async submitTransaction(transaction: Parameters<Horizon.Server['submitTransaction']>[0]) {
+  async submitTransaction(
+    transaction: Parameters<Horizon.Server['submitTransaction']>[0],
+  ) {
     return this.server.submitTransaction(transaction);
   }
 
   async verifyPayment(input: {
     transactionHash: string;
-    expectedAmount: string;
-    courseId: string;
+    expectedAmount: string | number;
+    expectedDestination: string;
+    courseId?: string;
   }): Promise<{ verified: boolean; transactionId: string; timestamp: string }> {
-    const { transactionHash } = input;
-    const tx = await this.server
-      .transactions()
-      .transaction(transactionHash)
-      .call();
+    const { transactionHash, expectedAmount, expectedDestination } = input;
 
-    return {
-      verified: Boolean(tx?.successful),
-      transactionId: transactionHash,
-      timestamp: new Date().toISOString(),
-    };
+    try {
+      const tx = await this.server
+        .transactions()
+        .transaction(transactionHash)
+        .call();
+
+      if (!tx?.successful) {
+        return {
+          verified: false,
+          transactionId: transactionHash,
+          timestamp: new Date().toISOString(),
+        };
+      }
+
+      const operations = await this.server
+        .operations()
+        .forTransaction(transactionHash)
+        .call();
+
+      const expectedAmountString = expectedAmount.toString();
+      const paymentOp = Array.isArray(operations?.records)
+        ? operations.records.find(
+            (op: any) =>
+              [
+                'payment',
+                'path_payment_strict_receive',
+                'path_payment_strict_send',
+              ].includes(op.type) &&
+              op.to === expectedDestination &&
+              op.amount === expectedAmountString,
+          )
+        : undefined;
+
+      return {
+        verified: Boolean(paymentOp),
+        transactionId: transactionHash,
+        timestamp: new Date().toISOString(),
+      };
+    } catch {
+      return {
+        verified: false,
+        transactionId: transactionHash,
+        timestamp: new Date().toISOString(),
+      };
+    }
   }
 
   async getBalance(publicKey: string): Promise<{
@@ -90,7 +115,11 @@ export class StellarService {
     };
   }
 
-  async createAccount(): Promise<{ publicKey: string; funded: boolean; message: string }> {
+  async createAccount(): Promise<{
+    publicKey: string;
+    funded: boolean;
+    message: string;
+  }> {
     const keypair = Keypair.random();
     const publicKey = keypair.publicKey();
 

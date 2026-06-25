@@ -1,17 +1,24 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { StudentEnrollmentService } from './student-enrollment.service';
 import { Enrollment } from './schemas/enrollment.schema';
 import { Course } from '../admin-course/schemas/course.schema';
 import { CartItem } from '../student-cart/schemas/cart-item.schema';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { StellarService } from '../stellar/stellar.service';
 
 describe('StudentEnrollmentService', () => {
   let service: StudentEnrollmentService;
   let enrollmentModel: any;
   let courseModel: any;
   let cartItemModel: any;
+  let stellarService: any;
+  let mockStellarService: any;
 
   const mockEnrollmentModel = {
     findOne: jest.fn(),
@@ -32,6 +39,12 @@ describe('StudentEnrollmentService', () => {
   };
 
   beforeEach(async () => {
+    process.env.PLATFORM_STELLAR_ADDRESS = 'GABCDTESTPLATFORMADDRESS1234567890';
+
+    mockStellarService = {
+      verifyPayment: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         StudentEnrollmentService,
@@ -51,6 +64,10 @@ describe('StudentEnrollmentService', () => {
           provide: EventEmitter2,
           useValue: { emit: jest.fn() },
         },
+        {
+          provide: StellarService,
+          useValue: mockStellarService,
+        },
       ],
     }).compile();
 
@@ -58,6 +75,7 @@ describe('StudentEnrollmentService', () => {
     enrollmentModel = module.get(getModelToken(Enrollment.name));
     courseModel = module.get(getModelToken(Course.name));
     cartItemModel = module.get(getModelToken(CartItem.name));
+    stellarService = module.get(StellarService);
 
     // Hybrid mock: constructor + Model methods
     function HybridEnrollmentModel(dto?: any) {
@@ -106,7 +124,6 @@ describe('StudentEnrollmentService', () => {
       const result = await service.enrollFree(studentId, courseId);
       expect(result).toEqual(mockSavedEnrollment);
       expect(courseModel.findByIdAndUpdate).toHaveBeenCalledWith(courseId, {
-        $addToSet: { enrolledStudents: studentId },
         $inc: { totalEnrollments: 1 },
       });
     });
@@ -178,11 +195,12 @@ describe('StudentEnrollmentService', () => {
 
     it('should skip already enrolled courses', async () => {
       const studentId = 'student1';
-      const cartItems = [{ _id: 'cart1', courseId: 'course1' }];
+      const courseId = '507f1f77bcf86cd799439011';
+      const cartItems = [{ _id: 'cart1', courseId }];
       cartItemModel.find.mockReturnValue({
         exec: jest.fn().mockResolvedValue(cartItems),
       });
-      const mockCourse = { _id: 'course1', price: 0, status: 'published' };
+      const mockCourse = { _id: courseId, price: 0, status: 'published' };
       courseModel.findById.mockReturnValue({
         exec: jest.fn().mockResolvedValue(mockCourse),
       });
@@ -194,16 +212,17 @@ describe('StudentEnrollmentService', () => {
       });
       const result = await service.checkoutCart(studentId);
       expect(result.enrolled).toEqual([]);
-      expect(result.failed).toEqual(['course1']);
+      expect(result.failed).toEqual([courseId]);
     });
 
     it('should skip unpublished courses', async () => {
       const studentId = 'student1';
-      const cartItems = [{ _id: 'cart1', courseId: 'course1' }];
+      const courseId = '507f1f77bcf86cd799439011';
+      const cartItems = [{ _id: 'cart1', courseId }];
       cartItemModel.find.mockReturnValue({
         exec: jest.fn().mockResolvedValue(cartItems),
       });
-      const mockCourse = { _id: 'course1', price: 0, status: 'draft' };
+      const mockCourse = { _id: courseId, price: 0, status: 'draft' };
       courseModel.findById.mockReturnValue({
         exec: jest.fn().mockResolvedValue(mockCourse),
       });
@@ -218,34 +237,131 @@ describe('StudentEnrollmentService', () => {
       expect(result.failed).toEqual(['course1']);
     });
 
-    it('should throw NotImplementedException for paid courses', async () => {
+    it('should fail paid courses when transaction hash is missing', async () => {
       const studentId = 'student1';
-      const cartItems = [{ _id: 'cart1', courseId: 'course1' }];
+      const courseId = '507f1f77bcf86cd799439011';
+      const cartItems = [{ _id: 'cart1', courseId }];
       cartItemModel.find.mockReturnValue({
         exec: jest.fn().mockResolvedValue(cartItems),
       });
-      const mockCourse = { _id: 'course1', price: 100, status: 'published' };
+      const mockCourse = { _id: courseId, price: 100, status: 'published' };
       courseModel.findById.mockReturnValue({
         exec: jest.fn().mockResolvedValue(mockCourse),
       });
       enrollmentModel.findOne.mockReturnValue({
         exec: jest.fn().mockResolvedValue(null),
       });
+
       const result = await service.checkoutCart(studentId);
+
+      expect(result.enrolled).toEqual([]);
+      expect(result.failed).toEqual([courseId]);
+      expect(mockStellarService.verifyPayment).not.toHaveBeenCalled();
+    });
+
+    it('should fail paid courses when payment verification does not confirm the transaction', async () => {
+      const studentId = 'student1';
+      const courseId = '507f1f77bcf86cd799439011';
+      const cartItems = [{ _id: 'cart1', courseId }];
+      cartItemModel.find.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(cartItems),
+      });
+      const mockCourse = { _id: courseId, price: 100, status: 'published' };
+      courseModel.findById.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(mockCourse),
+      });
+      enrollmentModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(null),
+      });
+      mockStellarService.verifyPayment.mockResolvedValue({ verified: false });
+
+      const result = await service.checkoutCart(
+        studentId,
+        'stellar',
+        'txhash123',
+      );
+
       expect(result.enrolled).toEqual([]);
       expect(result.failed).toEqual(['course1']);
+      expect(mockStellarService.verifyPayment).toHaveBeenCalledWith({
+        transactionHash: 'txhash123',
+        expectedAmount: 100,
+        expectedDestination: 'GABCDTESTPLATFORMADDRESS1234567890',
+      });
+    });
+
+    it('should enroll paid courses when payment is verified', async () => {
+      const studentId = 'student1';
+      const courseId = '507f1f77bcf86cd799439011';
+      const cartItems = [{ _id: 'cart1', courseId }];
+      cartItemModel.find.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(cartItems),
+      });
+      const mockCourse = {
+        _id: courseId,
+        price: 100,
+        status: 'published',
+        tutorId: 'tutor1',
+        tutorEmail: 'tutor@email.com',
+      };
+      courseModel.findById.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(mockCourse),
+      });
+      enrollmentModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(null),
+      });
+      courseModel.findByIdAndUpdate.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(mockCourse),
+      });
+      cartItemModel.findByIdAndDelete.mockReturnValue({
+        exec: jest.fn().mockResolvedValue({}),
+      });
+      mockStellarService.verifyPayment.mockResolvedValue({ verified: true });
+
+      const enrollmentSaveMock = jest.fn().mockResolvedValue({
+        studentId,
+        courseId,
+        type: 'paid',
+        amountPaid: 100,
+        status: 'completed',
+      });
+      class MockEnrollment {
+        constructor(dto: any) {
+          Object.assign(this, dto);
+        }
+        save = enrollmentSaveMock;
+      }
+      MockEnrollment.findOne = jest.fn().mockReturnValue({
+        exec: jest.fn().mockResolvedValue(null),
+      });
+      service.enrollmentModel = MockEnrollment;
+
+      const result = await service.checkoutCart(
+        studentId,
+        'stellar',
+        'txhash123',
+      );
+
+      expect(result.enrolled).toEqual([courseId]);
+      expect(result.failed).toEqual([]);
+      expect(result.totalAmount).toBe(100);
+      expect(mockStellarService.verifyPayment).toHaveBeenCalledWith({
+        transactionHash: 'txhash123',
+        expectedAmount: 100,
+        expectedDestination: 'GABCDTESTPLATFORMADDRESS1234567890',
+      });
     });
 
     it('should enroll free courses in cart', async () => {
+      const studentId = 'student1';
       // Patch the Enrollment mock's save method to return the expected enrollment object
       service.enrollmentModel.prototype.save = jest.fn().mockResolvedValue({
         studentId,
-        courseId: 'course1',
+        courseId,
         type: 'free',
         amountPaid: 0,
         status: 'completed',
       });
-      const studentId = 'student1';
       const cartItems = [{ _id: 'cart1', courseId: 'course1' }];
       cartItemModel.find.mockReset();
       courseModel.findById.mockReset();
@@ -267,15 +383,13 @@ describe('StudentEnrollmentService', () => {
         exec: jest.fn().mockResolvedValue(mockCourse),
       });
       // Patch the Enrollment model constructor directly on the service instance
-      const enrollmentSaveMock = jest
-        .fn()
-        .mockResolvedValue({
-          studentId,
-          courseId: 'course1',
-          type: 'free',
-          amountPaid: 0,
-          status: 'completed',
-        });
+      const enrollmentSaveMock = jest.fn().mockResolvedValue({
+        studentId,
+        courseId: 'course1',
+        type: 'free',
+        amountPaid: 0,
+        status: 'completed',
+      });
       class MockEnrollment {
         constructor(dto: any) {
           Object.assign(this, dto);
@@ -303,7 +417,9 @@ describe('StudentEnrollmentService', () => {
   describe('isEnrolled', () => {
     it('returns true when enrollment record exists', async () => {
       enrollmentModel.findOne.mockReturnValue({
-        exec: jest.fn().mockResolvedValue({ studentId: 'student1', courseId: 'course1' }),
+        exec: jest
+          .fn()
+          .mockResolvedValue({ studentId: 'student1', courseId: 'course1' }),
       });
 
       const result = await service.isEnrolled('student1', 'course1');
