@@ -22,6 +22,9 @@ export class StellarService {
   }
 
   async submitTransaction(transaction: Parameters<Horizon.Server['submitTransaction']>[0]) {
+  async submitTransaction(
+    transaction: Parameters<Horizon.Server['submitTransaction']>[0],
+  ) {
     return this.server.submitTransaction(transaction);
   }
 
@@ -76,7 +79,11 @@ export class StellarService {
     };
   }
 
-  async createAccount(): Promise<{ publicKey: string; funded: boolean; message: string }> {
+  async createAccount(): Promise<{
+    publicKey: string;
+    funded: boolean;
+    message: string;
+  }> {
     const keypair = Keypair.random();
     const publicKey = keypair.publicKey();
 
