@@ -5,6 +5,7 @@ import { Model } from 'mongoose';
 import * as crypto from 'crypto';
 import { GoogleAuthDto } from './dto/google-auth.dto';
 import { GoogleUser, GoogleUserDocument } from './schemas/google-user.schema';
+import { StudentAuthService } from '../student-auth/student-auth.service';
 
 const ACCESS_TOKEN_EXPIRY = 3600;
 
@@ -14,6 +15,7 @@ export class GoogleAuthService {
     @InjectModel(GoogleUser.name)
     private readonly googleUserModel: Model<GoogleUserDocument>,
     private readonly configService: ConfigService,
+    private readonly authService: StudentAuthService,
   ) {}
 
   private get jwtSecret(): string {
@@ -40,7 +42,7 @@ export class GoogleAuthService {
 
   async register(
     payload: GoogleAuthDto,
-  ): Promise<{ user: GoogleUser; token: string }> {
+  ): Promise<any> {
     const existing = await this.googleUserModel
       .findOne({
         $or: [{ googleId: payload.googleId }, { email: payload.email }],
@@ -52,17 +54,12 @@ export class GoogleAuthService {
 
     const user = await new this.googleUserModel(payload).save();
 
-    const token = this.createJwt(
-      { sub: user.id, email: user.email, role: user.role },
-      ACCESS_TOKEN_EXPIRY,
-    );
-
-    return { user, token };
+    return this.authService.generateTokenPair(user.id, user.email, user.role);
   }
 
   async login(
     payload: GoogleAuthDto,
-  ): Promise<{ user: GoogleUser; token: string }> {
+  ): Promise<any> {
     const user = await this.googleUserModel
       .findOneAndUpdate(
         { googleId: payload.googleId },
@@ -74,11 +71,6 @@ export class GoogleAuthService {
       throw new NotFoundException('User not found. Please register first.');
     }
 
-    const token = this.createJwt(
-      { sub: user.id, email: user.email, role: user.role },
-      ACCESS_TOKEN_EXPIRY,
-    );
-
-    return { user, token };
+    return this.authService.generateTokenPair(user.id, user.email, user.role);
   }
 }
