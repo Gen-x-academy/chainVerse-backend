@@ -1,4 +1,4 @@
-import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus, Logger } from '@nestjs/common';
+import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus, Logger, NotFoundException, BadRequestException, UnauthorizedException, ForbiddenException, ConflictException } from '@nestjs/common';
 import { Request, Response } from 'express';
 
 export interface ErrorResponse {
@@ -9,6 +9,21 @@ export interface ErrorResponse {
   timestamp: string;
   path: string;
   requestId?: string;
+}
+
+const EXCEPTION_ERROR_CODE_MAP: Array<{ type: new (...args: unknown[]) => HttpException; errorCode: string }> = [
+  { type: BadRequestException, errorCode: 'VAL_INVALID_INPUT' },
+  { type: UnauthorizedException, errorCode: 'AUTH_INVALID_TOKEN' },
+  { type: ForbiddenException, errorCode: 'AUTH_INSUFFICIENT_PERMISSIONS' },
+  { type: NotFoundException, errorCode: 'RES_NOT_FOUND' },
+  { type: ConflictException, errorCode: 'RES_ALREADY_EXISTS' },
+];
+
+function inferErrorCode(exception: HttpException): string | undefined {
+  for (const mapping of EXCEPTION_ERROR_CODE_MAP) {
+    if (exception instanceof mapping.type) return mapping.errorCode;
+  }
+  return undefined;
 }
 
 @Catch()
@@ -40,6 +55,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
         message = (body.message as string | string[]) ?? exception.message;
         error = (body.error as string) ?? HttpStatus[statusCode] ?? 'Error';
         errorCode = body.errorCode as string | undefined;
+      }
+
+      if (!errorCode) {
+        errorCode = inferErrorCode(exception);
       }
     }
 

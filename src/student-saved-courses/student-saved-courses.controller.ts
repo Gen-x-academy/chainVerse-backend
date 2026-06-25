@@ -8,7 +8,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '../common/enums/role.enum';
 
 @ApiBearerAuth('access-token')
-@Controller('student/save')
+@Controller('student/saved-courses')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.STUDENT)
 export class StudentSavedCoursesController {

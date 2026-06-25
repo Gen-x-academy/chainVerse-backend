@@ -10,7 +10,7 @@ import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 
 @ApiBearerAuth('access-token')
-@Controller(['organizations', 'organization'])
+@Controller('organizations')
 export class OrganizationController {
   constructor(private readonly service: OrganizationService) {}
 

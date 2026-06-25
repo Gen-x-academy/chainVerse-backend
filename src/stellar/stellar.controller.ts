@@ -25,7 +25,7 @@ export class WalletPublicKeyDto {
 }
 
 @ApiTags('Stellar')
-@Controller('api/v1/stellar')
+@Controller('stellar')
 export class StellarController {
   constructor(private readonly stellarService: StellarService) {}
 
