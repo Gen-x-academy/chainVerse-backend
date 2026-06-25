@@ -25,7 +25,10 @@ export class StudentSavedCoursesController {
   }
 
   @Delete(':id/:courseId')
-  remove(@Param('id', new ParseObjectIdPipe()) studentId: string, @Param('courseId') courseId: string) {
+  remove(
+    @Param('id', new ParseObjectIdPipe()) studentId: string,
+    @Param('courseId', new ParseObjectIdPipe()) courseId: string,
+  ) {
     return this.service.remove(studentId, courseId);
   }
 }

@@ -499,19 +499,24 @@ export class StudentAuthService {
     const stored = await this.refreshTokenModel.findOne({ tokenHash }).exec();
 
     if (!stored) {
-      // Token not in DB — possible replay of an already-rotated token.
-      // Revoke the entire token family to invalidate any sessions derived from it.
-      const family = payload.family as string | undefined;
-      if (family) {
-        await this.refreshTokenModel.deleteMany({ tokenFamily: family }).exec();
-      }
       throw new UnauthorizedException(
         'Refresh token has been revoked or already used',
       );
     }
 
-    // Rotate: delete consumed token, issue new pair in the same family
-    await this.refreshTokenModel.deleteOne({ tokenHash }).exec();
+    if (stored.isRevoked) {
+      // Token is already revoked: revoke ALL tokens in the family (theft detected)
+      await this.refreshTokenModel
+        .updateMany({ tokenFamily: stored.tokenFamily }, { isRevoked: true })
+        .exec();
+      throw new UnauthorizedException(
+        'Refresh token has been revoked or already used',
+      );
+    }
+
+    // Mark old token revoked
+    stored.isRevoked = true;
+    await stored.save();
 
     const student = await this.studentModel.findById(stored.studentId).exec();
     if (!student) {

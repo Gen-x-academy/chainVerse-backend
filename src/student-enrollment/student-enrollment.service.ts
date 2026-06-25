@@ -130,7 +130,7 @@ export class StudentEnrollmentService {
           status: 'completed',
           paymentMethod,
           transactionHash: transactionHash,
-);
+        });
 
         await enrollment.save();
 
