@@ -1,12 +1,7 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { StellarService } from './stellar.service';
-
-interface VerifyPaymentDto {
-  transactionHash: string;
-  expectedAmount: string;
-  courseId: string;
-}
+import { VerifyPaymentDto } from './dto/verify-payment.dto';
 
 @ApiTags('Stellar')
 @Controller('api/v1/stellar')
