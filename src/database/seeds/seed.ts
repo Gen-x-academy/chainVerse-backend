@@ -43,6 +43,9 @@ const StudentSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+StudentSchema.index({ email: 1 }, { unique: true });
+StudentSchema.index({ emailVerified: 1 });
+
 const CourseSchema = new mongoose.Schema(
   {
     title: String,
