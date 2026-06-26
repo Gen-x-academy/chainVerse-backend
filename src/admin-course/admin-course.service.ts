@@ -86,6 +86,7 @@ export class AdminCourseService {
       total,
       page,
       limit,
+      totalPages: Math.ceil(total / limit),
       data: courses.map((c) => this.sanitizeCourse(c)),
     };
   }

@@ -78,8 +78,12 @@ export class CourseDiscoveryService {
         sort.createdAt = -1;
     }
 
-    const limit = dto.limit || 20;
-    const skip = dto.skip || 0;
+    const limit = Math.min(dto.limit || 20, 50);
+    let page = Math.max(dto.page || 1, 1);
+    const skip = dto.skip !== undefined ? dto.skip : (page - 1) * limit;
+    if (dto.skip !== undefined) {
+      page = Math.max(Math.floor(dto.skip / limit) + 1, 1);
+    }
 
     const [courses, total] = await Promise.all([
       this.courseModel.find(query).sort(sort).limit(limit).skip(skip).exec(),
@@ -87,13 +91,11 @@ export class CourseDiscoveryService {
     ]);
 
     return {
-      courses: courses.map((c) => this.sanitizeCourse(c)),
-      pagination: {
-        total,
-        limit,
-        skip,
-        hasMore: skip + limit < total,
-      },
+      data: courses.map((c) => this.sanitizeCourse(c)),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
     };
   }
 

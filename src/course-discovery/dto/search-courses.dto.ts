@@ -73,6 +73,13 @@ export class SearchCoursesDto {
   @IsOptional()
   limit?: number;
 
+  @ApiProperty({ example: 1, required: false })
+  @IsNumber()
+  @Min(1)
+  @Type(() => Number)
+  @IsOptional()
+  page?: number;
+
   @ApiProperty({ example: 0, required: false })
   @IsNumber()
   @Min(0)
