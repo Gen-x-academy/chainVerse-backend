@@ -204,6 +204,9 @@ describe('StudentEnrollmentService', () => {
       courseModel.find.mockReturnValue({
         exec: jest.fn().mockResolvedValue([mockCourse]),
       });
+      courseModel.findById.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(mockCourse),
+      });
       enrollmentModel.findOne.mockReturnValue({
         exec: jest.fn().mockResolvedValue({ _id: 'enrollment1' }),
       });
@@ -225,6 +228,9 @@ describe('StudentEnrollmentService', () => {
       const mockCourse = { _id: courseId, price: 0, status: 'draft' };
       courseModel.find.mockReturnValue({
         exec: jest.fn().mockResolvedValue([mockCourse]),
+      });
+      courseModel.findById.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(mockCourse),
       });
       enrollmentModel.findOne.mockReturnValue({
         exec: jest.fn().mockResolvedValue(null),
@@ -256,11 +262,13 @@ describe('StudentEnrollmentService', () => {
     });
 
     it('should enroll free courses in cart using courseMap', async () => {
+    it('should enroll free courses in cart', async () => {
       const studentId = 'student1';
       const courseId = '507f1f77bcf86cd799439011';
       const cartItems = [{ _id: 'cart1', courseId }];
       cartItemModel.find.mockReset();
       courseModel.find.mockReset();
+      courseModel.findById.mockReset();
       enrollmentModel.findOne.mockReset();
       courseModel.findByIdAndUpdate.mockReset();
       cartItemModel.findByIdAndDelete.mockReset();
@@ -277,6 +285,9 @@ describe('StudentEnrollmentService', () => {
       };
       courseModel.find.mockReturnValue({
         exec: jest.fn().mockResolvedValue([mockCourse]),
+      });
+      courseModel.findById.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(mockCourse),
       });
       service.enrollmentModel.prototype.save = jest.fn().mockResolvedValue({
         studentId,
