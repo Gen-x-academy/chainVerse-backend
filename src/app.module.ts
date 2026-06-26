@@ -70,9 +70,9 @@ import { BadgeModule } from './badge/badge.module';
 import { PointsModule } from './points/points.module';
 import { GamificationPointsModule } from './gamification-points/gamification-points.module';
 import { CertificateSocialSharingModule } from './certificate-social-sharing/certificate-social-sharing.module';
+import { CertificationModule } from './certification/certification.module';
 import { ContactMessageModule } from './contact-message/contact-message.module';
 import { FaqManagementModule } from './faq-management/faq-management.module';
-import { PrivacyPolicyManagementModule } from './privacy-policy-management/privacy-policy-management.module';
 import { TermsConditionsManagementModule } from './terms-conditions-management/terms-conditions-management.module';
 import { AboutManagementModule } from './about-management/about-management.module';
 import { PrivateTutoringBookingsModule } from './private-tutoring-bookings/private-tutoring-bookings.module';
@@ -255,6 +255,7 @@ import { TutorReportsAnalyticsModule } from './tutor-reports-analytics/tutor-rep
     AdminModeratorAccountSettingsModule,
     // Certificate
     CertificateSocialSharingModule,
+    CertificationModule,
     CourseCertificationNftAchievementsModule,
     // Contact
     ContactMessageModule,
