@@ -79,7 +79,6 @@ describe('StudentEnrollmentService', () => {
     cartItemModel = module.get(getModelToken(CartItem.name));
     stellarService = module.get(StellarService);
 
-    // Hybrid mock: constructor + Model methods
     function HybridEnrollmentModel(dto?: any) {
       if (dto) {
         Object.assign(this, dto);
@@ -109,7 +108,6 @@ describe('StudentEnrollmentService', () => {
         exec: jest.fn().mockResolvedValue(null),
       });
 
-      // Mock the Enrollment instance and its save method
       const mockSavedEnrollment = { studentId, courseId, type: 'free' };
       function MockEnrollment(dto: any) {
         Object.assign(this, dto);
@@ -122,7 +120,6 @@ describe('StudentEnrollmentService', () => {
         exec: jest.fn().mockResolvedValue(mockCourse),
       });
 
-      // Re-initialize service with the mock constructor
       const result = await service.enrollFree(studentId, courseId);
       expect(result).toEqual(mockSavedEnrollment);
       expect(courseModel.findByIdAndUpdate).toHaveBeenCalledWith(courseId, {
@@ -160,6 +157,7 @@ describe('StudentEnrollmentService', () => {
         ConflictException,
       );
     });
+
     it('should throw NotFoundException if course does not exist', async () => {
       const studentId = 'student1';
       const courseId = 'course1';
@@ -263,6 +261,7 @@ describe('StudentEnrollmentService', () => {
       expect(mockStellarService.verifyPayment).not.toHaveBeenCalled();
     });
 
+    it('should enroll free courses in cart using courseMap', async () => {
     it('should enroll free courses in cart', async () => {
       const studentId = 'student1';
       const courseId = '507f1f77bcf86cd799439011';
@@ -364,7 +363,6 @@ describe('StudentEnrollmentService', () => {
       enrollmentModel.find.mockReturnValue({
         exec: jest.fn().mockResolvedValue(enrollments),
       });
-      // Ensure courseModel is available
       if (!courseModel.find) courseModel.find = jest.fn();
       courseModel.find.mockReturnValue({
         exec: jest.fn().mockResolvedValue(courses),

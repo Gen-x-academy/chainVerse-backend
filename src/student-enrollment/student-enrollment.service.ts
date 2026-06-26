@@ -98,6 +98,7 @@ export class StudentEnrollmentService {
     const courses = await this.courseModel
       .find({ _id: { $in: courseIds } })
       .exec();
+    const courseMap = new Map(courses.map((c) => [c._id.toString(), c]));
     const paidCourses = courses.filter((c) => c.price > 0);
     if (paidCourses.length > 0) {
       throw new NotImplementedException(
@@ -116,7 +117,7 @@ export class StudentEnrollmentService {
           continue;
         }
 
-        const course = await this.courseModel.findById(item.courseId).exec();
+        const course = courseMap.get(item.courseId);
         if (!course) {
           failed.push(item.courseId);
           continue;
