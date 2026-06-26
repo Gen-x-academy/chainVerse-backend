@@ -85,7 +85,7 @@ describe('StellarService', () => {
       mockServer.operations = jest.fn().mockReturnValue(opsBuilder);
     });
 
-    it('returns verified: true when Horizon reports the tx as successful', async () => {
+    it('returns { verified: true } when Horizon reports the tx as successful', async () => {
       mockServer.transactions().call.mockResolvedValue({ successful: true });
 
       const result = await service.verifyPayment({
@@ -100,7 +100,7 @@ describe('StellarService', () => {
       expect(typeof result.timestamp).toBe('string');
     });
 
-    it('returns verified: false when tx is not successful', async () => {
+    it('returns { verified: false } when tx is not successful', async () => {
       mockServer.transactions().call.mockResolvedValue({ successful: false });
 
       const result = await service.verifyPayment({
@@ -113,7 +113,7 @@ describe('StellarService', () => {
       expect(result.verified).toBe(false);
     });
 
-    it('returns verified: false when Horizon returns null', async () => {
+    it('returns { verified: false } when Horizon returns null', async () => {
       mockServer.transactions().call.mockResolvedValue(null);
 
       const result = await service.verifyPayment({
@@ -166,12 +166,25 @@ describe('StellarService', () => {
     });
   });
 
-  describe('verifyPayment', () => {
-    beforeEach(() => {
-      const mockTxBuilder = {
-        transaction: jest.fn().mockReturnThis(),
-        call: jest.fn(),
+    it('returns { verified: true } for matching amount and destination', async () => {
+      const opsBuilder = {
+        forTransaction: jest.fn().mockReturnThis(),
+        call: jest.fn().mockResolvedValue({
+          records: [
+            {
+              type: 'payment',
+              to: 'GDESTDESTDESTDESTDESTDESTDESTDESTDESTDEST',
+              amount: '100',
+            },
+          ],
+        }),
       };
+      mockServer.operations = jest.fn().mockReturnValue(opsBuilder);
+      mockServer.transactions().call.mockResolvedValue({ successful: true });
+
+      const result = await service.verifyPayment({
+        transactionHash: 'valid-hash',
+        expectedAmount: '100',
       mockServer.transactions = jest.fn().mockReturnValue(mockTxBuilder);
       const mockOpsBuilder = {
         forTransaction: jest.fn().mockReturnThis(),
@@ -199,16 +212,27 @@ describe('StellarService', () => {
       });
 
       expect(result.verified).toBe(true);
-      expect(result.transactionId).toBe('abc123');
-      expect(typeof result.timestamp).toBe('string');
     });
 
-    it('returns { verified: false } when transaction is not successful', async () => {
-      mockServer.transactions().call.mockResolvedValue({ successful: false });
+    it('returns { verified: false } for wrong amount', async () => {
+      const opsBuilder = {
+        forTransaction: jest.fn().mockReturnThis(),
+        call: jest.fn().mockResolvedValue({
+          records: [
+            {
+              type: 'payment',
+              to: 'GDESTDESTDESTDESTDESTDESTDESTDESTDESTDEST',
+              amount: '50',
+            },
+          ],
+        }),
+      };
+      mockServer.operations = jest.fn().mockReturnValue(opsBuilder);
+      mockServer.transactions().call.mockResolvedValue({ successful: true });
 
       const result = await service.verifyPayment({
-        transactionHash: 'abc123',
-        expectedAmount: '10',
+        transactionHash: 'wrong-amount-hash',
+        expectedAmount: '100',
         expectedDestination: 'GDESTDESTDESTDESTDESTDESTDESTDESTDESTDEST',
         courseId: 'course-1',
       });
@@ -216,8 +240,21 @@ describe('StellarService', () => {
       expect(result.verified).toBe(false);
     });
 
-    it('returns { verified: false } when Horizon returns null', async () => {
-      mockServer.transactions().call.mockResolvedValue(null);
+    it('returns { verified: false } for wrong destination', async () => {
+      const opsBuilder = {
+        forTransaction: jest.fn().mockReturnThis(),
+        call: jest.fn().mockResolvedValue({
+          records: [
+            {
+              type: 'payment',
+              to: 'GWRONGWRONGWRONGWRONGWRONGWRONGWRONGWRONG',
+              amount: '100',
+            },
+          ],
+        }),
+      };
+      mockServer.operations = jest.fn().mockReturnValue(opsBuilder);
+      mockServer.transactions().call.mockResolvedValue({ successful: true });
 
       const result = await service.verifyPayment({
         transactionHash: 'missing-hash',
@@ -305,6 +342,30 @@ describe('StellarService', () => {
       });
 
       expect(result.verified).toBe(false);
+    });
+  });
+
+  describe('getAccount', () => {
+    it('should return account details on success (happy path)', async () => {
+      const accountId = 'GD2LMJIK7BVUHJRJP3XKOIUE5NTISZFLGW7AUH36B5QUERZ3L7ILQQDA';
+      const mockAccount = { id: accountId, sequence: '123' };
+      mockServer.loadAccount.mockResolvedValue(mockAccount);
+
+      const result = await service.getAccount(accountId);
+
+      expect(mockServer.loadAccount).toHaveBeenCalledWith(accountId);
+      expect(result).toEqual(mockAccount);
+    });
+
+    it('should throw error on failure (failure path)', async () => {
+      const accountId = 'GD2LMJIK7BVUHJRJP3XKOIUE5NTISZFLGW7AUH36B5QUERZ3L7ILQQDA';
+      const error = new Error('Account not found');
+      mockServer.loadAccount.mockRejectedValue(error);
+
+      await expect(service.getAccount(accountId)).rejects.toThrow(
+        'Account not found',
+      );
+      expect(mockServer.loadAccount).toHaveBeenCalledWith(accountId);
     });
   });
 
