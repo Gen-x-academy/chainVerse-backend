@@ -54,3 +54,32 @@ docs: update CONTRIBUTING with branch protection rules
 ## Environment Variables
 
 If your change requires a new environment variable, add it to `.env.example` with a descriptive comment and note it in your PR description.
+
+## API Testing Guide
+
+### Prerequisites
+- Node.js 20+
+- MongoDB running locally (or set `MONGODB_URI` in `.env`)
+- Redis (optional, for rate limiting)
+
+### Setup
+```bash
+cp .env.example .env   # fill in required values
+npm install
+npm run start:dev
+```
+
+### Testing Endpoints
+Swagger UI is available at `http://localhost:3000/api/docs` in development mode.
+
+### Running Tests
+```bash
+npm test           # unit tests
+npm run test:e2e   # end-to-end tests
+```
+
+### Module Structure
+Each feature lives in its own folder under `src/`. To add a new feature:
+1. Create `src/my-feature/my-feature.module.ts`
+2. Add controllers, services, and DTOs inside that folder
+3. Register `MyFeatureModule` in the `imports` array of `src/app.module.ts`
