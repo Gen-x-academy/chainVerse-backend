@@ -56,7 +56,7 @@ export class TutorController {
     return this.tutorService.verifyEmail(dto);
   }
 
-  @Throttle({ default: { limit: 3, ttl: 15 * 60_000 } })
+  @Throttle({ default: { limit: 3, ttl: 900_000 } }) // 3 per 15 minutes
   @Post('forgot-password')
   @ApiOperation({ summary: 'Request a password reset link' })
   @ApiBody({ type: ForgetTutorPasswordDto })
