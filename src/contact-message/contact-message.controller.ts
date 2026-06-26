@@ -10,7 +10,7 @@ import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 
 @ApiBearerAuth('access-token')
-@Controller(['contact-messages', 'contact', 'v1/contact'])
+@Controller('contact-messages')
 export class ContactMessageController {
   constructor(private readonly service: ContactMessageService) {}
 

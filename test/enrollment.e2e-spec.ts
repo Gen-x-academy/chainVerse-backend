@@ -142,4 +142,37 @@ describe('Enrollment – E2E flow (#538)', () => {
 
     expect(res.body.isEnrolled ?? res.body.enrolled).toBe(true);
   });
+
+  // 6. Access course content
+  it('GET /student/enrollment/content/:courseId → 200, course content', async () => {
+    const res = await request(server)
+      .get(`/student/enrollment/content/${courseId}`)
+      .set('Authorization', `Bearer ${accessToken}`)
+      .expect(200);
+
+    expect(res.body).toBeDefined();
+  });
+
+  // 7. Access content without auth → 401
+  it('GET /student/enrollment/content/:courseId without token → 401', async () => {
+    await request(server)
+      .get(`/student/enrollment/content/${courseId}`)
+      .expect(401);
+  });
+
+  // 8. Enroll in non-existent course → 404
+  it('POST /student/enrollment/free/invalid-id → 404', async () => {
+    await request(server)
+      .post('/student/enrollment/free/000000000000000000000000')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .expect(404);
+  });
+
+  // 9. Re-enroll in same free course → 409
+  it('POST /student/enrollment/free/:courseId again → 409 conflict', async () => {
+    await request(server)
+      .post(`/student/enrollment/free/${courseId}`)
+      .set('Authorization', `Bearer ${accessToken}`)
+      .expect(409);
+  });
 });

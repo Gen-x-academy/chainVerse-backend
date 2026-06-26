@@ -10,7 +10,7 @@ import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 
 @ApiBearerAuth('access-token')
-@Controller('admin-moderator/account-settings')
+@Controller('admin/moderator/account-settings')
 export class AdminModeratorAccountSettingsController {
   constructor(private readonly service: AdminModeratorAccountSettingsService) {}
 
