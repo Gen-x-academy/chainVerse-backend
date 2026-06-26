@@ -92,6 +92,20 @@ export class StudentEnrollmentService {
       throw new BadRequestException('Cart is empty');
     }
 
+    const courseIds = cartItems
+      .filter((i) => isValidObjectId(i.courseId))
+      .map((i) => i.courseId);
+    const courses = await this.courseModel
+      .find({ _id: { $in: courseIds } })
+      .exec();
+    const courseMap = new Map(courses.map((c) => [c._id.toString(), c]));
+    const paidCourses = courses.filter((c) => c.price > 0);
+    if (paidCourses.length > 0) {
+      throw new NotImplementedException(
+        'Paid course checkout requires a Stellar transaction hash. See API docs for the payment flow.',
+      );
+    }
+
     const enrolled: string[] = [];
     const failed: string[] = [];
     let totalAmount = 0;
@@ -103,7 +117,7 @@ export class StudentEnrollmentService {
           continue;
         }
 
-        const course = await this.courseModel.findById(item.courseId).exec();
+        const course = courseMap.get(item.courseId);
         if (!course) {
           failed.push(item.courseId);
           continue;
