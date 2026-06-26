@@ -11,14 +11,14 @@ Repository admins must configure the following branch protection settings on `ma
 | Setting | Value |
 |---|---|
 | **Require status checks to pass before merging** | ✅ Enabled |
-| Required status checks | `CI / ci` |
+| Required status checks | `CI / Lint`, `CI / Build`, `CI / Unit tests`, `CI / E2E tests` |
 | **Require at least 1 approving review** | ✅ Enabled |
 | **Dismiss stale reviews when new commits are pushed** | ✅ Enabled |
 | **Require branches to be up to date before merging** | ✅ Enabled |
 
 ### Why each rule matters
 
-- **Status checks** — Prevents merging if lint, build, or tests are failing. The CI job name is `CI / ci` (defined in `.github/workflows/ci.yml`).
+- **Status checks** — Prevents merging if lint, build, or tests are failing. The required checks (`CI / Lint`, `CI / Build`, `CI / Unit tests`, `CI / E2E tests`) are defined in `.github/workflows/ci.yml`.
 - **Approving review** — Ensures at least one team member has reviewed the code before it lands on `main`.
 - **Dismiss stale reviews** — Forces re-review when the author pushes new changes after approval, preventing approval of old code.
 - **Up-to-date branches** — Requires the PR branch to be current with `main` before merging, avoiding integration surprises.
