@@ -161,7 +161,7 @@ jobs:
 
       - name: Validate required environment variables
         run: |
-          required_vars=("JWT_SECRET" "NODE_ENV")
+          required_vars=("JWT_SECRET" "NODE_ENV" "MONGO_URI")
           missing=0
           for var in "${required_vars[@]}"; do
             if [ -z "${!var}" ]; then
