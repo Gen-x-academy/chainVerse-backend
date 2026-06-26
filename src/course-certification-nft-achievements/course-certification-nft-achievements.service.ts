@@ -1,5 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   Contract,
@@ -13,6 +15,7 @@ import { CreateCourseCertificationNftAchievementsDto } from './dto/create-course
 import { UpdateCourseCertificationNftAchievementsDto } from './dto/update-course-certification-nft-achievements.dto';
 import { DomainEvents } from '../events/event-names';
 import { CertificateIssuedPayload } from '../events/payloads/certificate-issued.payload';
+import { CertificateTx } from '../stellar/stellar-sync.service';
 
 @Injectable()
 export class CourseCertificationNftAchievementsService {
@@ -25,6 +28,8 @@ export class CourseCertificationNftAchievementsService {
     private readonly eventEmitter: EventEmitter2,
     private readonly stellarService: StellarService,
     private readonly configService: ConfigService,
+    @InjectModel(CertificateTx.name)
+    private readonly certTxModel: Model<CertificateTx>,
   ) {}
 
   findAll() {
@@ -57,6 +62,25 @@ export class CourseCertificationNftAchievementsService {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       this.logger.warn(`On-chain certificate issuance failed for ${created.id}: ${msg}`);
+    }
+
+    // Record the on-chain transaction so StellarSyncService can poll Horizon
+    // and confirm the certificate status
+    if (created.transactionHash) {
+      try {
+        await this.certTxModel.create({
+          certificateId: created.id,
+          studentId: payload.studentId,
+          transactionHash: created.transactionHash,
+          status: 'pending',
+        });
+        this.logger.log(
+          `CertificateTx record created for ${created.id} (tx: ${created.transactionHash})`,
+        );
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        this.logger.warn(`Failed to create CertificateTx record for ${created.id}: ${msg}`);
+      }
     }
 
     this.eventEmitter.emit(

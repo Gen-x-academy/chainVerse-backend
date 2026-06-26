@@ -1,4 +1,5 @@
-import { Injectable, Logger, OnApplicationBootstrap, OnApplicationShutdown } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
@@ -32,14 +33,9 @@ CertificateTxSchema.index({ status: 1 });
 
 // ── Sync service ─────────────────────────────────────────────────────────────
 
-const POLL_INTERVAL_MS = 60_000;
-
 @Injectable()
-export class StellarSyncService
-  implements OnApplicationBootstrap, OnApplicationShutdown
-{
+export class StellarSyncService {
   private readonly logger = new Logger(StellarSyncService.name);
-  private timer: ReturnType<typeof setInterval> | null = null;
 
   constructor(
     @InjectModel(CertificateTx.name)
@@ -47,14 +43,12 @@ export class StellarSyncService
     private readonly stellarService: StellarService,
   ) {}
 
-  onApplicationBootstrap() {
-    this.timer = setInterval(() => void this.syncPending(), POLL_INTERVAL_MS);
-  }
-
-  onApplicationShutdown() {
-    if (this.timer) clearInterval(this.timer);
-  }
-
+  /**
+   * Polls Horizon every 60 seconds to confirm pending certificate transactions.
+   * Updates status to 'confirmed' when the ledger result is successful,
+   * or 'failed' when the transaction did not succeed.
+   */
+  @Cron('*/60 * * * * *')
   async syncPending(): Promise<void> {
     const pending = await this.certTxModel
       .find({ status: 'pending' })
