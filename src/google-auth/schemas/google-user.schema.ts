@@ -22,3 +22,5 @@ export class GoogleUser {
 }
 
 export const GoogleUserSchema = SchemaFactory.createForClass(GoogleUser);
+
+GoogleUserSchema.index({ email: 1 }, { unique: true });
