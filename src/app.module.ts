@@ -112,6 +112,7 @@ import { TermsConditionsManagementModule } from './terms-conditions-management/t
 import { TutorAccountSettingsModule } from './tutor-account-settings/tutor-account-settings.module';
 import { TutorJwtAuthModule } from './tutor-jwt-auth/tutor-jwt-auth.module';
 import { TutorReportsAnalyticsModule } from './tutor-reports-analytics/tutor-reports-analytics.module';
+import { VerificationModule } from './verification/verification.module';
 
 @Module({
   imports: [
@@ -282,6 +283,8 @@ import { TutorReportsAnalyticsModule } from './tutor-reports-analytics/tutor-rep
     TutorAccountSettingsModule,
     TutorJwtAuthModule,
     TutorReportsAnalyticsModule,
+    // Verification
+    VerificationModule,
     // Cache
     AppCacheModule,
   ],

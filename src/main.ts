@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
+// Note: standalone src/express/ server has been removed — all routes are served by NestJS.
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
