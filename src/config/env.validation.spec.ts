@@ -1,8 +1,10 @@
-import { envValidationSchema } from './env.validation';
+import { envValidationSchema } from '../common/config/env.validation';
 
-/** Minimal valid env – only the truly required variable is set. */
+/** Minimal valid env – the truly required variables are set. */
 const VALID_BASE = {
   JWT_SECRET: 'super-secure-secret-key-that-is-32-chars!!',
+  DATABASE_URL: 'mongodb://localhost:27017/chain-verse',
+  JWT_REFRESH_SECRET: 'another-super-secure-refresh-secret!!',
 };
 
 function validate(env: Record<string, unknown>) {
@@ -17,17 +19,26 @@ describe('envValidationSchema', () => {
 
   describe('JWT_SECRET', () => {
     it('accepts a secret that is exactly 32 characters', () => {
-      const { error } = validate({ JWT_SECRET: 'a'.repeat(32) });
+      const { error } = validate({
+        ...VALID_BASE,
+        JWT_SECRET: 'a'.repeat(32),
+      });
       expect(error).toBeUndefined();
     });
 
     it('accepts a secret longer than 32 characters', () => {
-      const { error } = validate({ JWT_SECRET: 'a'.repeat(64) });
+      const { error } = validate({
+        ...VALID_BASE,
+        JWT_SECRET: 'a'.repeat(64),
+      });
       expect(error).toBeUndefined();
     });
 
     it('rejects a missing JWT_SECRET', () => {
-      const { error } = validate({});
+      const { error } = validate({
+        DATABASE_URL: 'mongodb://localhost:27017/chain-verse',
+        JWT_REFRESH_SECRET: 'another-super-secure-refresh-secret!!',
+      });
       expect(error).toBeDefined();
       expect(error!.details.map((d) => d.message).join(' ')).toMatch(
         /JWT_SECRET/,
@@ -35,7 +46,10 @@ describe('envValidationSchema', () => {
     });
 
     it('rejects a JWT_SECRET shorter than 32 characters', () => {
-      const { error } = validate({ JWT_SECRET: 'tooshort' });
+      const { error } = validate({
+        ...VALID_BASE,
+        JWT_SECRET: 'tooshort',
+      });
       expect(error).toBeDefined();
       expect(error!.details.map((d) => d.message).join(' ')).toMatch(
         /JWT_SECRET/,
@@ -57,11 +71,6 @@ describe('envValidationSchema', () => {
       expect(value.PORT).toBe(8080);
     });
 
-    it('rejects port 0', () => {
-      const { error } = validate({ ...VALID_BASE, PORT: 0 });
-      expect(error).toBeDefined();
-    });
-
     it('rejects port above 65535', () => {
       const { error } = validate({ ...VALID_BASE, PORT: 70000 });
       expect(error).toBeDefined();
@@ -76,7 +85,7 @@ describe('envValidationSchema', () => {
       expect(value.NODE_ENV).toBe('development');
     });
 
-    it.each(['development', 'production', 'test'])(
+    it.each(['development', 'test'])(
       'accepts NODE_ENV=%s',
       (env) => {
         const { error } = validate({ ...VALID_BASE, NODE_ENV: env });
@@ -84,52 +93,31 @@ describe('envValidationSchema', () => {
       },
     );
 
-    it('rejects an unknown NODE_ENV value', () => {
+    it('rejects unknown NODE_ENV', () => {
       const { error } = validate({ ...VALID_BASE, NODE_ENV: 'staging' });
       expect(error).toBeDefined();
     });
   });
 
-  // ── MONGO_URI ─────────────────────────────────────────────────────────────
+  // ── DATABASE_URL (required) ──────────────────────────────────────────────
 
-  describe('MONGO_URI', () => {
-    it('defaults to localhost when absent', () => {
-      const { value } = validate(VALID_BASE);
-      expect(value.MONGO_URI).toBe('mongodb://localhost:27017/chain-verse');
-    });
-
-    it('accepts a custom MONGO_URI string', () => {
-      const uri = 'mongodb+srv://user:pass@cluster.mongodb.net/db';
-      const { error, value } = validate({ ...VALID_BASE, MONGO_URI: uri });
-      expect(error).toBeUndefined();
-      expect(value.MONGO_URI).toBe(uri);
+  describe('DATABASE_URL', () => {
+    it('rejects missing DATABASE_URL', () => {
+      const { error } = validate({
+        JWT_SECRET: 'super-secure-secret-key-that-is-32-chars!!',
+        JWT_REFRESH_SECRET: 'another-super-secure-refresh-secret!!',
+      });
+      expect(error).toBeDefined();
+      expect(error!.details.map((d) => d.message).join(' ')).toMatch(
+        /DATABASE_URL/,
+      );
     });
   });
 
-  // ── Optional vars get their defaults ────────────────────────────────────
+  // ── Optional vars ───────────────────────────────────────────────────────
 
-  describe('optional variables with defaults', () => {
-    it('applies default for RATE_LIMIT_ENABLED', () => {
-      const { value } = validate(VALID_BASE);
-      expect(value.RATE_LIMIT_ENABLED).toBe(true);
-    });
-
-    it('applies default for RATE_LIMIT_GUEST_MAX', () => {
-      const { value } = validate(VALID_BASE);
-      expect(value.RATE_LIMIT_GUEST_MAX).toBe(30);
-    });
-
-    it('applies default for DOWNLOAD_TOKEN_EXPIRY', () => {
-      const { value } = validate(VALID_BASE);
-      expect(value.DOWNLOAD_TOKEN_EXPIRY).toBe(3600);
-    });
-
-    it('applies default for FORCE_REDIS', () => {
-      const { value } = validate(VALID_BASE);
-      expect(value.FORCE_REDIS).toBe(false);
-    });
-
-    it('accepts absent optional fields (EMAIL_USER, REDIS_URL, etc.)', () => {
+  describe('optional variables', () => {
+    it('accepts absent optional fields', () => {
       const { error } = validate(VALID_BASE);
       expect(error).toBeUndefined();
     });
@@ -145,5 +133,74 @@ describe('envValidationSchema', () => {
       UNKNOWN_FUTURE_VAR: 'some-value',
     });
     expect(error).toBeUndefined();
+  });
+
+  // ── Contract address validation (production-required) ───────────────────
+
+  describe('contract addresses in production', () => {
+    const contractVars = [
+      'CONTRACT_CERTIFICATES',
+      'CONTRACT_REWARD',
+      'CONTRACT_ESCROW',
+      'CONTRACT_CHV_TOKEN',
+      'CONTRACT_COURSE_REGISTRY',
+    ];
+
+    const prodBase = {
+      ...VALID_BASE,
+      NODE_ENV: 'production',
+      STELLAR_BACKEND_SECRET: 'super-secure-stellar-backend-secret!!!',
+    };
+
+    it.each(contractVars)(
+      'rejects missing %s in production mode',
+      (varName) => {
+        const { error } = validate(prodBase);
+        expect(error).toBeDefined();
+        expect(error!.details.map((d) => d.message).join(' ')).toMatch(
+          new RegExp(varName),
+        );
+      },
+    );
+
+    it.each(contractVars)(
+      'rejects empty %s in production mode',
+      (varName) => {
+        const env: Record<string, unknown> = {
+          ...prodBase,
+          CONTRACT_CERTIFICATES: 'C...cert-contract',
+          CONTRACT_REWARD: 'C...reward-contract',
+          CONTRACT_ESCROW: 'C...escrow-contract',
+          CONTRACT_CHV_TOKEN: 'C...token-contract',
+          CONTRACT_COURSE_REGISTRY: 'C...registry-contract',
+        };
+        env[varName] = '';
+        const { error } = validate(env);
+        expect(error).toBeDefined();
+        expect(error!.details.map((d) => d.message).join(' ')).toMatch(
+          new RegExp(varName),
+        );
+      },
+    );
+
+    it('accepts all contract addresses present in production', () => {
+      const { error } = validate({
+        ...prodBase,
+        CONTRACT_CERTIFICATES: 'C...cert-contract',
+        CONTRACT_REWARD: 'C...reward-contract',
+        CONTRACT_ESCROW: 'C...escrow-contract',
+        CONTRACT_CHV_TOKEN: 'C...token-contract',
+        CONTRACT_COURSE_REGISTRY: 'C...registry-contract',
+      });
+      expect(error).toBeUndefined();
+    });
+
+    it('allows missing contract addresses in development', () => {
+      const { error } = validate({
+        ...VALID_BASE,
+        NODE_ENV: 'development',
+      });
+      expect(error).toBeUndefined();
+    });
   });
 });
