@@ -1,6 +1,6 @@
 import request from 'supertest';
 import * as jwt from 'jsonwebtoken';
-import { createTestApp } from '../utils/test-app';
+import { createTestApp } from './helpers/test-app.helper';
 import { INestApplication } from '@nestjs/common';
 
 describe('Authorization Edge Cases', () => {
