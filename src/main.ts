@@ -17,14 +17,13 @@ async function bootstrap() {
   app.setGlobalPrefix('api', { exclude: ['/health'] });
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
 
-  // Security headers (X-Content-Type-Options, X-Frame-Options, HSTS, etc.)
+  // Compress all responses — must be first so every subsequent handler sends compressed output
+  app.use((compression as unknown as () => ReturnType<typeof compression>)());
+
   // Body size limits for security
   const express = await import('express');
   app.use(express.json({ limit: '1mb' }));
   app.use(express.urlencoded({ limit: '1mb', extended: true }));
-
-  // Compress all responses
-  app.use((compression as unknown as () => ReturnType<typeof compression>)());
 
   // Security headers
   app.use(helmet());
