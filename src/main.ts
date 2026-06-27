@@ -26,12 +26,6 @@ async function bootstrap() {
   // Compress all responses
   app.use((compression as unknown as () => ReturnType<typeof compression>)());
 
-  // Global API prefix — exclude /health so load-balancers reach it without the prefix
-  app.setGlobalPrefix('api', { exclude: ['/health'] });
-
-  // URI-based versioning — controllers opt in with @Version(); existing routes are unaffected
-  app.enableVersioning({ type: VersioningType.URI });
-
   // Security headers
   app.use(helmet());
 
