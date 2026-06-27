@@ -8,11 +8,32 @@ on:
 
 jobs:
   # -----------------------------------------------------------------------
+  # 0. Guard against non-NestJS projects under src/
+  # -----------------------------------------------------------------------
+  src-guard:
+    name: Source guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Reject PHP and Composer files under src/
+        run: |
+          forbidden=$(git ls-files 'src/**/*.php' 'src/**/composer.json' 'src/**/composer.lock' || true)
+          if [ -n "$forbidden" ]; then
+            echo "Non-NestJS artifacts detected under src/:"
+            echo "$forbidden"
+            echo "This repo is TypeScript/NestJS only. Remove PHP or Symfony projects from src/."
+            exit 1
+          fi
+          echo "No forbidden artifacts under src/"
+
+  # -----------------------------------------------------------------------
   # 1. Lint
   # -----------------------------------------------------------------------
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    needs: src-guard
     steps:
       - uses: actions/checkout@v4
 

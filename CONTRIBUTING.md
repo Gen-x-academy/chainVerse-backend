@@ -32,6 +32,7 @@ Repository admins must configure the following branch protection settings on `ma
 2. Make your changes and write tests.
 3. Run checks locally before pushing:
    ```bash
+   npm run check:src-guard
    npm run lint
    npm run build
    npm run test
@@ -83,3 +84,6 @@ Each feature lives in its own folder under `src/`. To add a new feature:
 1. Create `src/my-feature/my-feature.module.ts`
 2. Add controllers, services, and DTOs inside that folder
 3. Register `MyFeatureModule` in the `imports` array of `src/app.module.ts`
+
+### Source directory (`src/`)
+This repository is a **NestJS / TypeScript** backend only. Do not add PHP, Symfony, or other non-TypeScript projects under `src/`. Feature code belongs in NestJS modules (`.module.ts`, `.controller.ts`, `.service.ts`, DTOs, etc.). CI rejects PHP and Composer artifacts under `src/`.
