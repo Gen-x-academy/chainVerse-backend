@@ -495,6 +495,10 @@ export class StudentAuthService {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
+    if (payload.type !== 'refresh') {
+      throw new UnauthorizedException('Invalid token type');
+    }
+
     const tokenHash = this.hashToken(dto.refreshToken);
     const stored = await this.refreshTokenModel.findOne({ tokenHash }).exec();
 
