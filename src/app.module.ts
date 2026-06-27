@@ -127,7 +127,7 @@ import { VerificationModule } from './verification/verification.module';
       useFactory: (config: ConfigService) => {
         const redisUrl = config.get<string>('redis.url');
         return {
-          throttlers: [{ ttl: 60, limit: 10 }],
+          throttlers: [{ ttl: 60_000, limit: 10 }], // 10 req/min global default
           ...(redisUrl && {
             storage: new ThrottlerStorageRedisService(redisUrl),
           }),
