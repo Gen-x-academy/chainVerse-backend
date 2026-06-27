@@ -26,11 +26,11 @@ import {
   PasswordResetTokenDocument,
 } from './schemas/password-reset-token.schema';
 
-const ACCESS_TOKEN_EXPIRY = 3600;
-const REFRESH_TOKEN_EXPIRY = 604800;
-const BCRYPT_SALT_ROUNDS = 10;
+const ACCESS_TOKEN_EXPIRY = 3600; // 1 hour
+const REFRESH_TOKEN_EXPIRY = 604800; // 7 days
 const VERIFICATION_TOKEN_EXPIRY = 86400; // 24 hours
 const RESET_TOKEN_EXPIRY = 900; // 15 minutes
+const BCRYPT_SALT_ROUNDS = 10;
 const VERIFICATION_COOLDOWN = 60; // 1 minute cooldown between attempts
 const VERIFICATION_ATTEMPT_WINDOW = 900; // 15 minutes window for attempt counting
 const MAX_VERIFICATION_ATTEMPTS = 5; // Maximum 5 attempts per window
@@ -493,6 +493,10 @@ export class StudentAuthService {
       payload = this.verifyJwt(dto.refreshToken);
     } catch {
       throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    if (payload.type !== 'refresh') {
+      throw new UnauthorizedException('Invalid token type');
     }
 
     const tokenHash = this.hashToken(dto.refreshToken);

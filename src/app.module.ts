@@ -148,6 +148,7 @@ import { VerificationModule } from './verification/verification.module';
     AppCacheModule,
     // MongoDB connection — reads mongoUri from app.config.ts which maps MONGO_URI
     MongooseModule.forRootAsync({
+      imports: [ConfigModule],
       useFactory: (config: ConfigService) => ({
         uri: config.get<string>('mongoUri'),
         serverSelectionTimeoutMS: 5000,
