@@ -122,6 +122,9 @@ import { VerificationModule } from './verification/verification.module';
     WorkerModule,
     MetricsModule,
     TracingModule,
+    EmailModule,
+    StellarModule,
+    SessionModule,
     // Auth
     StudentAuthModule,
     AdminAuthModule,
