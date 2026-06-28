@@ -91,7 +91,7 @@ import { VerificationModule } from './verification/verification.module';
       useFactory: (config: ConfigService) => {
         const redisUrl = config.get<string>('redis.url');
         return {
-          throttlers: [{ ttl: 60_000, limit: 10 }], // 10 req/min global default
+          throttlers: [{ ttl: 60_000, limit: 10 }],
           ...(redisUrl && {
             storage: new ThrottlerStorageRedisService(redisUrl),
           }),
@@ -99,7 +99,6 @@ import { VerificationModule } from './verification/verification.module';
       },
       inject: [ConfigService],
     }),
-    // Global JWT module — makes JwtService available to all guards/services
     JwtModule.registerAsync({
       global: true,
       imports: [ConfigModule],
@@ -110,7 +109,6 @@ import { VerificationModule } from './verification/verification.module';
       inject: [ConfigService],
     }),
     AppCacheModule,
-    // MongoDB connection — reads mongoUri from app.config.ts which maps MONGO_URI
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => ({
@@ -126,6 +124,7 @@ import { VerificationModule } from './verification/verification.module';
     TracingModule,
     EmailModule,
     StellarModule,
+    SessionModule,
     // Auth
     StudentAuthModule,
     AdminAuthModule,
@@ -136,6 +135,8 @@ import { VerificationModule } from './verification/verification.module';
     TutorCourseModule,
     TutorAccountSettingsModule,
     TutorReportsAnalyticsModule,
+    EmailModule,
+    SessionModule,
     // Course
     AdminCourseModule,
     CourseDiscoveryModule,
@@ -159,6 +160,7 @@ import { VerificationModule } from './verification/verification.module';
     HealthModule,
     NotificationModule,
     SessionModule,
+    FinancialAidModule,
     OrganizationModule,
     OrganizationMemberModule,
     SubscriptionPlanModule,
@@ -177,13 +179,14 @@ import { VerificationModule } from './verification/verification.module';
     ReportAbuseModule,
     FinancialAidModule,
     ReportsModule,
+    ReportsModule,
+    StellarModule,
     IdempotencyModule,
     VerificationModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
-    // Apply the throttler guard to every route in the application
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })
