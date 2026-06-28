@@ -135,6 +135,8 @@ import { VerificationModule } from './verification/verification.module';
     TutorCourseModule,
     TutorAccountSettingsModule,
     TutorReportsAnalyticsModule,
+    EmailModule,
+    SessionModule,
     // Course
     AdminCourseModule,
     CourseDiscoveryModule,
@@ -175,6 +177,7 @@ import { VerificationModule } from './verification/verification.module';
     RemovalRequestModule,
     ReportAbuseModule,
     ReportsModule,
+    StellarModule,
     IdempotencyModule,
     VerificationModule,
   ],
