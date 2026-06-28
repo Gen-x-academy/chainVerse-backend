@@ -27,10 +27,6 @@ import { GoogleAuthModule } from './google-auth/google-auth.module';
 import { TutorJwtAuthModule } from './tutor-jwt-auth/tutor-jwt-auth.module';
 
 // Tutor modules
-// Course modules
-import { AdminCourseModule } from './admin-course/admin-course.module';
-import { BadgeModule } from './badge/badge.module';
-import { AdminAuthModule } from './admin-auth/admin-auth.module';
 import { TutorModule } from './tutor/tutor.module';
 import { TutorCourseModule } from './tutor-course/tutor-course.module';
 import { TutorAccountSettingsModule } from './tutor-account-settings/tutor-account-settings.module';
@@ -62,7 +58,6 @@ import { AdminModeratorAccountSettingsModule } from './admin-moderator-account-s
 import { HealthModule } from './health/health.module';
 import { NotificationModule } from './notification/notification.module';
 import { FinancialAidModule } from './financial-aid/financial-aid.module';
-import { SessionModule } from './session/session.module';
 import { OrganizationModule } from './organization/organization.module';
 import { OrganizationMemberModule } from './organization-member/organization-member.module';
 import { SubscriptionPlanModule } from './subscription-plan/subscription-plan.module';
@@ -78,40 +73,9 @@ import { AboutManagementModule } from './about-management/about-management.modul
 import { PrivateTutoringBookingsModule } from './private-tutoring-bookings/private-tutoring-bookings.module';
 import { RemovalRequestModule } from './removal-request/removal-request.module';
 import { ReportAbuseModule } from './report-abuse/report-abuse.module';
-import { CourseAnalyticsModule } from './course-analytics/course-analytics.module';
-import { GamificationPointsModule } from './gamification-points/gamification-points.module';
-import { FaqManagementModule } from './faq-management/faq-management.module';
-import { GoogleAuthModule } from './google-auth/google-auth.module';
-import { PointsModule } from './points/points.module';
-import { HealthModule } from './health/health.module';
-import { SubscriptionPlanModule } from './subscription-plan/subscription-plan.module';
-import { OrganizationModule } from './organization/organization.module';
-import { OrganizationMemberModule } from './organization-member/organization-member.module';
-import { NotificationModule } from './notification/notification.module';
-import { CoursePerformanceLeaderboardModule } from './course-performance-leaderboard/course-performance-leaderboard.module';
-import { FinancialAidModule } from './financial-aid/financial-aid.module';
-import { StudentAuthModule } from './student-auth/student-auth.module';
-import { ContactMessageModule } from './contact-message/contact-message.module';
 import { ReportsModule } from './reports/reports.module';
-import { AboutManagementModule } from './about-management/about-management.module';
-import { AdminFinancialAidManagementModule } from './admin-financial-aid-management/admin-financial-aid-management.module';
-import { AdminModeratorAccountSettingsModule } from './admin-moderator-account-settings/admin-moderator-account-settings.module';
-import { CertificateSocialSharingModule } from './certificate-social-sharing/certificate-social-sharing.module';
-import { CourseCertificationNftAchievementsModule } from './course-certification-nft-achievements/course-certification-nft-achievements.module';
-import { CourseCategorizationFilteringModule } from './course-categorization-filtering/course-categorization-filtering.module';
-import { CourseReportsAnalyticsModule } from './course-reports-analytics/course-reports-analytics.module';
 import { IdempotencyModule } from './idempotency/idempotency.module';
 import { PrivacyPolicyManagementModule } from './privacy-policy-management/privacy-policy-management.module';
-import { PrivateTutoringBookingsModule } from './private-tutoring-bookings/private-tutoring-bookings.module';
-import { RemovalRequestModule } from './removal-request/removal-request.module';
-import { ReportAbuseModule } from './report-abuse/report-abuse.module';
-import { StudentAccountSettingsModule } from './student-account-settings/student-account-settings.module';
-import { StudentCertificateNameChangeRequestModule } from './student-certificate-name-change-request/student-certificate-name-change-request.module';
-import { StudentReportsAnalyticsModule } from './student-reports-analytics/student-reports-analytics.module';
-import { TermsConditionsManagementModule } from './terms-conditions-management/terms-conditions-management.module';
-import { TutorAccountSettingsModule } from './tutor-account-settings/tutor-account-settings.module';
-import { TutorJwtAuthModule } from './tutor-jwt-auth/tutor-jwt-auth.module';
-import { TutorReportsAnalyticsModule } from './tutor-reports-analytics/tutor-reports-analytics.module';
 import { VerificationModule } from './verification/verification.module';
 
 @Module({
@@ -160,6 +124,8 @@ import { VerificationModule } from './verification/verification.module';
     WorkerModule,
     MetricsModule,
     TracingModule,
+    EmailModule,
+    StellarModule,
     // Auth
     StudentAuthModule,
     AdminAuthModule,
@@ -167,13 +133,6 @@ import { VerificationModule } from './verification/verification.module';
     TutorJwtAuthModule,
     // Tutor
     TutorModule,
-    EmailModule,
-    SessionModule,
-    // Tutor modules
-    TutorModule,
-    // Course modules
-    AdminAuthModule,
-    AdminCourseModule,
     TutorCourseModule,
     TutorAccountSettingsModule,
     TutorReportsAnalyticsModule,
@@ -199,7 +158,6 @@ import { VerificationModule } from './verification/verification.module';
     // Platform features
     HealthModule,
     NotificationModule,
-    FinancialAidModule,
     SessionModule,
     OrganizationModule,
     OrganizationMemberModule,
@@ -207,87 +165,20 @@ import { VerificationModule } from './verification/verification.module';
     BadgeModule,
     PointsModule,
     GamificationPointsModule,
-    CertificateSocialSharingModule,
-    ContactMessageModule,
-    FaqManagementModule,
-    PrivacyPolicyManagementModule,
-    TermsConditionsManagementModule,
-    AboutManagementModule,
-    PrivateTutoringBookingsModule,
-    RemovalRequestModule,
-    ReportAbuseModule,
-    BadgeModule,
-    // Student modules
-    StudentAuthModule,
-    StudentSavedCoursesModule,
-    StudentCartModule,
-    StudentEnrollmentModule,
-    // Analytics
-    CourseAnalyticsModule,
-    // Gamification
-    GamificationPointsModule,
-    CoursePerformanceLeaderboardModule,
-    // FAQ
-    FaqManagementModule,
-    // Google Auth
-    GoogleAuthModule,
-    // Points
-    PointsModule,
-    // Health
-    HealthModule,
-    // Subscription Plan
-    SubscriptionPlanModule,
-    // Organization
-    OrganizationModule,
-    OrganizationMemberModule,
-    // Notification
-    NotificationModule,
-    // Financial Aid
-    FinancialAidModule,
-    // Contact
-    ContactMessageModule,
-    // Reporting
-    ReportsModule,
-    // Stellar
-    StellarModule,
-    // About
-    AboutManagementModule,
-    // Admin management
-    AdminFinancialAidManagementModule,
-    AdminModeratorAccountSettingsModule,
-    // Certificate
     CertificateSocialSharingModule,
     CertificationModule,
-    CourseCertificationNftAchievementsModule,
-    // Contact
     ContactMessageModule,
-    // Course features
-    CourseCategorizationFilteringModule,
-    CoursePerformanceLeaderboardModule,
-    CourseReportsAnalyticsModule,
-    // Idempotency
-    IdempotencyModule,
-    // Policy & legal
+    FaqManagementModule,
     PrivacyPolicyManagementModule,
     TermsConditionsManagementModule,
-    // Tutoring & sessions
+    AboutManagementModule,
     PrivateTutoringBookingsModule,
-    SessionModule,
-    // Moderation
     RemovalRequestModule,
     ReportAbuseModule,
-    // Student features
-    StudentAccountSettingsModule,
-    StudentCertificateNameChangeRequestModule,
-    StudentReportsAnalyticsModule,
-    // Tutor features
-    TutorAccountSettingsModule,
-    TutorJwtAuthModule,
-    TutorReportsAnalyticsModule,
-    // Verification
+    FinancialAidModule,
+    ReportsModule,
+    IdempotencyModule,
     VerificationModule,
-    // Cache
-    AppCacheModule,
   ],
   controllers: [AppController],
   providers: [
