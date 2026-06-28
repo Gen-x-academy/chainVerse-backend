@@ -159,6 +159,7 @@ import { VerificationModule } from './verification/verification.module';
     // Platform features
     HealthModule,
     NotificationModule,
+    SessionModule,
     FinancialAidModule,
     OrganizationModule,
     OrganizationMemberModule,
@@ -176,6 +177,8 @@ import { VerificationModule } from './verification/verification.module';
     PrivateTutoringBookingsModule,
     RemovalRequestModule,
     ReportAbuseModule,
+    FinancialAidModule,
+    ReportsModule,
     ReportsModule,
     StellarModule,
     IdempotencyModule,
