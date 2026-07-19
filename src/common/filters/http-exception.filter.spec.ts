@@ -97,7 +97,7 @@ describe('AllExceptionsFilter', () => {
     });
 
     it('formats ConflictException (409)', () => {
-      const { host, status, json } = buildHost('/student/create');
+      const { host, status, json } = buildHost('/auth/student/register');
       filter.catch(new ConflictException('Email already registered'), host);
 
       expect(status).toHaveBeenCalledWith(409);
@@ -105,7 +105,7 @@ describe('AllExceptionsFilter', () => {
         expect.objectContaining({
           statusCode: 409,
           message: 'Email already registered',
-          path: '/student/create',
+          path: '/auth/student/register',
         }),
       );
     });

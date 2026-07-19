@@ -27,7 +27,7 @@ export class TutorController {
   constructor(private readonly tutorService: TutorService) {}
 
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
-  @Post('create')
+  @Post('register')
   @ApiOperation({ summary: 'Register a new tutor' })
   @ApiBody({ type: CreateTutorDto })
   @ApiResponse({ status: 201, description: 'Tutor registered. Verification email sent.' })
