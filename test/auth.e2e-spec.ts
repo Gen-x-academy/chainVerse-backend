@@ -53,10 +53,10 @@ describe('Student Auth – Full Journey (e2e)', () => {
   // ---------------------------------------------------------------------------
   // Registration
   // ---------------------------------------------------------------------------
-  describe('POST /student/create', () => {
+  describe('POST /auth/student/register', () => {
     it('creates a new student and returns tokens (verification token sent via email)', async () => {
       const res = await request(server)
-        .post('/student/create')
+        .post('/auth/student/register')
         .send({
           firstName: 'Journey',
           lastName: 'Student',
@@ -87,7 +87,7 @@ describe('Student Auth – Full Journey (e2e)', () => {
 
     it('rejects a duplicate email with 409', () =>
       request(server)
-        .post('/student/create')
+        .post('/auth/student/register')
         .send({
           firstName: 'Dup',
           lastName: 'User',
@@ -98,13 +98,13 @@ describe('Student Auth – Full Journey (e2e)', () => {
 
     it('rejects missing required fields with 400', () =>
       request(server)
-        .post('/student/create')
+        .post('/auth/student/register')
         .send({ email: 'no-name@example.com', password: 'ValidPass1!' })
         .expect(400));
 
     it('rejects an invalid email format with 400', () =>
       request(server)
-        .post('/student/create')
+        .post('/auth/student/register')
         .send({
           firstName: 'A',
           lastName: 'B',
@@ -115,7 +115,7 @@ describe('Student Auth – Full Journey (e2e)', () => {
 
     it('rejects a password shorter than 8 characters with 400', () =>
       request(server)
-        .post('/student/create')
+        .post('/auth/student/register')
         .send({
           firstName: 'A',
           lastName: 'B',
@@ -131,7 +131,7 @@ describe('Student Auth – Full Journey (e2e)', () => {
   describe('POST /student/resend-verification-email', () => {
     it('sends a verification token for an unverified email', async () => {
       // First create a new unverified student
-      await request(server).post('/student/create').send({
+      await request(server).post('/auth/student/register').send({
         firstName: 'Verify',
         lastName: 'Student',
         email: VERIFICATION_EMAIL,
