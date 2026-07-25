@@ -26,6 +26,7 @@ import {
 } from './schemas/password-reset-token.schema';
 import { DomainEvents } from '../events/event-names';
 import { StudentRegisteredPayload } from '../events/payloads/student-registered.payload';
+import { VerificationEmailResentPayload } from '../events/payloads/verification-email-resent.payload';
 import { BadRequestException, ConflictException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 
 jest.mock('bcryptjs');
@@ -398,7 +399,7 @@ describe('StudentAuthService', () => {
       );
       expect(eventEmitter.emit).toHaveBeenCalledWith(
         DomainEvents.VERIFICATION_EMAIL_RESENT,
-        expect.any(StudentRegisteredPayload),
+        expect.any(VerificationEmailResentPayload),
       );
     });
 
