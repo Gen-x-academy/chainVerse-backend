@@ -140,6 +140,11 @@ export class EnvironmentVariables {
   @IsString()
   SMTP_PASSWORD?: string;
 
+  // Application base URL used for verification / reset links in emails
+  @IsOptional()
+  @IsUrl()
+  BASE_URL: string = "http://localhost:3000";
+
   @IsString()
   EMAIL_VERIFICATION_URL: string = "http://localhost:3000/auth/verify-email";
 
