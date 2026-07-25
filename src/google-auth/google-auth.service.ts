@@ -15,6 +15,7 @@ export class GoogleAuthService {
     private readonly jwtService: JwtService,
   ) {}
 
+  private generateAccessToken(user: GoogleUserDocument): string {
   private createAccessToken(user: GoogleUserDocument): string {
     return this.jwtService.sign(
       { sub: user.id, email: user.email, role: user.role },
@@ -36,6 +37,15 @@ export class GoogleAuthService {
 
     const user = await new this.googleUserModel(payload).save();
 
+    return {
+      accessToken: this.generateAccessToken(user),
+      user: {
+        id: user.id,
+        email: user.email,
+        displayName: user.displayName,
+        role: user.role,
+      },
+    };
     const accessToken = this.createAccessToken(user);
 
     return { accessToken, expiresIn: ACCESS_TOKEN_EXPIRY };
@@ -55,6 +65,15 @@ export class GoogleAuthService {
       throw new NotFoundException('User not found. Please register first.');
     }
 
+    return {
+      accessToken: this.generateAccessToken(user),
+      user: {
+        id: user.id,
+        email: user.email,
+        displayName: user.displayName,
+        role: user.role,
+      },
+    };
     const accessToken = this.createAccessToken(user);
 
     return { accessToken, expiresIn: ACCESS_TOKEN_EXPIRY };
