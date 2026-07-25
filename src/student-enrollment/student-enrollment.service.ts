@@ -188,6 +188,13 @@ export class StudentEnrollmentService {
       (acc, enrollment) => {
         const course = courseMap.get(enrollment.courseId);
         if (!course) return acc;
+        const totalLessons = enrollment.lessons?.length ?? 0;
+        const completedLessons =
+          enrollment.lessons?.filter((l) => l.completed).length ?? 0;
+        const progress =
+          totalLessons > 0
+            ? Math.round((completedLessons / totalLessons) * 100)
+            : 0;
         acc.push({
           enrollment,
           course: {
@@ -196,7 +203,7 @@ export class StudentEnrollmentService {
             description: course.description,
             thumbnailUrl: course.thumbnailUrl,
             tutorName: course.tutorName,
-            progress: 0, // TODO: Implement progress tracking
+            progress,
           },
         });
         return acc;
@@ -247,5 +254,53 @@ export class StudentEnrollmentService {
 
   async getStudentEnrollmentCount(studentId: string): Promise<number> {
     return this.enrollmentModel.countDocuments({ studentId }).exec();
+  }
+
+  async updateProgress(
+    studentId: string,
+    courseId: string,
+    lessonIndex: number,
+    completed: boolean,
+  ) {
+    const enrollment = await this.enrollmentModel
+      .findOne({ studentId, courseId })
+      .exec();
+
+    if (!enrollment) {
+      throw new NotFoundException('Enrollment not found');
+    }
+
+    const existingLesson = enrollment.lessons?.find(
+      (l) => l.lessonIndex === lessonIndex,
+    );
+
+    if (existingLesson) {
+      existingLesson.completed = completed;
+      existingLesson.completedAt = completed ? new Date() : null;
+    } else {
+      enrollment.lessons.push({
+        lessonIndex,
+        completed,
+        completedAt: completed ? new Date() : null,
+      } as any);
+    }
+
+    await enrollment.save();
+
+    const totalLessons = enrollment.lessons.length;
+    const completedLessons = enrollment.lessons.filter(
+      (l) => l.completed,
+    ).length;
+    const progress =
+      totalLessons > 0
+        ? Math.round((completedLessons / totalLessons) * 100)
+        : 0;
+
+    return {
+      enrollment,
+      progress,
+      completedLessons,
+      totalLessons,
+    };
   }
 }

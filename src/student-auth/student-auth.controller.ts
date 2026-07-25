@@ -1,6 +1,8 @@
-import { Body, Controller, Post, Req } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { StudentAuthService } from './student-auth.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { LoginStudentDto } from './dto/login-student.dto';
@@ -121,5 +123,16 @@ export class StudentAuthController {
   @ApiResponse({ status: 400, description: 'Missing refresh token' })
   logout(@Body() dto: RefreshTokenDto) {
     return this.studentAuthService.logout(dto);
+  }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  @ApiOperation({ summary: 'Get authenticated student profile' })
+  @ApiResponse({ status: 200, description: 'Returns the student profile' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Student not found' })
+  getProfile(@CurrentUser('sub') studentId: string) {
+    return this.studentAuthService.getProfile(studentId);
   }
 }
