@@ -29,7 +29,7 @@ export class VerificationController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ORGANIZER, UserRole.ADMIN)
-  @ApiBearerAuth('JWT-auth')
+  @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Verify a ticket code (organizer or admin only)' })
   @ApiResponse({ status: 200, description: 'Ticket is valid' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
@@ -61,7 +61,7 @@ export class VerificationController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ORGANIZER, UserRole.ADMIN)
-  @ApiBearerAuth('JWT-auth')
+  @ApiBearerAuth('access-token')
   @ApiOperation({
     summary: 'Check in an attendee by ticket code (organizer or admin only)',
   })
@@ -112,7 +112,7 @@ export class VerificationController {
 
   @Get('stats/:eventId')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('JWT-auth')
+  @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Get verification statistics for an event' })
   @ApiParam({ name: 'eventId', type: String, description: 'Event UUID' })
   @ApiResponse({ status: 200, description: 'Verification statistics returned' })
@@ -126,7 +126,7 @@ export class VerificationController {
 
   @Get('logs/:eventId')
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('JWT-auth')
+  @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Get all verification logs for an event' })
   @ApiParam({ name: 'eventId', type: String, description: 'Event UUID' })
   @ApiResponse({ status: 200, description: 'Verification logs returned' })

@@ -12,6 +12,7 @@ import {
   HttpStatus,
   BadRequestException,
 } from "@nestjs/common";
+import { ApiBearerAuth } from "@nestjs/swagger";
 import { PositionTrackingService } from "./services/position-tracking.service";
 import { YieldOptimizationService } from "./services/yield-optimization.service";
 import { RiskAssessmentService } from "./services/risk-assessment.service";
@@ -39,6 +40,7 @@ import { User } from "src/core/user/entities/user.entity";
 import { CurrentUser } from "src/core/auth/decorators";
 import { ProtocolRegistry, ProtocolAdapterMetadata } from "./protocols/protocol-registry";
 
+@ApiBearerAuth('access-token')
 @Controller("defi")
 @UseGuards(JwtAuthGuard)
 export class DeFiController {
