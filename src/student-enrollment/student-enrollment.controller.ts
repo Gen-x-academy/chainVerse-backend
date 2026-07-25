@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, Req, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Param, Req, Body, UseGuards, BadRequestException } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -7,6 +7,7 @@ import { EnrollmentGuard } from '../common/guards/enrollment.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 import { StudentEnrollmentService } from './student-enrollment.service';
+import { UpdateProgressDto } from './dto/update-progress.dto';
 
 @ApiTags('Student Enrollment')
 @ApiBearerAuth('access-token')
@@ -60,5 +61,20 @@ export class StudentEnrollmentController {
       const entry = courses.find((c) => c.enrollment.courseId === courseId);
       return entry ?? { courseId, message: 'Content access granted' };
     });
+  }
+
+  @ApiOperation({ summary: 'Update lesson progress for an enrolled course' })
+  @Patch(':courseId/progress')
+  updateProgress(
+    @Req() req: { user: { id: string } },
+    @Param('courseId') courseId: string,
+    @Body() dto: UpdateProgressDto,
+  ) {
+    return this.service.updateProgress(
+      req.user.id,
+      courseId,
+      dto.lessonIndex,
+      dto.completed,
+    );
   }
 }

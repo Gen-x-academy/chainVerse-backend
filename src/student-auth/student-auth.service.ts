@@ -538,6 +538,14 @@ export class StudentAuthService {
     return this.generateTokenPair(student, stored.tokenFamily);
   }
 
+  async getProfile(studentId: string) {
+    const student = await this.studentModel.findById(studentId).exec();
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+    return this.sanitizeStudent(student);
+  }
+
   async logout(dto: RefreshTokenDto) {
     if (!dto.refreshToken) {
       throw new BadRequestException('Refresh token is required');
