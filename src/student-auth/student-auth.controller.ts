@@ -1,5 +1,5 @@
-import { Body, Controller, Post, Req } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { StudentAuthService } from './student-auth.service';
 import { CreateStudentDto } from './dto/create-student.dto';
@@ -9,6 +9,8 @@ import { ResendVerificationEmailDto } from './dto/resend-verification-email.dto'
 import { ForgetPasswordDto } from './dto/forget-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { Public } from '../common/decorators/public.decorator';
 
 // Auth endpoints are more sensitive to brute-force: tighten to 10 req/min
 @Throttle({ default: { limit: 10, ttl: 60_000 } })
@@ -17,7 +19,18 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 export class StudentAuthController {
   constructor(private readonly studentAuthService: StudentAuthService) {}
 
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  @ApiOperation({ summary: 'Get authenticated student profile' })
+  @ApiResponse({ status: 200, description: 'Returns the authenticated student profile' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async me(@Req() req: any) {
+    return this.studentAuthService.findStudentById(req.user.sub);
+  }
+
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Public()
   @Post('register')
   @ApiOperation({ summary: 'Register a new student' })
   @ApiBody({ type: CreateStudentDto })
@@ -28,6 +41,7 @@ export class StudentAuthController {
     return this.studentAuthService.create(dto);
   }
 
+  @Public()
   @Post('verify-email')
   @ApiOperation({ summary: 'Verify student email with token' })
   @ApiBody({ type: VerifyEmailDto })
@@ -37,6 +51,7 @@ export class StudentAuthController {
     return this.studentAuthService.verifyEmail(dto);
   }
 
+  @Public()
   @Post('resend-verification-email')
   @ApiOperation({ summary: 'Resend email verification link' })
   @ApiBody({ type: ResendVerificationEmailDto })
@@ -53,6 +68,7 @@ export class StudentAuthController {
   }
 
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Public()
   @Post('login')
   @ApiOperation({ summary: 'Authenticate a student and receive tokens' })
   @ApiBody({ type: LoginStudentDto })
@@ -70,6 +86,7 @@ export class StudentAuthController {
   }
 
   @Throttle({ default: { limit: 3, ttl: 900_000 } }) // 3 per 15 minutes
+  @Public()
   @Post('forgot-password')
   @ApiOperation({ summary: 'Request a password reset link' })
   @ApiBody({ type: ForgetPasswordDto })
@@ -86,6 +103,7 @@ export class StudentAuthController {
     );
   }
 
+  @Public()
   @Post('reset-password')
   @ApiOperation({ summary: 'Reset password using a valid reset token' })
   @ApiBody({ type: ResetPasswordDto })
@@ -102,6 +120,7 @@ export class StudentAuthController {
     );
   }
 
+  @Public()
   @Post('refresh-token')
   @ApiOperation({ summary: 'Rotate refresh token and get a new token pair' })
   @ApiBody({ type: RefreshTokenDto })
@@ -114,6 +133,7 @@ export class StudentAuthController {
     return this.studentAuthService.refreshToken(dto);
   }
 
+  @Public()
   @Post('logout')
   @ApiOperation({ summary: 'Invalidate the current refresh token' })
   @ApiBody({ type: RefreshTokenDto })

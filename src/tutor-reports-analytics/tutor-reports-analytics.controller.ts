@@ -11,21 +11,23 @@ import { Roles } from '../common/decorators/roles.decorator';
 
 @ApiBearerAuth('access-token')
 @Controller('tutor/reports-analytics')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class TutorReportsAnalyticsController {
   constructor(private readonly service: TutorReportsAnalyticsService) {}
 
+  @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   @Get()
   findAll() {
     return this.service.findAll();
   }
 
+  @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   @Get(':id')
   findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   create(@Body() payload: CreateTutorReportsAnalyticsDto) {
     return this.service.create(payload);

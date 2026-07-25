@@ -1,11 +1,13 @@
 import { Controller, Get, HttpStatus, Res } from '@nestjs/common';
 import type { Response } from 'express';
 import { HealthService } from './health.service';
+import { Public } from '../common/decorators/public.decorator';
 
 /**
  * GET /health       – liveness probe (always 200 while the process is running)
  * GET /health/ready – readiness probe (503 when a configured dependency is unreachable)
  */
+@Public()
 @Controller('health')
 export class HealthController {
   constructor(private readonly healthService: HealthService) {}

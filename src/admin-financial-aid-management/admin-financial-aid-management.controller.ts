@@ -11,21 +11,23 @@ import { Roles } from '../common/decorators/roles.decorator';
 
 @ApiBearerAuth('access-token')
 @Controller('admin/financial-aid')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class AdminFinancialAidManagementController {
   constructor(private readonly service: AdminFinancialAidManagementService) {}
 
+  @Roles(Role.ADMIN)
   @Get()
   findAll() {
     return this.service.findAll();
   }
 
+  @Roles(Role.ADMIN)
   @Get(':id')
   findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   create(@Body() payload: CreateAdminFinancialAidManagementDto) {
     return this.service.create(payload);

@@ -8,17 +8,20 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
+import { Public } from '../common/decorators/public.decorator';
 
 @ApiBearerAuth('access-token')
 @Controller('organizations')
 export class OrganizationController {
   constructor(private readonly service: OrganizationService) {}
 
+  @Public()
   @Get()
   findAll() {
     return this.service.findAll();
   }
 
+  @Public()
   @Get(':id')
   findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
