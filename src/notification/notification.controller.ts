@@ -46,6 +46,8 @@ export class NotificationController {
   }
 
   @Get(':id')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
   findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }

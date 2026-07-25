@@ -10,12 +10,14 @@ import { IsStellarPublicKey } from '../common/validators/is-stellar-public-key.v
 import { StellarService } from './stellar.service';
 import { VerifyPaymentDto } from './dto/verify-payment.dto';
 import { CreateAccountResponseDto } from './dto/create-account-response.dto';
+import { Public } from '../common/decorators/public.decorator';
 
 export class WalletPublicKeyDto {
   @Validate(IsStellarPublicKey)
   publicKey: string;
 }
 
+@Public()
 @ApiTags('Stellar')
 @Controller('stellar')
 export class StellarController {

@@ -11,6 +11,7 @@ import { AppController } from './app.controller';
 import appConfig from './config/app.config';
 import { envValidationSchema } from './common/config/env.validation';
 import { AppService } from './app.service';
+import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { WorkerModule } from './worker/worker.module';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { MetricsModule } from './metrics/metrics.module';
@@ -187,6 +188,7 @@ import { VerificationModule } from './verification/verification.module';
   controllers: [AppController],
   providers: [
     AppService,
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })

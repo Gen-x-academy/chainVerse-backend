@@ -11,28 +11,29 @@ import { Roles } from '../common/decorators/roles.decorator';
 
 @ApiBearerAuth('access-token')
 @Controller('tutor/jwt-auth')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class TutorJwtAuthController {
   constructor(private readonly service: TutorJwtAuthService) {}
 
+  @Roles(Role.ADMIN)
   @Get()
   async findAll() {
     return this.service.findAll();
   }
 
+  @Roles(Role.ADMIN)
   @Get(':id')
   async findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   async create(@Body() payload: CreateTutorJwtAuthDto) {
     return this.service.create(payload);
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   async update(
     @Param('id', new ParseObjectIdPipe()) id: string,
@@ -42,7 +43,6 @@ export class TutorJwtAuthController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
   async remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.remove(id);

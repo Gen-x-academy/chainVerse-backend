@@ -1,7 +1,9 @@
 import { Controller, Get, Param, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { CertificationService } from './certification.service';
+import { Public } from '../common/decorators/public.decorator';
 
+@Public()
 @Controller(['certification', 'v1/certification'])
 export class CertificationController {
   constructor(private readonly certificationService: CertificationService) {}

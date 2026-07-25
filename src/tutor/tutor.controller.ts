@@ -20,6 +20,7 @@ import { ResetTutorPasswordDto } from './dto/reset-tutor-password.dto';
 import { UpdateTutorProfileDto } from './dto/update-tutor-profile.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { Public } from '../common/decorators/public.decorator';
 
 @ApiTags('Tutor Auth')
 @Controller('tutor')
@@ -27,6 +28,7 @@ export class TutorController {
   constructor(private readonly tutorService: TutorService) {}
 
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Public()
   @Post('register')
   @ApiOperation({ summary: 'Register a new tutor' })
   @ApiBody({ type: CreateTutorDto })
@@ -37,6 +39,7 @@ export class TutorController {
   }
 
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Public()
   @Post('login')
   @ApiOperation({ summary: 'Authenticate a tutor and receive tokens' })
   @ApiBody({ type: LoginTutorDto })
@@ -47,6 +50,7 @@ export class TutorController {
     return this.tutorService.login(dto);
   }
 
+  @Public()
   @Post('verify-email')
   @ApiOperation({ summary: 'Verify tutor email with token' })
   @ApiBody({ type: VerifyTutorEmailDto })
@@ -57,6 +61,7 @@ export class TutorController {
   }
 
   @Throttle({ default: { limit: 3, ttl: 900_000 } }) // 3 per 15 minutes
+  @Public()
   @Post('forgot-password')
   @ApiOperation({ summary: 'Request a password reset link' })
   @ApiBody({ type: ForgetTutorPasswordDto })
@@ -70,6 +75,7 @@ export class TutorController {
     );
   }
 
+  @Public()
   @Post('reset-password')
   @ApiOperation({ summary: 'Reset password using a valid reset token' })
   @ApiBody({ type: ResetTutorPasswordDto })
@@ -83,6 +89,7 @@ export class TutorController {
     );
   }
 
+  @Public()
   @Post('refresh-token')
   @ApiOperation({ summary: 'Rotate tutor refresh token and issue a new token pair' })
   @ApiBody({ type: RefreshTokenDto })
@@ -92,6 +99,7 @@ export class TutorController {
     return this.tutorService.refreshToken(dto);
   }
 
+  @Public()
   @Post('logout')
   @ApiOperation({ summary: 'Revoke the current tutor refresh token' })
   @ApiBody({ type: RefreshTokenDto })

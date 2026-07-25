@@ -8,22 +8,26 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
+import { Public } from '../common/decorators/public.decorator';
 
 @ApiBearerAuth('access-token')
 @Controller('badges')
 export class BadgeController {
   constructor(private readonly service: BadgeService) {}
 
+  @Public()
   @Get()
   findAll() {
     return this.service.findAll();
   }
 
+  @Public()
   @Get(':id')
   findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
+  @Public()
   @Get('nft/:tokenId')
   findByNftTokenId(@Param('tokenId') tokenId: string) {
     return this.service.findByNftTokenId(tokenId);

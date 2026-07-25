@@ -12,13 +12,11 @@ import { Response } from 'express';
 import { createReadStream, existsSync } from 'fs';
 import { join } from 'path';
 import { Public } from '../common/decorators/public.decorator';
-import { SkipKyc } from '../common/decorators/skip-kyc.decorator';
 import { ProfilingService } from './profiling.service';
 
 @ApiTags('Profiling')
 @Controller('profiling')
 @Public()
-@SkipKyc()
 export class ProfilingController {
   constructor(private readonly profilingService: ProfilingService) {}
 
