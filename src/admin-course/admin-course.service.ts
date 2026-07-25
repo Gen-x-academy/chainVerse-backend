@@ -321,14 +321,14 @@ export class AdminCourseService {
    */
   async delete(
     id: string,
-    tutorId: string,
+    userId: string,
     isAdmin: boolean = false,
     reason?: string,
   ): Promise<{ message: string }> {
     const course = await this.findOne(id);
 
     // Only tutor or admin can delete
-    if (!isAdmin && course.tutorId !== tutorId) {
+    if (!isAdmin && course.tutorId !== userId) {
       throw new ForbiddenException('You can only delete your own courses');
     }
 
@@ -340,7 +340,7 @@ export class AdminCourseService {
     }
 
     course.deletedAt = new Date();
-    course.deletedBy = isAdmin ? `admin:${tutorId}` : `tutor:${tutorId}`;
+    course.deletedBy = isAdmin ? `admin:${userId}` : `tutor:${userId}`;
     course.deletionReason = reason || 'User requested deletion';
     await course.save();
 
