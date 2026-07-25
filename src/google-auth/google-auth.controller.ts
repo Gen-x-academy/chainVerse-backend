@@ -1,21 +1,24 @@
 import { Body, Controller, Post, Get, UseGuards, Req, Res } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Throttle } from '@nestjs/throttler';
 import { GoogleAuthService } from './google-auth.service';
 import { GoogleAuthDto } from './dto/google-auth.dto';
+import { Public } from '../common/decorators/public.decorator';
 
+@Public()
 @Controller()
 export class GoogleAuthController {
   constructor(private readonly service: GoogleAuthService) {}
 
-  @Post('student/register/google-auth')
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Post('student/register/google-auth')
   @Post('register/google-auth')
   register(@Body() payload: GoogleAuthDto) {
     return this.service.register(payload);
   }
 
-  @Post('student/login/google-auth')
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Post('student/login/google-auth')
   @Post('login/google-auth')
   login(@Body() payload: GoogleAuthDto) {
     return this.service.login(payload);

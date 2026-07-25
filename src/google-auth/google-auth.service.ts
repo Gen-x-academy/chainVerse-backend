@@ -16,6 +16,7 @@ export class GoogleAuthService {
   ) {}
 
   private generateAccessToken(user: GoogleUserDocument): string {
+  private createAccessToken(user: GoogleUserDocument): string {
     return this.jwtService.sign(
       { sub: user.id, email: user.email, role: user.role },
       { expiresIn: ACCESS_TOKEN_EXPIRY },
@@ -45,6 +46,9 @@ export class GoogleAuthService {
         role: user.role,
       },
     };
+    const accessToken = this.createAccessToken(user);
+
+    return { accessToken, expiresIn: ACCESS_TOKEN_EXPIRY };
   }
 
   async login(
@@ -70,5 +74,8 @@ export class GoogleAuthService {
         role: user.role,
       },
     };
+    const accessToken = this.createAccessToken(user);
+
+    return { accessToken, expiresIn: ACCESS_TOKEN_EXPIRY };
   }
 }

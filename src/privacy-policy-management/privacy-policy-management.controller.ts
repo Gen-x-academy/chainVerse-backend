@@ -9,12 +9,14 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
+import { Public } from '../common/decorators/public.decorator';
 
 @ApiBearerAuth('access-token')
 @Controller('privacy-policy')
 export class PrivacyPolicyManagementController {
   constructor(private readonly service: PrivacyPolicyManagementService) {}
 
+  @Public()
   @Get()
   @UseInterceptors(CacheInterceptor)
   @CacheKey('privacy-policy')
@@ -24,6 +26,7 @@ export class PrivacyPolicyManagementController {
     return this.service.findAll();
   }
 
+  @Public()
   @Get(':id')
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(3600000)

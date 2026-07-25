@@ -9,12 +9,14 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
+import { Public } from '../common/decorators/public.decorator';
 
 @ApiBearerAuth('access-token')
 @Controller('faq')
 export class FaqManagementController {
   constructor(private readonly service: FaqManagementService) {}
 
+  @Public()
   @Get()
   @UseInterceptors(CacheInterceptor)
   @CacheKey('/api/v1/faq')
@@ -24,6 +26,7 @@ export class FaqManagementController {
     return this.service.findAll();
   }
 
+  @Public()
   @Get(':id')
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(600000)

@@ -119,6 +119,14 @@ export class StudentAuthService {
     };
   }
 
+  async findStudentById(studentId: string) {
+    const student = await this.studentModel.findById(studentId).exec();
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+    return this.sanitizeStudent(student);
+  }
+
   async create(dto: CreateStudentDto) {
     if (!dto.firstName || !dto.lastName || !dto.email || !dto.password) {
       throw new BadRequestException(
