@@ -53,6 +53,14 @@ export const envValidationSchema = Joi.object({
     is: 'production',
     then: Joi.required(),
   }),
+
+  // ─── Email ──────────────────────────────────────────────────────────────────
+  SMTP_HOST: Joi.string().optional(),
+  SMTP_PORT: Joi.number().port().default(587).optional(),
+  SMTP_SECURE: Joi.boolean().default(false).optional(),
+
+  // Application base URL used for verification / reset links in emails
+  BASE_URL: Joi.string().uri().default('http://localhost:3000'),
 });
 
 /**

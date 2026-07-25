@@ -79,7 +79,7 @@ export class EmailService {
     verificationToken: string,
   ): Promise<void> {
     const from =
-      this.configService.get<string>('emailFrom') ??
+      this.configService.get<string>('email.from') ??
       'noreply@chainverse.academy';
     const baseUrl =
       this.configService.get<string>('baseUrl') ?? 'http://localhost:3000';
