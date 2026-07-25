@@ -16,6 +16,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { DomainEvents } from '../events/event-names';
 import { StudentRegisteredPayload } from '../events/payloads/student-registered.payload';
+import { VerificationEmailResentPayload } from '../events/payloads/verification-email-resent.payload';
 import { Student, StudentDocument } from './schemas/student.schema';
 import {
   RefreshToken,
@@ -299,7 +300,7 @@ export class StudentAuthService {
 
     this.eventEmitter.emit(
       DomainEvents.VERIFICATION_EMAIL_RESENT,
-      Object.assign(new StudentRegisteredPayload(), {
+      Object.assign(new VerificationEmailResentPayload(), {
         studentId: student.id,
         email: student.email,
         firstName: student.firstName,
