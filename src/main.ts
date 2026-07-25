@@ -7,25 +7,24 @@ import * as compression from 'compression';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 
+// Note: standalone src/express/ server has been removed — all routes are served by NestJS.
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
   app.useLogger(app.get(Logger));
 
+  app.setGlobalPrefix('api', { exclude: ['/health'] });
+  app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
+
+  // Compress all responses — must be first so every subsequent handler sends compressed output
+  app.use((compression as unknown as () => ReturnType<typeof compression>)());
+
   // Body size limits for security
   const express = await import('express');
   app.use(express.json({ limit: '1mb' }));
   app.use(express.urlencoded({ limit: '1mb', extended: true }));
-
-  // Compress all responses
-  app.use((compression as unknown as () => ReturnType<typeof compression>)());
-
-  // Global API prefix — exclude /health so load-balancers reach it without the prefix
-  app.setGlobalPrefix('api', { exclude: ['/health'] });
-
-  // URI-based versioning — controllers opt in with @Version(); existing routes are unaffected
-  app.enableVersioning({ type: VersioningType.URI });
 
   // Security headers
   app.use(helmet());
@@ -35,6 +34,7 @@ async function bootstrap() {
     origin: process.env.ALLOWED_ORIGINS?.split(',') ?? ['http://localhost:3000'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
   });
 
   app.useGlobalPipes(
@@ -43,10 +43,14 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
       transform: true,
       transformOptions: { enableImplicitConversion: true },
+      stopAtFirstError: true,
     }),
   );
 
   app.useGlobalFilters(new AllExceptionsFilter());
+
+  // Wrap all successful responses in the standard ApiResponse envelope
+  app.useGlobalInterceptors(new TransformInterceptor());
 
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
@@ -60,7 +64,8 @@ async function bootstrap() {
       .build();
 
     const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api', app, document);
+    SwaggerModule.setup('api/docs', app, document);
+    console.log('Swagger UI available at /api/docs');
   }
 
   app.enableShutdownHooks();

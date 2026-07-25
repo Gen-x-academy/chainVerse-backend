@@ -120,4 +120,35 @@ describe('JwtAuthGuard', () => {
       role: 'student',
     });
   });
+
+  it('should throw when Authorization header does not start with Bearer', () => {
+    const { context } = createContext('Basic some-token');
+
+    expect(() => guard.canActivate(context)).toThrow(
+      UnauthorizedException,
+    );
+  });
+
+  it('should throw when Bearer token is empty string', () => {
+    const { context } = createContext('Bearer ');
+
+    expect(() => guard.canActivate(context)).toThrow(
+      UnauthorizedException,
+    );
+  });
+
+  it('should throw when sub claim is empty string', () => {
+    mockJwtService.verify.mockReturnValue({
+      sub: '',
+      email: 'test@example.com',
+      role: 'student',
+      type: 'access',
+    });
+
+    const { context } = createContext('Bearer empty-sub.token');
+
+    expect(() => guard.canActivate(context)).toThrow(
+      UnauthorizedException,
+    );
+  });
 });

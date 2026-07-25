@@ -25,3 +25,6 @@ build/
 
 # Submission artifacts
 *.submission*.json
+
+# Local scratch files
+*.scratch.ts

@@ -153,6 +153,6 @@ CourseSchema.index({ price: 1 });
 CourseSchema.index({ averageRating: 1 });
 CourseSchema.index({ totalEnrollments: 1 });
 CourseSchema.index({ tags: 1 });
-CourseSchema.index({ title: 'text', description: 'text' });
+CourseSchema.index({ title: 'text', description: 'text', tags: 'text' });
 
 applySoftDeleteSchema(CourseSchema);

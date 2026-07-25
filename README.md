@@ -42,6 +42,7 @@ Moving to NestJS enables:
 | Language       | TypeScript                          | Type safety & maintainability |
 | Authentication | JWT (Access + Refresh Tokens)       | Secure user sessions          |
 | Validation     | class-validator / class-transformer | DTO validation                |
+| ODM            | Mongoose                            | Database abstraction          |
 | ORM            | Mongoose                            | MongoDB object modeling       |
 | Database       | MongoDB                             | Document data storage         |
 | Caching        | Redis (optional)                    | Performance optimization      |
@@ -214,6 +215,7 @@ Create a `.env` file in the root directory:
 ```
 PORT=3000
 
+MONGODB_URI=mongodb://localhost:27017/chainverse
 MONGO_URI=mongodb://localhost:27017/chainverse
 
 JWT_SECRET=your_access_secret
@@ -244,7 +246,7 @@ npm run start:prod
 After starting the server:
 
 ```
-http://localhost:3000/api
+http://localhost:3000/docs
 ```
 
 This provides:

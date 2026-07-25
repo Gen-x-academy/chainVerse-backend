@@ -6,24 +6,17 @@ import { CreateFaqManagementDto } from './dto/create-faq-management.dto';
 import { UpdateFaqManagementDto } from './dto/update-faq-management.dto';
 import { FaqManagement } from './schemas/faq-management.schema';
 
-export const FAQ_CACHE_KEY = '/faq';
+export const FAQ_CACHE_KEY = '/api/v1/faq';
 
 @Injectable()
 export class FaqManagementService {
+  @Inject('FaqManagementModel')
   private faqModel: any;
+
+  @Inject(CACHE_MANAGER)
   private cache: Cache;
 
   constructor() {}
-
-  @Inject('FaqManagementModel')
-  setFaqModel: (model: any) => void = (model: any) => {
-    this.faqModel = model;
-  };
-
-  @Inject(CACHE_MANAGER)
-  setCache: (cache: Cache) => void = (cache: Cache) => {
-    this.cache = cache;
-  };
 
   async findAll() {
     return this.faqModel.find({ isActive: true }).sort({ order: 1 }).exec();
@@ -41,9 +34,9 @@ export class FaqManagementService {
 
   async create(payload: CreateFaqManagementDto) {
     const created = new this.faqModel(payload);
-    await created.save();
+    const saved = await created.save();
     await this.cache.del(FAQ_CACHE_KEY);
-    return created;
+    return saved;
   }
 
   async update(id: string, payload: UpdateFaqManagementDto) {

@@ -53,10 +53,10 @@ describe('Student Auth – Full Journey (e2e)', () => {
   // ---------------------------------------------------------------------------
   // Registration
   // ---------------------------------------------------------------------------
-  describe('POST /student/create', () => {
+  describe('POST /auth/student/register', () => {
     it('creates a new student and returns tokens (verification token sent via email)', async () => {
       const res = await request(server)
-        .post('/student/create')
+        .post('/auth/student/register')
         .send({
           firstName: 'Journey',
           lastName: 'Student',
@@ -87,7 +87,7 @@ describe('Student Auth – Full Journey (e2e)', () => {
 
     it('rejects a duplicate email with 409', () =>
       request(server)
-        .post('/student/create')
+        .post('/auth/student/register')
         .send({
           firstName: 'Dup',
           lastName: 'User',
@@ -98,13 +98,13 @@ describe('Student Auth – Full Journey (e2e)', () => {
 
     it('rejects missing required fields with 400', () =>
       request(server)
-        .post('/student/create')
+        .post('/auth/student/register')
         .send({ email: 'no-name@example.com', password: 'ValidPass1!' })
         .expect(400));
 
     it('rejects an invalid email format with 400', () =>
       request(server)
-        .post('/student/create')
+        .post('/auth/student/register')
         .send({
           firstName: 'A',
           lastName: 'B',
@@ -115,7 +115,7 @@ describe('Student Auth – Full Journey (e2e)', () => {
 
     it('rejects a password shorter than 8 characters with 400', () =>
       request(server)
-        .post('/student/create')
+        .post('/auth/student/register')
         .send({
           firstName: 'A',
           lastName: 'B',
@@ -131,7 +131,7 @@ describe('Student Auth – Full Journey (e2e)', () => {
   describe('POST /student/resend-verification-email', () => {
     it('sends a verification token for an unverified email', async () => {
       // First create a new unverified student
-      await request(server).post('/student/create').send({
+      await request(server).post('/auth/student/register').send({
         firstName: 'Verify',
         lastName: 'Student',
         email: VERIFICATION_EMAIL,
@@ -374,9 +374,9 @@ describe('Student Auth – Full Journey (e2e)', () => {
   // Password reset
   // ---------------------------------------------------------------------------
   describe('Password reset flow', () => {
-    it('POST /student/forget/password returns success for any email (no oracle)', async () => {
+    it('POST /student/forgot-password returns success for any email (no oracle)', async () => {
       const res = await request(server)
-        .post('/student/forget/password')
+        .post('/student/forgot-password')
         .send({ email: BASE_EMAIL })
         .expect((r) => {
           if (r.status !== 200 && r.status !== 201) {
@@ -391,9 +391,9 @@ describe('Student Auth – Full Journey (e2e)', () => {
       expect(res.body.resetToken).toBeUndefined();
     });
 
-    it('POST /student/forget/password returns success even for an unknown email', async () => {
+    it('POST /student/forgot-password returns success even for an unknown email', async () => {
       const res = await request(server)
-        .post('/student/forget/password')
+        .post('/student/forgot-password')
         .send({ email: 'ghost@example.com' })
         .expect((r) => {
           if (r.status !== 200 && r.status !== 201) {
@@ -406,38 +406,38 @@ describe('Student Auth – Full Journey (e2e)', () => {
       expect(res.body.message).toMatch(/reset link/i);
     });
 
-    it('POST /student/forget/password rejects a missing email with 400', () =>
-      request(server).post('/student/forget/password').send({}).expect(400));
+    it('POST /student/forgot-password rejects a missing email with 400', () =>
+      request(server).post('/student/forgot-password').send({}).expect(400));
 
-    it('POST /student/reset/password rejects a missing body with 400', () =>
-      request(server).post('/student/reset/password').send({}).expect(400));
+    it('POST /student/reset-password rejects a missing body with 400', () =>
+      request(server).post('/student/reset-password').send({}).expect(400));
 
-    it('POST /student/reset/password rejects an invalid token with 400', () =>
+    it('POST /student/reset-password rejects an invalid token with 400', () =>
       request(server)
-        .post('/student/reset/password')
+        .post('/student/reset-password')
         .send({ token: 'bad-token', newPassword: 'NewPass123!' })
         .expect(400));
 
-    it('POST /student/reset/password rejects a short new password with 400', () =>
+    it('POST /student/reset-password rejects a short new password with 400', () =>
       request(server)
-        .post('/student/reset/password')
+        .post('/student/reset-password')
         .send({ token: 'sometoken', newPassword: 'short' })
         .expect(400));
 
-    it('POST /student/reset/password rejects an expired token with 400', async () => {
+    it('POST /student/reset-password rejects an expired token with 400', async () => {
       // Generate a fake expired token (this would fail validation)
       const res = await request(server)
-        .post('/student/reset/password')
+        .post('/student/reset-password')
         .send({ token: 'invalid-token-format', newPassword: 'NewSecurePass1!' })
         .expect(400);
 
       expect(res.body.message).toMatch(/invalid|expired/i);
     });
 
-    it('POST /student/reset/password rejects a used token (one-time use)', async () => {
+    it('POST /student/reset-password rejects a used token (one-time use)', async () => {
       // First, request a reset token
       await request(server)
-        .post('/student/forget/password')
+        .post('/student/forgot-password')
         .send({ email: BASE_EMAIL });
 
       // Get the token from database for testing
@@ -472,7 +472,7 @@ describe('Student Auth – Full Journey (e2e)', () => {
 
         // Use the token once
         await request(server)
-          .post('/student/reset/password')
+          .post('/student/reset-password')
           .send({
             token: resetTokenRecord.tokenHash,
             newPassword: 'TempPass123!',
@@ -481,7 +481,7 @@ describe('Student Auth – Full Journey (e2e)', () => {
 
         // Try to use it again - should fail
         const res = await request(server)
-          .post('/student/reset/password')
+          .post('/student/reset-password')
           .send({
             token: resetTokenRecord.tokenHash,
             newPassword: 'AnotherPass123!',
@@ -494,10 +494,10 @@ describe('Student Auth – Full Journey (e2e)', () => {
       }
     });
 
-    it('POST /student/reset/password resets the password with a valid token', async () => {
+    it('POST /student/reset-password resets the password with a valid token', async () => {
       // Request a new reset token
       await request(server)
-        .post('/student/forget/password')
+        .post('/student/forgot-password')
         .send({ email: BASE_EMAIL });
 
       // Get the token from database for testing
@@ -529,7 +529,7 @@ describe('Student Auth – Full Journey (e2e)', () => {
         }
 
         const res = await request(server)
-          .post('/student/reset/password')
+          .post('/student/reset-password')
           .send({
             token: resetTokenRecord.tokenHash,
             newPassword: 'NewSecurePass1!',

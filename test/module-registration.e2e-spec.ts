@@ -17,6 +17,7 @@ describe('Module registration smoke tests', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api', { exclude: ['/health'] });
     await app.init();
     server = app.getHttpServer();
   });
@@ -62,6 +63,8 @@ describe('Module registration smoke tests', () => {
       description: payload.description,
       id: expect.any(String),
     });
+  });
+
   it('should create a session via POST /api/session with auth', async () => {
     const payload = {
       token: 'test-session-token',

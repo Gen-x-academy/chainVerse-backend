@@ -5,6 +5,7 @@ import { extname } from 'node:path';
 import { mkdirSync } from 'node:fs';
 import { WorkerService } from './worker.service';
 import { UploadWorkerFileDto } from './dto/upload-worker-file.dto';
+import { Public } from '../common/decorators/public.decorator';
 
 interface MulterFile {
   originalname: string;
@@ -15,6 +16,7 @@ interface MulterFile {
 
 const uploadDirectory = 'uploads/worker';
 
+@Public()
 @Controller('worker')
 export class WorkerController {
   constructor(private readonly workerService: WorkerService) {}

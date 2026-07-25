@@ -57,7 +57,8 @@ export class CourseDiscoveryService {
     }
 
     // Build sort option
-    const sort: Record<string, number> = {};
+    const hasTextSearch = !!dto.query;
+    const sort: Record<string, unknown> = {};
     switch (dto.sortBy) {
       case 'price-asc':
         sort.price = 1;
@@ -75,25 +76,41 @@ export class CourseDiscoveryService {
         sort.createdAt = -1;
         break;
       default:
-        sort.createdAt = -1;
+        // When text search is active, sort by text relevance score;
+        // otherwise fall back to newest-first.
+        if (hasTextSearch) {
+          sort.score = { $meta: 'textScore' };
+        } else {
+          sort.createdAt = -1;
+        }
     }
 
-    const limit = dto.limit || 20;
-    const skip = dto.skip || 0;
+    const limit = Math.min(dto.limit || 20, 50);
+    let page = Math.max(dto.page || 1, 1);
+    const skip = dto.skip !== undefined ? dto.skip : (page - 1) * limit;
+    if (dto.skip !== undefined) {
+      page = Math.max(Math.floor(dto.skip / limit) + 1, 1);
+    }
+
+    // Include textScore metadata in the projection when using $text search
+    const projection = hasTextSearch ? { score: { $meta: 'textScore' } } : {};
 
     const [courses, total] = await Promise.all([
-      this.courseModel.find(query).sort(sort).limit(limit).skip(skip).exec(),
+      this.courseModel
+        .find(query, projection)
+        .sort(sort)
+        .limit(limit)
+        .skip(skip)
+        .exec(),
       this.courseModel.countDocuments(query).exec(),
     ]);
 
     return {
-      courses: courses.map((c) => this.sanitizeCourse(c)),
-      pagination: {
-        total,
-        limit,
-        skip,
-        hasMore: skip + limit < total,
-      },
+      data: courses.map((c) => this.sanitizeCourse(c)),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
     };
   }
 

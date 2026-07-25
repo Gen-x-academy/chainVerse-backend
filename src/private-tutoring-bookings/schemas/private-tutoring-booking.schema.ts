@@ -9,7 +9,7 @@ export class PrivateTutoringBooking {
   @Prop({ required: true })
   title: string;
 
-  @Prop({ default: null })
+  @Prop({ type: String, default: null })
   description: string | null;
 
   @Prop({ type: Object, default: {} })

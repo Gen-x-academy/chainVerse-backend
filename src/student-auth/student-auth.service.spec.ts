@@ -176,6 +176,76 @@ describe('StudentAuthService', () => {
     jest.clearAllMocks();
   });
 
+  describe('create (register)', () => {
+    const createDto: CreateStudentDto = {
+      firstName: 'Jane',
+      lastName: 'Doe',
+      email: 'jane@example.com',
+      password: 'password123',
+    };
+
+    it('happy path — saves student, hashes password, emits event', async () => {
+      jest
+        .spyOn(studentModel, 'findOne')
+        .mockReturnValue(mockQuery(null) as any);
+
+      const savedStudent = {
+        ...mockStudent,
+        email: createDto.email,
+        id: 'new-id-123',
+      };
+
+      function MockStudentModel(dto: any) {
+        Object.assign(this, dto);
+        this.save = jest.fn().mockResolvedValue(savedStudent);
+      }
+      MockStudentModel.findOne = jest.fn().mockReturnValue(mockQuery(null));
+      (service as any).studentModel = MockStudentModel;
+
+      jest.spyOn(jwtService, 'sign').mockReturnValue('mock.access.token');
+
+      const result = await service.create(createDto);
+
+      expect(bcrypt.hash).toHaveBeenCalled();
+      expect(result.user.email).toBe(createDto.email);
+      expect(eventEmitter.emit).toHaveBeenCalled();
+    });
+
+    it('throws ConflictException for duplicate email', async () => {
+      jest
+        .spyOn(studentModel, 'findOne')
+        .mockReturnValue(mockQuery(mockStudent) as any);
+
+      await expect(service.create(createDto)).rejects.toThrow(
+        ConflictException,
+      );
+      expect(bcrypt.hash).not.toHaveBeenCalled();
+    });
+
+    it('calls bcrypt.hash with the plaintext password', async () => {
+      jest
+        .spyOn(studentModel, 'findOne')
+        .mockReturnValue(mockQuery(null) as any);
+
+      const savedStudent = { ...mockStudent, id: 'new-id-456' };
+      function MockStudentModel2(dto: any) {
+        Object.assign(this, dto);
+        this.save = jest.fn().mockResolvedValue(savedStudent);
+      }
+      MockStudentModel2.findOne = jest.fn().mockReturnValue(mockQuery(null));
+      (service as any).studentModel = MockStudentModel2;
+
+      jest.spyOn(jwtService, 'sign').mockReturnValue('mock.token');
+
+      await service.create(createDto);
+
+      expect(bcrypt.hash).toHaveBeenCalledWith(
+        createDto.password,
+        expect.any(Number),
+      );
+    });
+  });
+
   describe('verifyEmail', () => {
     const verifyEmailDto: VerifyEmailDto = {
       token: 'valid.jwt.token',
@@ -256,6 +326,45 @@ describe('StudentAuthService', () => {
         mockQuery({
           ...mockStudent,
           emailVerified: true,
+        }) as any,
+      );
+
+      await expect(service.verifyEmail(verifyEmailDto)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw BadRequestException on verification cooldown', async () => {
+      const now = Math.floor(Date.now() / 1000);
+      jest.spyOn(jwtService, 'verify').mockReturnValue({
+        sub: mockStudent.id,
+        email: mockStudent.email,
+        type: 'email_verification',
+      });
+      jest.spyOn(studentModel, 'findById').mockReturnValue(
+        mockQuery({
+          ...mockStudent,
+          emailVerified: false,
+          lastVerificationAttempt: now - 30,
+          verificationAttempts: 1,
+        }) as any,
+      );
+
+      await expect(service.verifyEmail(verifyEmailDto)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw BadRequestException when token email does not match student email', async () => {
+      jest.spyOn(jwtService, 'verify').mockReturnValue({
+        sub: mockStudent.id,
+        email: 'different@example.com',
+        type: 'email_verification',
+      });
+      jest.spyOn(studentModel, 'findById').mockReturnValue(
+        mockQuery({
+          ...mockStudent,
+          emailVerified: false,
         }) as any,
       );
 
@@ -401,6 +510,19 @@ describe('StudentAuthService', () => {
         UnauthorizedException,
       );
     });
+
+    it('should throw UnauthorizedException when account is locked', async () => {
+      jest.spyOn(studentModel, 'findOne').mockReturnValue(
+        mockQuery({
+          ...mockStudent,
+          lockedUntil: new Date(Date.now() + 600000),
+        }) as any,
+      );
+
+      await expect(service.login(loginDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
   });
 
   describe('forgetPassword', () => {
@@ -419,6 +541,35 @@ describe('StudentAuthService', () => {
         'If the email exists, a reset link has been sent',
       );
       expect(emailService.sendPasswordReset).not.toHaveBeenCalled();
+    });
+
+    it('should send password reset email when student exists', async () => {
+      const studentWithSave = {
+        ...mockStudent,
+        save: jest.fn().mockResolvedValue(true),
+      };
+      jest
+        .spyOn(studentModel, 'findOne')
+        .mockReturnValue(mockQuery(studentWithSave) as any);
+      jest
+        .spyOn(passwordResetTokenModel, 'updateMany')
+        .mockReturnValue({ exec: jest.fn().mockResolvedValue(true) } as any);
+      (crypto.randomBytes as jest.Mock).mockReturnValue({
+        toString: jest.fn().mockReturnValue('reset-token-hex'),
+      });
+
+      const result = await service.forgetPassword(forgetDto, '127.0.0.1', 'Mozilla');
+
+      expect(result.message).toBe(
+        'If the email exists, a reset link has been sent',
+      );
+      expect(emailService.sendPasswordReset).toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException when email is missing', async () => {
+      await expect(
+        service.forgetPassword({ email: '' }),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -528,13 +679,60 @@ describe('StudentAuthService', () => {
       jest
         .spyOn(refreshTokenModel, 'findOne')
         .mockReturnValue(mockQuery(null) as any);
-      jest.spyOn(refreshTokenModel, 'deleteMany').mockReturnValue({
+
+      await expect(service.refreshToken(refreshDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should revoke the entire family when a revoked token is used', async () => {
+      const revokedToken = {
+        ...mockRefreshToken,
+        isRevoked: true,
+      };
+      jest
+        .spyOn(jwtService, 'verify')
+        .mockReturnValue({ family: 'family-123' });
+      jest
+        .spyOn(refreshTokenModel, 'findOne')
+        .mockReturnValue(mockQuery(revokedToken) as any);
+      const updateManySpy = jest.spyOn(refreshTokenModel, 'updateMany').mockReturnValue({
         exec: jest.fn().mockResolvedValue(true),
       } as any);
 
       await expect(service.refreshToken(refreshDto)).rejects.toThrow(
         UnauthorizedException,
       );
+      expect(updateManySpy).toHaveBeenCalledWith(
+        { tokenFamily: 'family-123' },
+        { isRevoked: true },
+      );
+    });
+
+    it('should mark the token as revoked on a successful refresh', async () => {
+      const validToken = {
+        ...mockRefreshToken,
+        isRevoked: false,
+        save: jest.fn().mockResolvedValue(true),
+      };
+      jest
+        .spyOn(jwtService, 'verify')
+        .mockReturnValue({ family: 'family-123' });
+      jest
+        .spyOn(refreshTokenModel, 'findOne')
+        .mockReturnValue(mockQuery(validToken) as any);
+      jest
+        .spyOn(studentModel, 'findById')
+        .mockReturnValue(mockQuery(mockStudent) as any);
+      jest.spyOn(service as any, 'generateTokenPair').mockResolvedValue({
+        accessToken: 'new.access.token',
+        refreshToken: 'new.refresh.token',
+        expiresIn: 3600,
+      });
+
+      await service.refreshToken(refreshDto);
+      expect(validToken.isRevoked).toBe(true);
+      expect(validToken.save).toHaveBeenCalled();
     });
   });
 

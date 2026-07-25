@@ -8,6 +8,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
+import { Public } from '../common/decorators/public.decorator';
 
 @ApiBearerAuth('access-token')
 @Controller('courses')
@@ -25,6 +26,7 @@ export class CourseRatingsFeedbackController {
     return this.service.create(courseId, req.user.id, payload);
   }
 
+  @Public()
   @Get(':id/ratings')
   findAllForCourse(@Param('id', new ParseObjectIdPipe()) courseId: string) {
     return this.service.findAllForCourse(courseId);

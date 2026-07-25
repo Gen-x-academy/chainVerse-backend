@@ -10,22 +10,24 @@ import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 
 @ApiBearerAuth('access-token')
-@Controller('admin-moderator/account-settings')
+@Controller('admin/moderator/account-settings')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class AdminModeratorAccountSettingsController {
   constructor(private readonly service: AdminModeratorAccountSettingsService) {}
 
+  @Roles(Role.ADMIN)
   @Get()
   findAll() {
     return this.service.findAll();
   }
 
+  @Roles(Role.ADMIN)
   @Get(':id')
   findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   create(@Body() payload: CreateAdminModeratorAccountSettingsDto) {
     return this.service.create(payload);

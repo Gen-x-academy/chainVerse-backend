@@ -1,8 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import * as crypto from 'crypto';
 import { GoogleAuthDto } from './dto/google-auth.dto';
 import { GoogleUser, GoogleUserDocument } from './schemas/google-user.schema';
 
@@ -13,34 +12,20 @@ export class GoogleAuthService {
   constructor(
     @InjectModel(GoogleUser.name)
     private readonly googleUserModel: Model<GoogleUserDocument>,
-    private readonly configService: ConfigService,
+    private readonly jwtService: JwtService,
   ) {}
 
-  private get jwtSecret(): string {
-    return this.configService.get<string>('jwtSecret') ?? '';
-  }
-
-  private createJwt(
-    payload: Record<string, unknown>,
-    expiresIn: number,
-  ): string {
-    const header = Buffer.from(
-      JSON.stringify({ alg: 'HS256', typ: 'JWT' }),
-    ).toString('base64url');
-    const now = Math.floor(Date.now() / 1000);
-    const body = Buffer.from(
-      JSON.stringify({ ...payload, iat: now, exp: now + expiresIn }),
-    ).toString('base64url');
-    const sig = crypto
-      .createHmac('sha256', this.jwtSecret)
-      .update(`${header}.${body}`)
-      .digest('base64url');
-    return `${header}.${body}.${sig}`;
+  private generateAccessToken(user: GoogleUserDocument): string {
+  private createAccessToken(user: GoogleUserDocument): string {
+    return this.jwtService.sign(
+      { sub: user.id, email: user.email, role: user.role },
+      { expiresIn: ACCESS_TOKEN_EXPIRY },
+    );
   }
 
   async register(
     payload: GoogleAuthDto,
-  ): Promise<{ user: GoogleUser; token: string }> {
+  ): Promise<any> {
     const existing = await this.googleUserModel
       .findOne({
         $or: [{ googleId: payload.googleId }, { email: payload.email }],
@@ -52,17 +37,23 @@ export class GoogleAuthService {
 
     const user = await new this.googleUserModel(payload).save();
 
-    const token = this.createJwt(
-      { sub: user.id, email: user.email, role: user.role },
-      ACCESS_TOKEN_EXPIRY,
-    );
+    return {
+      accessToken: this.generateAccessToken(user),
+      user: {
+        id: user.id,
+        email: user.email,
+        displayName: user.displayName,
+        role: user.role,
+      },
+    };
+    const accessToken = this.createAccessToken(user);
 
-    return { user, token };
+    return { accessToken, expiresIn: ACCESS_TOKEN_EXPIRY };
   }
 
   async login(
     payload: GoogleAuthDto,
-  ): Promise<{ user: GoogleUser; token: string }> {
+  ): Promise<any> {
     const user = await this.googleUserModel
       .findOneAndUpdate(
         { googleId: payload.googleId },
@@ -74,11 +65,17 @@ export class GoogleAuthService {
       throw new NotFoundException('User not found. Please register first.');
     }
 
-    const token = this.createJwt(
-      { sub: user.id, email: user.email, role: user.role },
-      ACCESS_TOKEN_EXPIRY,
-    );
+    return {
+      accessToken: this.generateAccessToken(user),
+      user: {
+        id: user.id,
+        email: user.email,
+        displayName: user.displayName,
+        role: user.role,
+      },
+    };
+    const accessToken = this.createAccessToken(user);
 
-    return { user, token };
+    return { accessToken, expiresIn: ACCESS_TOKEN_EXPIRY };
   }
 }

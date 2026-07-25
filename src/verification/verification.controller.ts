@@ -14,6 +14,7 @@ import { Roles } from '../auth/decorators/roles.decorators';
 import { CurrentUser } from '../auth/decorators/current.user.decorators';
 import { UserRole } from '../auth/common/enum/user-role-enum';
 import { User } from '../auth/entities/user.entity';
+import { Public } from '../common/decorators/public.decorator';
 import type {
   VerificationResult,
   VerificationStats,
@@ -89,6 +90,7 @@ export class VerificationController {
     return result;
   }
 
+  @Public()
   @Get('peek/:ticketCode')
   @ApiOperation({
     summary: 'Preview ticket validity without marking it as used (public)',

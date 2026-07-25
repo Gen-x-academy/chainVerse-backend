@@ -10,37 +10,37 @@ import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 
 @ApiBearerAuth('access-token')
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('admin/auth')
 export class AdminAuthController {
   constructor(private readonly service: AdminAuthService) {}
 
+  @Roles(Role.ADMIN)
   @Get()
   findAll() {
     return this.service.findAll();
   }
 
+  @Roles(Role.ADMIN)
   @Get(':id')
   findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
-  @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
+  @Post()
   create(@Body() payload: CreateAdminAuthDto) {
     return this.service.create(payload);
   }
 
-  @Patch(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
+  @Patch(':id')
   update(@Param('id', new ParseObjectIdPipe()) id: string, @Body() payload: UpdateAdminAuthDto) {
     return this.service.update(id, payload);
   }
 
+  @Roles(Role.ADMIN)
   @Delete(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.MODERATOR)
   remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.remove(id);
   }

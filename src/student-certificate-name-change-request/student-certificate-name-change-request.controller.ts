@@ -11,23 +11,25 @@ import { Roles } from '../common/decorators/roles.decorator';
 
 @ApiBearerAuth('access-token')
 @Controller('student/certificates/name-change-request')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class StudentCertificateNameChangeRequestController {
   constructor(
     private readonly service: StudentCertificateNameChangeRequestService,
   ) {}
 
+  @Roles(Role.ADMIN, Role.MODERATOR)
   @Get()
   findAll() {
     return this.service.findAll();
   }
 
+  @Roles(Role.ADMIN, Role.MODERATOR)
   @Get(':id')
   findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   create(@Body() payload: CreateStudentCertificateNameChangeRequestDto) {
     return this.service.create(payload);

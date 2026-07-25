@@ -19,6 +19,40 @@ export const envValidationSchema = Joi.object({
   JWT_REFRESH_SECRET: Joi.string().min(32).required(),
 
   ALLOWED_ORIGINS: Joi.string().default('http://localhost:3000'),
+
+  // Stellar — secret key required in production so reward/certificate signing works
+  STELLAR_BACKEND_SECRET: Joi.string().min(1).when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+  }),
+
+  // Contract addresses — required in production so Stellar interactions don't
+  // fail at runtime with cryptic errors.  .min(1) ensures empty strings are
+  // rejected, not just missing keys.
+  CONTRACT_CERTIFICATES: Joi.string().min(1).when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+  }),
+
+  CONTRACT_REWARD: Joi.string().min(1).when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+  }),
+
+  CONTRACT_ESCROW: Joi.string().min(1).when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+  }),
+
+  CONTRACT_CHV_TOKEN: Joi.string().min(1).when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+  }),
+
+  CONTRACT_COURSE_REGISTRY: Joi.string().min(1).when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+  }),
 });
 
 /**

@@ -441,4 +441,62 @@ export class TutorService {
 
     return this.sanitizeTutor(tutor);
   }
+
+  async refreshToken(dto: RefreshTokenDto) {
+    if (!dto.refreshToken) {
+      throw new BadRequestException('Refresh token is required');
+    }
+
+    let payload: Record<string, unknown>;
+    try {
+      payload = this.verifyJwt(dto.refreshToken);
+    } catch {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    if (payload.type !== 'refresh') {
+      throw new UnauthorizedException('Invalid token type');
+    }
+
+    const tokenHash = this.hashToken(dto.refreshToken);
+    const stored = await this.refreshTokenModel.findOne({ tokenHash }).exec();
+
+    // If token not found or already revoked, it's a security breach/replay attack
+    if (!stored || stored.revoked) {
+      const family = (payload.family as string) || (stored?.family);
+      if (family) {
+        // Revoke all tokens in the family
+        await this.refreshTokenModel.updateMany({ family }, { $set: { revoked: true } }).exec();
+      }
+      throw new UnauthorizedException('Refresh token has been revoked or already used');
+    }
+
+    // Revoke the old token (mark as revoked)
+    stored.revoked = true;
+    await stored.save();
+
+    // Get tutor
+    const tutor = await this.tutorModel.findById(stored.userId).exec();
+    if (!tutor) {
+      throw new NotFoundException('Tutor not found');
+    }
+
+    if (tutor.accountStatus !== 'active') {
+      throw new UnauthorizedException('Tutor account is not active');
+    }
+
+    // Generate new token pair under the same family
+    return this.generateTokenPair(tutor, stored.family);
+  }
+
+  async logout(dto: RefreshTokenDto) {
+    if (!dto.refreshToken) {
+      throw new BadRequestException('Refresh token is required');
+    }
+
+    const tokenHash = this.hashToken(dto.refreshToken);
+    await this.refreshTokenModel.updateOne({ tokenHash }, { $set: { revoked: true } }).exec();
+
+    return { message: 'Logged out successfully' };
+  }
 }
