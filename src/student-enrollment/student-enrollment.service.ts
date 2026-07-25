@@ -2,7 +2,6 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
-  NotImplementedException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -99,13 +98,6 @@ export class StudentEnrollmentService {
       .find({ _id: { $in: courseIds } })
       .exec();
     const courseMap = new Map(courses.map((c) => [c._id.toString(), c]));
-    const paidCourses = courses.filter((c) => c.price > 0);
-    if (paidCourses.length > 0) {
-      throw new NotImplementedException(
-        'Paid course checkout requires a Stellar transaction hash. See API docs for the payment flow.',
-      );
-    }
-
     const enrolled: string[] = [];
     const failed: string[] = [];
     let totalAmount = 0;
