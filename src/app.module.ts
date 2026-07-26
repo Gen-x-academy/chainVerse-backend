@@ -136,8 +136,6 @@ import { VerificationModule } from './verification/verification.module';
     TutorCourseModule,
     TutorAccountSettingsModule,
     TutorReportsAnalyticsModule,
-    EmailModule,
-    SessionModule,
     // Course
     AdminCourseModule,
     CourseDiscoveryModule,
