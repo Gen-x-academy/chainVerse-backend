@@ -59,18 +59,18 @@ export class StudentCartService {
     const courses = await this.courseModel
       .find({ _id: { $in: courseIds } })
       .exec();
-    const courseMap = new Map(
-      courses.map((c) => [
-        c.id,
-        {
-          id: c.id,
-          title: c.title,
-          price: c.price,
-          thumbnailUrl: c.thumbnailUrl,
-          tutorName: c.tutorName,
-        },
-      ]),
-    );
+
+    const courseMap = new Map<string, any>();
+    courses.forEach(c => {
+      courseMap.set(c.id.toString(), {
+        id: c.id,
+        title: c.title,
+        price: c.price,
+        thumbnailUrl: c.thumbnailUrl,
+        tutorName: c.tutorName,
+      });
+    });
+
 
     const itemsWithDetails = items.map((item) => ({
       cartItem: item,
