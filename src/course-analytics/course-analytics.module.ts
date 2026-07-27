@@ -19,6 +19,12 @@ import {
   CartItem,
   CartItemSchema,
 } from '../student-cart/schemas/cart-item.schema';
+import {
+  LearningEvent,
+  LearningEventSchema,
+} from './schemas/learning-event.schema';
+import { AnalyticsIngestionController } from './analytics-ingestion.controller';
+import { AnalyticsIngestionService } from './analytics-ingestion.service';
 
 @Module({
   imports: [
@@ -28,10 +34,11 @@ import {
       { name: CourseRating.name, schema: CourseRatingSchema },
       { name: SavedCourse.name, schema: SavedCourseSchema },
       { name: CartItem.name, schema: CartItemSchema },
+      { name: LearningEvent.name, schema: LearningEventSchema },
     ]),
   ],
-  controllers: [CourseAnalyticsController],
-  providers: [CourseAnalyticsService],
-  exports: [CourseAnalyticsService],
+  controllers: [CourseAnalyticsController, AnalyticsIngestionController],
+  providers: [CourseAnalyticsService, AnalyticsIngestionService],
+  exports: [CourseAnalyticsService, AnalyticsIngestionService],
 })
 export class CourseAnalyticsModule {}
