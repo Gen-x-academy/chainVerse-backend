@@ -1,6 +1,17 @@
 import { ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { CacheInterceptor, CacheKey, CacheTTL } from '@nestjs/cache-manager';
 import { CourseCategorizationFilteringService } from './course-categorization-filtering.service';
 import { CreateCourseCategorizationFilteringDto } from './dto/create-course-categorization-filtering.dto';

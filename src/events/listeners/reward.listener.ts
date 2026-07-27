@@ -33,8 +33,14 @@ export class RewardListener {
 
     try {
       // Build the Soroban call arguments for claim_reward(student_id, certificate_id)
-      const { SorobanRpc, Contract, Networks, TransactionBuilder, Keypair, BASE_FEE } =
-        await import('@stellar/stellar-sdk');
+      const {
+        rpc: SorobanRpc,
+        Contract,
+        Networks,
+        TransactionBuilder,
+        Keypair,
+        BASE_FEE,
+      } = await import('@stellar/stellar-sdk');
 
       const backendSecret = this.config.get<string>('STELLAR_BACKEND_SECRET');
       if (!backendSecret) {

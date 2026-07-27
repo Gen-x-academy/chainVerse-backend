@@ -1,6 +1,14 @@
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
-import { Controller, Delete, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { StudentSavedCoursesService } from './student-saved-courses.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -18,6 +26,10 @@ export class StudentSavedCoursesController {
   @Post(':id/add')
   @ApiOperation({ summary: 'Save a course to the authenticated student\'s list' })
   add(@Req() req: { user: { id: string } }, @Param('id', new ParseObjectIdPipe()) courseId: string) {
+  add(
+    @Req() req: { user: { id: string } },
+    @Param('id', new ParseObjectIdPipe()) courseId: string,
+  ) {
     return this.service.add(req.user.id, courseId);
   }
 

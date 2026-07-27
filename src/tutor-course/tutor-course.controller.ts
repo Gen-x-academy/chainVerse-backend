@@ -1,6 +1,16 @@
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { TutorCourseService } from './tutor-course.service';
 import { CreateCourseDto } from '../admin-course/dto/create-course.dto';
 import { UpdateCourseDto } from '../admin-course/dto/update-course.dto';
@@ -24,7 +34,10 @@ export class TutorCourseController {
   @ApiOperation({
     summary: 'Get a specific course by ID (must be owned by tutor)',
   })
-  findOne(@Param('id', new ParseObjectIdPipe()) id: string, @CurrentUser('sub') tutorId: string) {
+  findOne(
+    @Param('id', new ParseObjectIdPipe()) id: string,
+    @CurrentUser('sub') tutorId: string,
+  ) {
     return this.tutorCourseService.findOne(id, tutorId);
   }
 
@@ -60,13 +73,19 @@ export class TutorCourseController {
 
   @Patch(':id/publish')
   @ApiOperation({ summary: 'Publish an approved course' })
-  publish(@Param('id', new ParseObjectIdPipe()) id: string, @CurrentUser('sub') tutorId: string) {
+  publish(
+    @Param('id', new ParseObjectIdPipe()) id: string,
+    @CurrentUser('sub') tutorId: string,
+  ) {
     return this.tutorCourseService.publish(id, tutorId);
   }
 
   @Patch(':id/unpublish')
   @ApiOperation({ summary: 'Unpublish a published course' })
-  unpublish(@Param('id', new ParseObjectIdPipe()) id: string, @CurrentUser('sub') tutorId: string) {
+  unpublish(
+    @Param('id', new ParseObjectIdPipe()) id: string,
+    @CurrentUser('sub') tutorId: string,
+  ) {
     return this.tutorCourseService.unpublish(id, tutorId);
   }
 
@@ -82,7 +101,10 @@ export class TutorCourseController {
 
   @Get(':id/enrollments')
   @ApiOperation({ summary: 'Get enrollments for a course' })
-  getEnrollments(@Param('id', new ParseObjectIdPipe()) id: string, @CurrentUser('sub') tutorId: string) {
+  getEnrollments(
+    @Param('id', new ParseObjectIdPipe()) id: string,
+    @CurrentUser('sub') tutorId: string,
+  ) {
     return this.tutorCourseService.getEnrollments(id, tutorId);
   }
 }

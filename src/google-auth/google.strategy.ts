@@ -8,8 +8,11 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(private readonly configService: ConfigService) {
     super({
       clientID: configService.get<string>('google.clientId') || 'dummy-id',
-      clientSecret: configService.get<string>('google.clientSecret') || 'dummy-secret',
-      callbackURL: configService.get<string>('google.callbackUrl') || 'http://localhost:3000/api/v1/auth/google/callback',
+      clientSecret:
+        configService.get<string>('google.clientSecret') || 'dummy-secret',
+      callbackURL:
+        configService.get<string>('google.callbackUrl') ||
+        'http://localhost:3000/api/v1/auth/google/callback',
       scope: ['email', 'profile'],
     });
   }
@@ -26,7 +29,9 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       email: emails[0].value,
       firstName: name?.givenName || '',
       lastName: name?.familyName || '',
-      displayName: `${name?.givenName || ''} ${name?.familyName || ''}`.trim() || 'Google User',
+      displayName:
+        `${name?.givenName || ''} ${name?.familyName || ''}`.trim() ||
+        'Google User',
       avatarUrl: photos?.[0]?.value,
     };
     done(null, user);

@@ -1,5 +1,8 @@
 import 'reflect-metadata';
-import { THROTTLER_LIMIT, THROTTLER_TTL } from '@nestjs/throttler/dist/throttler.constants';
+import {
+  THROTTLER_LIMIT,
+  THROTTLER_TTL,
+} from '@nestjs/throttler/dist/throttler.constants';
 import { StudentAuthController } from './student-auth.controller';
 
 describe('StudentAuthController forgot-password throttle', () => {
@@ -7,6 +10,8 @@ describe('StudentAuthController forgot-password throttle', () => {
     const handler = StudentAuthController.prototype.forgetPassword;
 
     expect(Reflect.getMetadata(THROTTLER_LIMIT + 'default', handler)).toBe(3);
-    expect(Reflect.getMetadata(THROTTLER_TTL + 'default', handler)).toBe(900_000);
+    expect(Reflect.getMetadata(THROTTLER_TTL + 'default', handler)).toBe(
+      900_000,
+    );
   });
 });

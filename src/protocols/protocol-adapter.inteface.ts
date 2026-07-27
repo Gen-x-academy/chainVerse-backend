@@ -64,19 +64,55 @@ export interface SimulationResult {
 export interface ProtocolAdapter {
   name: string;
   supportedChains: string[];
-  getPosition(address: string, token: string, chain?: string): Promise<PositionData>;
+  getPosition(
+    address: string,
+    token: string,
+    chain?: string,
+  ): Promise<PositionData>;
   getAllPositions(address: string, chain?: string): Promise<PositionData[]>;
-  deposit(address: string, token: string, amount: number, chain?: string): Promise<TransactionData>;
-  withdraw(address: string, token: string, amount: number, chain?: string): Promise<TransactionData>;
-  borrow(address: string, token: string, amount: number, chain?: string): Promise<TransactionData>;
-  repay(address: string, token: string, amount: number, chain?: string): Promise<TransactionData>;
+  deposit(
+    address: string,
+    token: string,
+    amount: number,
+    chain?: string,
+  ): Promise<TransactionData>;
+  withdraw(
+    address: string,
+    token: string,
+    amount: number,
+    chain?: string,
+  ): Promise<TransactionData>;
+  borrow(
+    address: string,
+    token: string,
+    amount: number,
+    chain?: string,
+  ): Promise<TransactionData>;
+  repay(
+    address: string,
+    token: string,
+    amount: number,
+    chain?: string,
+  ): Promise<TransactionData>;
   getCollateralData(address: string, chain?: string): Promise<CollateralData>;
-  getRewards(addresses: string[], user: string, chain?: string): Promise<RewardData[]>;
-  claimRewards(address: string, token?: string, chain?: string): Promise<TransactionData>;
+  getRewards(
+    addresses: string[],
+    user: string,
+    chain?: string,
+  ): Promise<RewardData[]>;
+  claimRewards(
+    address: string,
+    token?: string,
+    chain?: string,
+  ): Promise<TransactionData>;
   getAPY(token: string, chain?: string): Promise<number>;
   getTVL(): Promise<number>;
   getProtocolMetrics(): Promise<ProtocolMetrics>;
-  getRiskMetrics(address: string, token: string, chain?: string): Promise<RiskMetrics>;
+  getRiskMetrics(
+    address: string,
+    token: string,
+    chain?: string,
+  ): Promise<RiskMetrics>;
   estimateGas(tx: TransactionData): Promise<GasEstimate>;
   simulateTransaction(tx: TransactionData): Promise<SimulationResult>;
 }

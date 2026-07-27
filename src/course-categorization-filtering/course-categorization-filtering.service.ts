@@ -1,6 +1,6 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+import type { Cache } from 'cache-manager';
 import { CreateCourseCategorizationFilteringDto } from './dto/create-course-categorization-filtering.dto';
 import { UpdateCourseCategorizationFilteringDto } from './dto/update-course-categorization-filtering.dto';
 import { SearchCourseDto } from './dto/search-course.dto';

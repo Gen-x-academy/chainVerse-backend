@@ -15,7 +15,8 @@ class LessonProgress {
   completedAt: Date | null;
 }
 
-export const LessonProgressSchema = SchemaFactory.createForClass(LessonProgress);
+export const LessonProgressSchema =
+  SchemaFactory.createForClass(LessonProgress);
 
 @Schema({ timestamps: true })
 export class Enrollment {

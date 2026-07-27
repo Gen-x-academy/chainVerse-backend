@@ -58,7 +58,7 @@ export class CourseDiscoveryService {
 
     // Build sort option
     const hasTextSearch = !!dto.query;
-    const sort: Record<string, unknown> = {};
+    const sort: Record<string, 1 | -1 | { $meta: string }> = {};
     switch (dto.sortBy) {
       case 'price-asc':
         sort.price = 1;
@@ -151,7 +151,13 @@ export class CourseDiscoveryService {
    * Get all categories with course counts
    */
   async getCategories() {
-    const categories = await this.courseModel.aggregate([
+    interface CategoryAggResult {
+      _id: string;
+      count: number;
+      avgPrice: number;
+    }
+
+    const categories = await this.courseModel.aggregate<CategoryAggResult>([
       {
         $match: {
           status: 'published',

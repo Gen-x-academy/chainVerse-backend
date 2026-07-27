@@ -1,5 +1,11 @@
 import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -24,7 +30,10 @@ export class StudentAuthController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   @ApiOperation({ summary: 'Get authenticated student profile' })
-  @ApiResponse({ status: 200, description: 'Returns the authenticated student profile' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns the authenticated student profile',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async me(@Req() req: any) {
     return this.studentAuthService.findStudentById(req.user.sub);
@@ -35,7 +44,10 @@ export class StudentAuthController {
   @Post('register')
   @ApiOperation({ summary: 'Register a new student' })
   @ApiBody({ type: CreateStudentDto })
-  @ApiResponse({ status: 201, description: 'Student registered. Verification email sent.' })
+  @ApiResponse({
+    status: 201,
+    description: 'Student registered. Verification email sent.',
+  })
   @ApiResponse({ status: 400, description: 'Invalid input or missing fields' })
   @ApiResponse({ status: 409, description: 'Email already registered.' })
   create(@Body() dto: CreateStudentDto) {

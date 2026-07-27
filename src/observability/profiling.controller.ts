@@ -1,14 +1,14 @@
-import { 
-  Controller, 
-  Post, 
-  Get, 
-  HttpStatus, 
+import {
+  Controller,
+  Post,
+  Get,
+  HttpStatus,
   HttpException,
   Res,
-  Param
+  Param,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Response } from 'express';
+import type { Response } from 'express';
 import { createReadStream, existsSync } from 'fs';
 import { join } from 'path';
 import { Public } from '../common/decorators/public.decorator';
@@ -21,11 +21,15 @@ export class ProfilingController {
   constructor(private readonly profilingService: ProfilingService) {}
 
   @Post('cpu/start')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Start CPU profiling',
-    description: 'Starts collecting CPU profiling data to identify hot functions and bottlenecks'
+    description:
+      'Starts collecting CPU profiling data to identify hot functions and bottlenecks',
   })
-  @ApiResponse({ status: 200, description: 'CPU profiling started successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'CPU profiling started successfully',
+  })
   async startCpuProfiling() {
     const result = await this.profilingService.startCpuProfiling();
     if (!result.success) {
@@ -35,11 +39,15 @@ export class ProfilingController {
   }
 
   @Post('cpu/stop')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Stop CPU profiling',
-    description: 'Stops CPU profiling and returns the profile file that can be downloaded'
+    description:
+      'Stops CPU profiling and returns the profile file that can be downloaded',
   })
-  @ApiResponse({ status: 200, description: 'CPU profiling stopped and profile saved' })
+  @ApiResponse({
+    status: 200,
+    description: 'CPU profiling stopped and profile saved',
+  })
   async stopCpuProfiling() {
     const result = await this.profilingService.stopCpuProfiling();
     if (!result.success) {
@@ -49,11 +57,15 @@ export class ProfilingController {
   }
 
   @Post('heap/snapshot')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Take heap snapshot',
-    description: 'Captures a heap snapshot that can be analyzed for memory leaks and memory usage patterns'
+    description:
+      'Captures a heap snapshot that can be analyzed for memory leaks and memory usage patterns',
   })
-  @ApiResponse({ status: 200, description: 'Heap snapshot created successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Heap snapshot created successfully',
+  })
   async takeHeapSnapshot() {
     const result = await this.profilingService.takeHeapSnapshot();
     if (!result.success) {
@@ -63,9 +75,9 @@ export class ProfilingController {
   }
 
   @Get('profiles')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'List all available profiles',
-    description: 'Returns a list of all saved CPU profiles and heap snapshots'
+    description: 'Returns a list of all saved CPU profiles and heap snapshots',
   })
   @ApiResponse({ status: 200, description: 'List of available profiles' })
   listProfiles() {
@@ -74,14 +86,15 @@ export class ProfilingController {
   }
 
   @Get('profiles/:filename')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Download a profile file',
-    description: 'Downloads a specific profile or heap snapshot file for analysis'
+    description:
+      'Downloads a specific profile or heap snapshot file for analysis',
   })
   @ApiResponse({ status: 200, description: 'Profile file stream' })
   async downloadProfile(
     @Param('filename') filename: string,
-    @Res() res: Response
+    @Res() res: Response,
   ) {
     const profilesDir = join(process.cwd(), 'profiles');
     const filePath = join(profilesDir, filename);
@@ -104,9 +117,10 @@ export class ProfilingController {
   }
 
   @Get('memory/health')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Check memory health',
-    description: 'Returns current memory usage and detects potential memory leaks'
+    description:
+      'Returns current memory usage and detects potential memory leaks',
   })
   @ApiResponse({ status: 200, description: 'Memory health status' })
   checkMemoryHealth() {
