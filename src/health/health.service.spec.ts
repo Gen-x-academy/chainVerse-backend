@@ -19,7 +19,7 @@ describe('HealthService', () => {
 
     mockStellarService = {
       getServer: jest.fn().mockReturnValue({
-        serverInfo: jest.fn().mockResolvedValue({
+        root: jest.fn().mockResolvedValue({
           protocol_version: 19,
           network_passphrase: 'Test SDF Network ; September 2015',
         }),
@@ -84,7 +84,9 @@ describe('HealthService', () => {
 
     it('should return error when Stellar Horizon is unreachable', async () => {
       mockStellarService.getServer.mockReturnValue({
-        serverInfo: jest.fn().mockRejectedValue(new Error('connection timeout')),
+        root: jest
+          .fn()
+          .mockRejectedValue(new Error('connection timeout')),
       });
 
       const result = await service.checkStellar();

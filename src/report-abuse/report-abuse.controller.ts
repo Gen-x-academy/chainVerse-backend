@@ -62,6 +62,8 @@ export class ReportAbuseController {
   update(
     @Param('id', new ParseObjectIdPipe()) id: string,
     @Body() payload: UpdateReportAbuseDto,
+  ) {
+    return this.service.update(id, payload);
     @AuditActor() audit: AuditContext,
   ) {
     return this.service.update(id, payload, audit);

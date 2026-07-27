@@ -1,6 +1,16 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
-import { Body, Controller, Delete, Get, Param, Post, Put, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { CourseRatingsFeedbackService } from './course-ratings-feedback.service';
 import { CreateCourseRatingsFeedbackDto } from './dto/create-course-ratings-feedback.dto';
 import { UpdateCourseRatingsFeedbackDto } from './dto/update-course-ratings-feedback.dto';
@@ -56,7 +66,10 @@ export class CourseRatingsFeedbackController {
   @Delete(':id/rate')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STUDENT)
-  remove(@Param('id', new ParseObjectIdPipe()) courseId: string, @Req() req: { user: { id: string } }) {
+  remove(
+    @Param('id', new ParseObjectIdPipe()) courseId: string,
+    @Req() req: { user: { id: string } },
+  ) {
     return this.service.remove(courseId, req.user.id);
   }
 }

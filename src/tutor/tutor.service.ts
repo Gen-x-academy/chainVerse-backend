@@ -1,4 +1,10 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
@@ -290,19 +296,6 @@ export class TutorService {
     return this.generateTokenPair(tutor, stored.family);
   }
 
-  async logout(dto: RefreshTokenDto) {
-    if (!dto.refreshToken) {
-      throw new BadRequestException('Refresh token is required');
-    }
-
-    const tokenHash = this.hashToken(dto.refreshToken);
-    await this.refreshTokenModel
-      .updateOne({ tokenHash }, { revoked: true })
-      .exec();
-
-    return { message: 'Logged out successfully' };
-  }
-
   private hashToken(token: string): string {
     return crypto.createHash('sha256').update(token).digest('hex');
   }
@@ -442,15 +435,15 @@ export class TutorService {
     return this.sanitizeTutor(tutor);
   }
 
-
-
   async logout(dto: RefreshTokenDto) {
     if (!dto.refreshToken) {
       throw new BadRequestException('Refresh token is required');
     }
 
     const tokenHash = this.hashToken(dto.refreshToken);
-    await this.refreshTokenModel.updateOne({ tokenHash }, { $set: { revoked: true } }).exec();
+    await this.refreshTokenModel
+      .updateOne({ tokenHash }, { $set: { revoked: true } })
+      .exec();
 
     return { message: 'Logged out successfully' };
   }

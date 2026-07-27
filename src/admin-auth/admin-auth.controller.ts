@@ -52,6 +52,8 @@ export class AdminAuthController {
   update(
     @Param('id', new ParseObjectIdPipe()) id: string,
     @Body() payload: UpdateAdminAuthDto,
+  ) {
+    return this.service.update(id, payload);
     @AuditActor() audit: AuditContext,
   ) {
     return this.service.update(id, payload, audit);

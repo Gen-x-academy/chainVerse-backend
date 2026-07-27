@@ -1,6 +1,16 @@
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { CacheInterceptor, CacheKey, CacheTTL } from '@nestjs/cache-manager';
 import { FaqManagementService } from './faq-management.service';
 import { CreateFaqManagementDto } from './dto/create-faq-management.dto';
@@ -45,7 +55,10 @@ export class FaqManagementController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
-  update(@Param('id', new ParseObjectIdPipe()) id: string, @Body() payload: UpdateFaqManagementDto) {
+  update(
+    @Param('id', new ParseObjectIdPipe()) id: string,
+    @Body() payload: UpdateFaqManagementDto,
+  ) {
     return this.service.update(id, payload);
   }
 

@@ -1,6 +1,16 @@
 import { ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { CacheInterceptor, CacheKey, CacheTTL } from '@nestjs/cache-manager';
 import { CoursePerformanceLeaderboardService } from './course-performance-leaderboard.service';
 import { CreateCoursePerformanceLeaderboardDto } from './dto/create-course-performance-leaderboard.dto';

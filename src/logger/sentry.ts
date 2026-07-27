@@ -1,21 +1,24 @@
-import * as Sentry from "@sentry/node";
-import { 
-  httpIntegration, 
-  onUncaughtExceptionIntegration, 
+import * as Sentry from '@sentry/node';
+import {
+  httpIntegration,
+  onUncaughtExceptionIntegration,
   onUnhandledRejectionIntegration,
   expressIntegration,
-  getDefaultIntegrations
-} from "@sentry/node";
-import { logger } from "./logger";
+  getDefaultIntegrations,
+} from '@sentry/node';
 
 const dsn = process.env.SENTRY_DSN;
-const environment = process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV || "development";
-const release = process.env.SENTRY_RELEASE || process.env.npm_package_version || "unknown";
-const tracesSampleRate = parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE ?? "0.1");
+const environment =
+  process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV || 'development';
+const release =
+  process.env.SENTRY_RELEASE || process.env.npm_package_version || 'unknown';
+const tracesSampleRate = parseFloat(
+  process.env.SENTRY_TRACES_SAMPLE_RATE ?? '0.1',
+);
 
 export const initSentry = () => {
   if (!dsn) {
-    logger.info("Sentry DSN not set; Sentry initialization skipped");
+    console.log('Sentry DSN not set; Sentry initialization skipped');
     return;
   }
 
@@ -23,46 +26,45 @@ export const initSentry = () => {
     dsn,
     environment,
     release,
-    tracesSampleRate: Number.isFinite(tracesSampleRate) ? tracesSampleRate : 0.1,
+    tracesSampleRate: Number.isFinite(tracesSampleRate)
+      ? tracesSampleRate
+      : 0.1,
     integrations: [
       ...getDefaultIntegrations({}),
       expressIntegration(),
       onUncaughtExceptionIntegration({
         onFatalError: (error) => {
-          logger.error({ error }, "Sentry uncaught exception");
+          console.error('Sentry uncaught exception:', error);
           process.exit(1);
         },
       }),
-      onUnhandledRejectionIntegration({ mode: "warn" }),
+      onUnhandledRejectionIntegration({ mode: 'warn' }),
     ],
     attachStacktrace: true,
     normalizeDepth: 5,
     beforeSend(event) {
-      if (event.request && typeof event.request === "object") {
+      if (event.request && typeof event.request === 'object') {
         delete (event.request as any).data;
       }
       return event;
     },
   });
 
-  logger.info(
-    {
-      environment,
-      release,
-      tracesSampleRate,
-    },
-    "Sentry initialized",
-  );
+  console.log('Sentry initialized:', {
+    environment,
+    release,
+    tracesSampleRate,
+  });
 };
 
 export const captureException = (exception: unknown) => {
-  if (Sentry.getCurrentHub().getClient()) {
+  if (Sentry.getClient()) {
     Sentry.captureException(exception);
   }
 };
 
 export const addBreadcrumb = (breadcrumb: Sentry.Breadcrumb) => {
-  if (Sentry.getCurrentHub().getClient()) {
+  if (Sentry.getClient()) {
     Sentry.addBreadcrumb(breadcrumb);
   }
 };

@@ -1,4 +1,10 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
@@ -333,7 +339,9 @@ export class StudentAuthService {
     }
 
     if (student.lockedUntil && student.lockedUntil > new Date()) {
-      throw new UnauthorizedException('Account temporarily locked. Try again later.');
+      throw new UnauthorizedException(
+        'Account temporarily locked. Try again later.',
+      );
     }
 
     const passwordValid = await this.verifyPassword(

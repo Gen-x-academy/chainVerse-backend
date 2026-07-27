@@ -50,13 +50,13 @@ export class StellarSyncService {
    */
   @Cron('*/60 * * * * *')
   async syncPending(): Promise<void> {
-    const pending = await this.certTxModel
-      .find({ status: 'pending' })
-      .exec();
+    const pending = await this.certTxModel.find({ status: 'pending' }).exec();
 
     if (pending.length === 0) return;
 
-    this.logger.log(`Syncing ${pending.length} pending certificate transaction(s)`);
+    this.logger.log(
+      `Syncing ${pending.length} pending certificate transaction(s)`,
+    );
 
     await Promise.allSettled(
       pending.map(async (record) => {
