@@ -1,6 +1,15 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { AdminAuthService } from './admin-auth.service';
 import { CreateAdminAuthDto } from './dto/create-admin-auth.dto';
 import { UpdateAdminAuthDto } from './dto/update-admin-auth.dto';
@@ -8,6 +17,8 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
+import { AuditActor } from '../common/audit/audit-context';
+import type { AuditContext } from '../common/audit/audit-context';
 
 @ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -29,19 +40,29 @@ export class AdminAuthController {
 
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   @Post()
-  create(@Body() payload: CreateAdminAuthDto) {
-    return this.service.create(payload);
+  create(
+    @Body() payload: CreateAdminAuthDto,
+    @AuditActor() audit: AuditContext,
+  ) {
+    return this.service.create(payload, audit);
   }
 
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   @Patch(':id')
-  update(@Param('id', new ParseObjectIdPipe()) id: string, @Body() payload: UpdateAdminAuthDto) {
-    return this.service.update(id, payload);
+  update(
+    @Param('id', new ParseObjectIdPipe()) id: string,
+    @Body() payload: UpdateAdminAuthDto,
+    @AuditActor() audit: AuditContext,
+  ) {
+    return this.service.update(id, payload, audit);
   }
 
   @Roles(Role.ADMIN)
   @Delete(':id')
-  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
-    return this.service.remove(id);
+  remove(
+    @Param('id', new ParseObjectIdPipe()) id: string,
+    @AuditActor() audit: AuditContext,
+  ) {
+    return this.service.remove(id, audit);
   }
 }

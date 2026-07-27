@@ -28,3 +28,7 @@ build/
 
 # Local scratch files
 *.scratch.ts
+
+# Upload storage root (quarantine / clean / infected)
+var/
+uploads/

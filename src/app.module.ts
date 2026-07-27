@@ -12,6 +12,7 @@ import appConfig from './config/app.config';
 import { envValidationSchema } from './common/config/env.validation';
 import { AppService } from './app.service';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { AuditModule } from './common/audit/audit.module';
 import { WorkerModule } from './worker/worker.module';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { MetricsModule } from './metrics/metrics.module';
@@ -120,6 +121,8 @@ import { VerificationModule } from './verification/verification.module';
       inject: [ConfigService],
     }),
     AppLoggerModule,
+    // Global: exports AuditService to every feature module.
+    AuditModule,
     WorkerModule,
     MetricsModule,
     TracingModule,

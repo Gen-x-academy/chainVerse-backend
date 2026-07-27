@@ -36,6 +36,28 @@ export interface AppConfig {
     skipFailed: boolean;
     keyPrefix: string;
   };
+  /** Immutable audit trail for privileged actions. */
+  audit: {
+    /** HMAC key for entry integrity hashes; falls back to `jwtSecret`. */
+    hmacSecret: string | undefined;
+    /** When true, a failed audit write fails the mutation it describes. */
+    failClosed: boolean;
+  };
+  /** Worker upload quarantine, scanning and quota settings. */
+  uploads: {
+    /** Storage root, kept outside any web-served directory. */
+    root: string;
+    maxFileBytes: number;
+    /** Keep infected samples in `infected/` instead of deleting them. */
+    retainInfected: boolean;
+    quota: { maxBytes: number; maxFiles: number; windowMs: number };
+    scanner: {
+      provider: string;
+      host: string;
+      port: number;
+      timeoutMs: number;
+    };
+  };
 }
 
 export default (): AppConfig => ({
@@ -97,5 +119,34 @@ export default (): AppConfig => ({
     skipSuccess: process.env.RATE_LIMIT_SKIP_SUCCESS === 'true',
     skipFailed: process.env.RATE_LIMIT_SKIP_FAILED === 'true',
     keyPrefix: process.env.RATE_LIMIT_KEY_PREFIX ?? 'rl:',
+  },
+  audit: {
+    hmacSecret: process.env.AUDIT_HMAC_SECRET,
+    failClosed: process.env.AUDIT_LOG_FAIL_CLOSED === 'true',
+  },
+  uploads: {
+    root: process.env.UPLOAD_STORAGE_ROOT ?? 'var/uploads',
+    maxFileBytes: parseInt(
+      process.env.UPLOAD_MAX_FILE_BYTES ?? String(5 * 1024 * 1024),
+      10,
+    ),
+    retainInfected: process.env.UPLOAD_RETAIN_INFECTED === 'true',
+    quota: {
+      maxBytes: parseInt(
+        process.env.UPLOAD_QUOTA_MAX_BYTES ?? String(100 * 1024 * 1024),
+        10,
+      ),
+      maxFiles: parseInt(process.env.UPLOAD_QUOTA_MAX_FILES ?? '20', 10),
+      windowMs: parseInt(
+        process.env.UPLOAD_QUOTA_WINDOW_MS ?? String(24 * 60 * 60 * 1000),
+        10,
+      ),
+    },
+    scanner: {
+      provider: process.env.MALWARE_SCAN_PROVIDER ?? 'builtin',
+      host: process.env.MALWARE_SCAN_HOST ?? '127.0.0.1',
+      port: parseInt(process.env.MALWARE_SCAN_PORT ?? '3310', 10),
+      timeoutMs: parseInt(process.env.MALWARE_SCAN_TIMEOUT_MS ?? '30000', 10),
+    },
   },
 });

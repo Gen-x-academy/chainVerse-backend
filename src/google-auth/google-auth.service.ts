@@ -16,11 +16,15 @@ export class GoogleAuthService {
   ) {}
 
   private generateAccessToken(user: GoogleUserDocument): string {
-  private createAccessToken(user: GoogleUserDocument): string {
     return this.jwtService.sign(
       { sub: user.id, email: user.email, role: user.role },
       { expiresIn: ACCESS_TOKEN_EXPIRY },
     );
+  }
+
+  /** Alias kept because both names are called from this service. */
+  private createAccessToken(user: GoogleUserDocument): string {
+    return this.generateAccessToken(user);
   }
 
   async register(

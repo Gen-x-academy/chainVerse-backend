@@ -9,6 +9,26 @@ import { Course, CourseDocument } from './schemas/course.schema';
 import { Tutor, TutorDocument } from '../tutor/schemas/tutor.schema';
 import { DomainEvents } from '../events/event-names';
 import { EmailService } from '../email/email.service';
+import { AuditService } from '../common/audit/audit.service';
+import { AuditAction } from '../common/audit/audit-action.enum';
+import { AuditContext, systemAuditContext } from '../common/audit/audit-context';
+import { snapshot } from '../common/audit/audit-redaction';
+
+/** Fields captured in course audit before/after snapshots. */
+const COURSE_AUDIT_FIELDS = [
+  'title',
+  'category',
+  'price',
+  'status',
+  'level',
+  'language',
+  'publishedAt',
+  'approvedAt',
+  'rejectionReason',
+  'deletedAt',
+  'deletedBy',
+  'deletionReason',
+] as const;
 
 @Injectable()
 export class AdminCourseService {
@@ -19,7 +39,29 @@ export class AdminCourseService {
     private readonly tutorModel: Model<TutorDocument>,
     private readonly eventEmitter: EventEmitter2,
     private readonly emailService: EmailService,
+    private readonly auditService: AuditService,
   ) {}
+
+  /**
+   * Records a privileged course mutation. Callers that have no HTTP context
+   * (background jobs, tests) fall back to a system actor.
+   */
+  private auditCourse(
+    action: AuditAction,
+    course: CourseDocument,
+    before: Record<string, unknown> | null,
+    audit: AuditContext | undefined,
+    reason?: string | null,
+  ): Promise<unknown> {
+    return this.auditService.record({
+      action,
+      context: audit ?? systemAuditContext(),
+      target: { type: 'course', id: course.id },
+      before,
+      after: snapshot(course, COURSE_AUDIT_FIELDS),
+      reason: reason ?? null,
+    });
+  }
 
   /**
    * Create a new course (for tutors)
@@ -118,8 +160,10 @@ export class AdminCourseService {
     dto: UpdateCourseDto,
     tutorId?: string,
     isAdmin: boolean = false,
+    audit?: AuditContext,
   ): Promise<CourseDocument> {
     const course = await this.findOne(id);
+    const before = snapshot(course, COURSE_AUDIT_FIELDS);
 
     // Ownership check - only tutor or admin can update
     if (!isAdmin && course.tutorId !== tutorId) {
@@ -153,6 +197,15 @@ export class AdminCourseService {
 
     Object.assign(course, dto);
     await course.save();
+
+    if (isAdmin) {
+      await this.auditCourse(
+        AuditAction.COURSE_UPDATED,
+        course,
+        before,
+        audit,
+      );
+    }
 
     return course;
   }
@@ -208,8 +261,10 @@ export class AdminCourseService {
     id: string,
     dto: ReviewCourseDto,
     adminId: string,
+    audit?: AuditContext,
   ): Promise<{ message: string; course: CourseDocument }> {
     const course = await this.findOne(id);
+    const before = snapshot(course, COURSE_AUDIT_FIELDS);
 
     if (course.status !== 'pending') {
       throw new BadRequestException('Only pending courses can be reviewed');
@@ -237,6 +292,14 @@ export class AdminCourseService {
 
     await course.save();
 
+    await this.auditCourse(
+      AuditAction.COURSE_REVIEWED,
+      course,
+      before,
+      audit ?? systemAuditContext('system', adminId),
+      dto.reason ?? null,
+    );
+
     this.eventEmitter.emit('course.reviewed', {
       courseId: course.id,
       tutorId: course.tutorId,
@@ -254,8 +317,10 @@ export class AdminCourseService {
     id: string,
     tutorId: string,
     isAdmin: boolean = false,
+    audit?: AuditContext,
   ): Promise<{ message: string; course: CourseDocument }> {
     const course = await this.findOne(id);
+    const before = snapshot(course, COURSE_AUDIT_FIELDS);
 
     // Only tutor or admin can publish
     if (!isAdmin && course.tutorId !== tutorId) {
@@ -271,6 +336,15 @@ export class AdminCourseService {
     course.status = 'published';
     course.publishedAt = new Date();
     await course.save();
+
+    if (isAdmin) {
+      await this.auditCourse(
+        AuditAction.COURSE_PUBLISHED,
+        course,
+        before,
+        audit,
+      );
+    }
 
     this.eventEmitter.emit('course.published', {
       courseId: course.id,
@@ -289,8 +363,10 @@ export class AdminCourseService {
     id: string,
     tutorId: string,
     isAdmin: boolean = false,
+    audit?: AuditContext,
   ): Promise<{ message: string; course: CourseDocument }> {
     const course = await this.findOne(id);
+    const before = snapshot(course, COURSE_AUDIT_FIELDS);
 
     // Only tutor or admin can unpublish
     if (!isAdmin && course.tutorId !== tutorId) {
@@ -305,6 +381,15 @@ export class AdminCourseService {
 
     course.status = 'unpublished';
     await course.save();
+
+    if (isAdmin) {
+      await this.auditCourse(
+        AuditAction.COURSE_UNPUBLISHED,
+        course,
+        before,
+        audit,
+      );
+    }
 
     this.eventEmitter.emit('course.unpublished', {
       courseId: course.id,
@@ -324,8 +409,10 @@ export class AdminCourseService {
     userId: string,
     isAdmin: boolean = false,
     reason?: string,
+    audit?: AuditContext,
   ): Promise<{ message: string }> {
     const course = await this.findOne(id);
+    const before = snapshot(course, COURSE_AUDIT_FIELDS);
 
     // Only tutor or admin can delete
     if (!isAdmin && course.tutorId !== userId) {
@@ -343,6 +430,16 @@ export class AdminCourseService {
     course.deletedBy = isAdmin ? `admin:${userId}` : `tutor:${userId}`;
     course.deletionReason = reason || 'User requested deletion';
     await course.save();
+
+    if (isAdmin) {
+      await this.auditCourse(
+        AuditAction.COURSE_DELETED,
+        course,
+        before,
+        audit,
+        course.deletionReason,
+      );
+    }
 
     // Update tutor stats
     await this.updateTutorStats(course.tutorId, -1);
