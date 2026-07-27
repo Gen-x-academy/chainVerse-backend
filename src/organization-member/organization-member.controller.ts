@@ -40,14 +40,14 @@ export class OrganizationMemberController {
     OrganizationRole.INSTRUCTOR,
     OrganizationRole.MEMBER,
   )
-  findByOrganization(@Param('orgId') orgId: string) {
+  findByOrganization(@Param('orgId', new ParseObjectIdPipe()) orgId: string) {
     return this.service.findByOrganization(orgId);
   }
 
   @Get('user/:userId')
   @ApiOperation({ summary: 'List your own organization memberships' })
   findByUser(
-    @Param('userId') userId: string,
+    @Param('userId', new ParseObjectIdPipe()) userId: string,
     @CurrentUser('sub') requesterId: string,
     @CurrentUser('role') requesterRole: string,
   ) {
