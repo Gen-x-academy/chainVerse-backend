@@ -17,6 +17,8 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
+import { AuditActor } from '../common/audit/audit-context';
+import type { AuditContext } from '../common/audit/audit-context';
 
 @ApiBearerAuth('access-token')
 @Controller('admin/financial-aid')
@@ -38,8 +40,11 @@ export class AdminFinancialAidManagementController {
 
   @Post()
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
-  create(@Body() payload: CreateAdminFinancialAidManagementDto) {
-    return this.service.create(payload);
+  create(
+    @Body() payload: CreateAdminFinancialAidManagementDto,
+    @AuditActor() audit: AuditContext,
+  ) {
+    return this.service.create(payload, audit);
   }
 
   @Patch(':id')
@@ -48,14 +53,18 @@ export class AdminFinancialAidManagementController {
   update(
     @Param('id', new ParseObjectIdPipe()) id: string,
     @Body() payload: UpdateAdminFinancialAidManagementDto,
+    @AuditActor() audit: AuditContext,
   ) {
-    return this.service.update(id, payload);
+    return this.service.update(id, payload, audit);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
-    return this.service.remove(id);
+  remove(
+    @Param('id', new ParseObjectIdPipe()) id: string,
+    @AuditActor() audit: AuditContext,
+  ) {
+    return this.service.remove(id, audit);
   }
 }

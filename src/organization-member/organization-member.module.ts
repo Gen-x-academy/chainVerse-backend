@@ -6,6 +6,7 @@ import {
   OrganizationMember,
   OrganizationMemberSchema,
 } from './schemas/organization-member.schema';
+import { OrganizationRolesGuard } from '../common/guards/organization-roles.guard';
 
 @Module({
   imports: [
@@ -14,7 +15,7 @@ import {
     ]),
   ],
   controllers: [OrganizationMemberController],
-  providers: [OrganizationMemberService],
+  providers: [OrganizationMemberService, OrganizationRolesGuard],
   exports: [OrganizationMemberService],
 })
 export class OrganizationMemberModule {}

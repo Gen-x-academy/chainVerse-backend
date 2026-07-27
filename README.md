@@ -122,10 +122,28 @@ Supported roles:
 * `TUTOR`
 * `STUDENT`
 
+### 🏢 Organization-Scoped Roles
+
+Global roles describe what a user is on the platform. Membership in an
+organization is a separate axis with its own roles:
+
+* `owner` · `admin` · `instructor` · `member`
+
+Holding a role in one organization grants nothing in another. See
+[docs/security/organization-authorization.md](docs/security/organization-authorization.md).
+
 ### 🔒 Guards
 
 * `JwtAuthGuard` → validates authenticated users
-* `RolesGuard` → enforces role-based permissions
+* `RolesGuard` → enforces platform role-based permissions
+* `OrganizationRolesGuard` → enforces organization membership roles
+
+### 📝 Security Documentation
+
+* [Immutable audit logging](docs/security/audit-logging.md) — append-only trail
+  for privileged actions
+* [Organization-scoped authorization](docs/security/organization-authorization.md)
+* [Upload quarantine and malware scanning](docs/security/uploads.md)
 
 ---
 

@@ -20,6 +20,7 @@ export class GoogleAuthService {
   ) {}
 
   private createAccessToken(user: GoogleUserDocument): string {
+  private generateAccessToken(user: GoogleUserDocument): string {
     return this.jwtService.sign(
       { sub: user.id, email: user.email, role: user.role },
       { expiresIn: ACCESS_TOKEN_EXPIRY },
@@ -27,6 +28,14 @@ export class GoogleAuthService {
   }
 
   async register(payload: GoogleAuthDto): Promise<any> {
+  /** Alias kept because both names are called from this service. */
+  private createAccessToken(user: GoogleUserDocument): string {
+    return this.generateAccessToken(user);
+  }
+
+  async register(
+    payload: GoogleAuthDto,
+  ): Promise<any> {
     const existing = await this.googleUserModel
       .findOne({
         $or: [{ googleId: payload.googleId }, { email: payload.email }],

@@ -10,7 +10,8 @@ class LessonProgress {
   @Prop({ default: false })
   completed: boolean;
 
-  @Prop({ default: null })
+  // `Date | null` is ambiguous to the metadata reflector, so the type is explicit.
+  @Prop({ type: Date, default: null })
   completedAt: Date | null;
 }
 

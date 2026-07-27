@@ -20,6 +20,8 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '../common/enums/role.enum';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { AuditActor } from '../common/audit/audit-context';
+import type { AuditContext } from '../common/audit/audit-context';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Admin Courses')
@@ -60,8 +62,9 @@ export class AdminCourseController {
     @Param('id', new ParseObjectIdPipe()) id: string,
     @Body() dto: ReviewCourseDto,
     @CurrentUser('sub') adminId: string,
+    @AuditActor() audit: AuditContext,
   ) {
-    return this.adminCourseService.review(id, dto, adminId);
+    return this.adminCourseService.review(id, dto, adminId, audit);
   }
 
   @Patch(':id/publish')
@@ -71,6 +74,9 @@ export class AdminCourseController {
     @CurrentUser('sub') adminId: string,
   ) {
     return this.adminCourseService.publish(id, adminId, true);
+    @AuditActor() audit: AuditContext,
+  ) {
+    return this.adminCourseService.publish(id, adminId, true, audit);
   }
 
   @Patch(':id/unpublish')
@@ -80,6 +86,9 @@ export class AdminCourseController {
     @CurrentUser('sub') adminId: string,
   ) {
     return this.adminCourseService.unpublish(id, adminId, true);
+    @AuditActor() audit: AuditContext,
+  ) {
+    return this.adminCourseService.unpublish(id, adminId, true, audit);
   }
 
   @Patch(':id')
@@ -88,8 +97,9 @@ export class AdminCourseController {
     @Param('id', new ParseObjectIdPipe()) id: string,
     @Body() dto: UpdateCourseDto,
     @CurrentUser('sub') adminId: string,
+    @AuditActor() audit: AuditContext,
   ) {
-    return this.adminCourseService.update(id, dto, adminId, true);
+    return this.adminCourseService.update(id, dto, adminId, true, audit);
   }
 
   @Delete(':id')
@@ -98,9 +108,10 @@ export class AdminCourseController {
   delete(
     @Param('id', new ParseObjectIdPipe()) id: string,
     @CurrentUser('sub') adminId: string,
+    @AuditActor() audit: AuditContext,
     @Query('reason') reason?: string,
   ) {
-    return this.adminCourseService.delete(id, adminId, true, reason);
+    return this.adminCourseService.delete(id, adminId, true, reason, audit);
   }
 
   @Get(':id/enrollments')

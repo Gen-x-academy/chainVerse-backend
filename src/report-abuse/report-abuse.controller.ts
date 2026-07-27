@@ -18,6 +18,8 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
+import { AuditActor } from '../common/audit/audit-context';
+import type { AuditContext } from '../common/audit/audit-context';
 
 @ApiBearerAuth('access-token')
 @Controller('report-abuse')
@@ -62,12 +64,18 @@ export class ReportAbuseController {
     @Body() payload: UpdateReportAbuseDto,
   ) {
     return this.service.update(id, payload);
+    @AuditActor() audit: AuditContext,
+  ) {
+    return this.service.update(id, payload, audit);
   }
 
   @Delete(':id')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
-  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
-    return this.service.remove(id);
+  remove(
+    @Param('id', new ParseObjectIdPipe()) id: string,
+    @AuditActor() audit: AuditContext,
+  ) {
+    return this.service.remove(id, audit);
   }
 }
