@@ -1,6 +1,15 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { BadgeService } from './badge.service';
 import { CreateBadgeDto } from './dto/create-badge.dto';
 import { UpdateBadgeDto } from './dto/update-badge.dto';
@@ -43,7 +52,10 @@ export class BadgeController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  update(@Param('id', new ParseObjectIdPipe()) id: string, @Body() payload: UpdateBadgeDto) {
+  update(
+    @Param('id', new ParseObjectIdPipe()) id: string,
+    @Body() payload: UpdateBadgeDto,
+  ) {
     return this.service.update(id, payload);
   }
 

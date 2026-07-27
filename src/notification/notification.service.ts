@@ -52,7 +52,11 @@ export class NotificationService {
     const safeLimit = Math.min(limit, 50);
     const skip = (page - 1) * safeLimit;
     const [data, total] = await Promise.all([
-      this.notificationModel.find({ userId }).skip(skip).limit(safeLimit).exec(),
+      this.notificationModel
+        .find({ userId })
+        .skip(skip)
+        .limit(safeLimit)
+        .exec(),
       this.notificationModel.countDocuments({ userId }).exec(),
     ]);
     return {

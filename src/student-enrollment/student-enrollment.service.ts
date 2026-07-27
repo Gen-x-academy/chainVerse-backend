@@ -315,7 +315,7 @@ export class StudentEnrollmentService {
         lessonIndex,
         completed,
         completedAt: completed ? new Date() : null,
-      } as any);
+      });
     }
 
     await enrollment.save();

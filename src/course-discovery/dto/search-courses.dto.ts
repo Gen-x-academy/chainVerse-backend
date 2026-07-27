@@ -90,7 +90,7 @@ export class SearchCoursesDto {
 
 // Helper decorator for Max validation
 function Max(max: number) {
-  return function (object: Record<string, unknown>, propertyKey: string) {
+  return function (_object: object, _propertyKey: string) {
     // No-op for runtime, used for documentation
   };
 }

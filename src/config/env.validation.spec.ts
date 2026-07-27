@@ -85,13 +85,10 @@ describe('envValidationSchema', () => {
       expect(value.NODE_ENV).toBe('development');
     });
 
-    it.each(['development', 'test'])(
-      'accepts NODE_ENV=%s',
-      (env) => {
-        const { error } = validate({ ...VALID_BASE, NODE_ENV: env });
-        expect(error).toBeUndefined();
-      },
-    );
+    it.each(['development', 'test'])('accepts NODE_ENV=%s', (env) => {
+      const { error } = validate({ ...VALID_BASE, NODE_ENV: env });
+      expect(error).toBeUndefined();
+    });
 
     it('rejects unknown NODE_ENV', () => {
       const { error } = validate({ ...VALID_BASE, NODE_ENV: 'staging' });
@@ -163,25 +160,22 @@ describe('envValidationSchema', () => {
       },
     );
 
-    it.each(contractVars)(
-      'rejects empty %s in production mode',
-      (varName) => {
-        const env: Record<string, unknown> = {
-          ...prodBase,
-          CONTRACT_CERTIFICATES: 'C...cert-contract',
-          CONTRACT_REWARD: 'C...reward-contract',
-          CONTRACT_ESCROW: 'C...escrow-contract',
-          CONTRACT_CHV_TOKEN: 'C...token-contract',
-          CONTRACT_COURSE_REGISTRY: 'C...registry-contract',
-        };
-        env[varName] = '';
-        const { error } = validate(env);
-        expect(error).toBeDefined();
-        expect(error!.details.map((d) => d.message).join(' ')).toMatch(
-          new RegExp(varName),
-        );
-      },
-    );
+    it.each(contractVars)('rejects empty %s in production mode', (varName) => {
+      const env: Record<string, unknown> = {
+        ...prodBase,
+        CONTRACT_CERTIFICATES: 'C...cert-contract',
+        CONTRACT_REWARD: 'C...reward-contract',
+        CONTRACT_ESCROW: 'C...escrow-contract',
+        CONTRACT_CHV_TOKEN: 'C...token-contract',
+        CONTRACT_COURSE_REGISTRY: 'C...registry-contract',
+      };
+      env[varName] = '';
+      const { error } = validate(env);
+      expect(error).toBeDefined();
+      expect(error!.details.map((d) => d.message).join(' ')).toMatch(
+        new RegExp(varName),
+      );
+    });
 
     it('accepts all contract addresses present in production', () => {
       const { error } = validate({

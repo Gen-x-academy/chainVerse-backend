@@ -58,6 +58,13 @@ export class OrganizationController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  update(
+    @Param('id', new ParseObjectIdPipe()) id: string,
+    @Body() payload: UpdateOrganizationDto,
+  ) {
+    return this.service.update(id, payload);
   @UseGuards(JwtAuthGuard, OrganizationRolesGuard)
   @OrgScope({ source: 'param', key: 'id' })
   @OrgRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)

@@ -1,10 +1,20 @@
-import { IsString, IsNotEmpty, IsOptional, IsEnum, IsNumber, IsBoolean, IsUrl, Min, Max } from "class-validator";
-import { Transform } from "class-transformer";
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsEnum,
+  IsNumber,
+  IsBoolean,
+  IsUrl,
+  Min,
+  Max,
+} from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export enum NodeEnv {
-  Development = "development",
-  Production = "production",
-  Test = "test",
+  Development = 'development',
+  Production = 'production',
+  Test = 'test',
 }
 
 export class EnvironmentVariables {
@@ -19,7 +29,7 @@ export class EnvironmentVariables {
 
   @IsString()
   @IsNotEmpty()
-  API_PREFIX: string = "/api/v1";
+  API_PREFIX: string = '/api/v1';
 
   @IsString()
   @IsNotEmpty()
@@ -31,7 +41,7 @@ export class EnvironmentVariables {
 
   @IsString()
   @IsNotEmpty()
-  JWT_EXPIRATION: string = "24h";
+  JWT_EXPIRATION: string = '24h';
 
   // AI Services
   @IsOptional()
@@ -48,10 +58,10 @@ export class EnvironmentVariables {
 
   @IsString()
   @IsNotEmpty()
-  CORS_ORIGIN: string = "http://localhost:3001";
+  CORS_ORIGIN: string = 'http://localhost:3001';
 
   @IsString()
-  LOG_LEVEL: string = "info";
+  LOG_LEVEL: string = 'info';
 
   @IsOptional()
   @IsString()
@@ -129,7 +139,7 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsBoolean()
-  @Transform(({ value }) => value === "true")
+  @Transform(({ value }) => value === 'true')
   SMTP_SECURE?: boolean;
 
   @IsOptional()
@@ -143,10 +153,10 @@ export class EnvironmentVariables {
   // Application base URL used for verification / reset links in emails
   @IsOptional()
   @IsUrl()
-  BASE_URL: string = "http://localhost:3000";
+  BASE_URL: string = 'http://localhost:3000';
 
   @IsString()
-  EMAIL_VERIFICATION_URL: string = "http://localhost:3000/auth/verify-email";
+  EMAIL_VERIFICATION_URL: string = 'http://localhost:3000/auth/verify-email';
 
   @IsString()
   EMAIL_FROM: string = '"alian-structure" <noreply@alian-structure.com>';
@@ -232,11 +242,11 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsBoolean()
-  @Transform(({ value }) => value === "true")
+  @Transform(({ value }) => value === 'true')
   REFERRAL_ENABLE_BOT_DETECTION?: boolean = true;
 
   @IsOptional()
   @IsBoolean()
-  @Transform(({ value }) => value === "true")
+  @Transform(({ value }) => value === 'true')
   REFERRAL_ENABLE_VPN_DETECTION?: boolean = false;
 }

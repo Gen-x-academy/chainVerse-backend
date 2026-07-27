@@ -161,7 +161,6 @@ import { VerificationModule } from './verification/verification.module';
     // Platform features
     HealthModule,
     NotificationModule,
-    SessionModule,
     FinancialAidModule,
     OrganizationModule,
     OrganizationMemberModule,

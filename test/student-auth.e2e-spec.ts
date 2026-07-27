@@ -48,7 +48,12 @@ describe('Student Auth – E2E flow (#537)', () => {
   it('POST /student/register → 201, email queued', async () => {
     const res = await request(server)
       .post('/student/register')
-      .send({ firstName: 'E2E', lastName: 'User', email: EMAIL, password: PASSWORD })
+      .send({
+        firstName: 'E2E',
+        lastName: 'User',
+        email: EMAIL,
+        password: PASSWORD,
+      })
       .expect(201);
 
     expect(res.body.message).toMatch(/verify your email/i);
