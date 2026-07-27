@@ -67,7 +67,7 @@ export class StudentEnrollmentController {
   @Patch(':courseId/progress')
   updateProgress(
     @Req() req: { user: { id: string } },
-    @Param('courseId') courseId: string,
+    @Param('courseId', new ParseObjectIdPipe()) courseId: string,
     @Body() dto: UpdateProgressDto,
   ) {
     return this.service.updateProgress(

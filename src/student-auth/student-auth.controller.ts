@@ -11,7 +11,6 @@ import { ResendVerificationEmailDto } from './dto/resend-verification-email.dto'
 import { ForgetPasswordDto } from './dto/forget-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { Public } from '../common/decorators/public.decorator';
 
 // Auth endpoints are more sensitive to brute-force: tighten to 10 req/min
