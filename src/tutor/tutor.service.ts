@@ -441,17 +441,4 @@ export class TutorService {
 
     return this.sanitizeTutor(tutor);
   }
-
-
-
-  async logout(dto: RefreshTokenDto) {
-    if (!dto.refreshToken) {
-      throw new BadRequestException('Refresh token is required');
-    }
-
-    const tokenHash = this.hashToken(dto.refreshToken);
-    await this.refreshTokenModel.updateOne({ tokenHash }, { $set: { revoked: true } }).exec();
-
-    return { message: 'Logged out successfully' };
-  }
 }
