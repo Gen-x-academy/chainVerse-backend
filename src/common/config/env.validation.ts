@@ -61,6 +61,35 @@ export const envValidationSchema = Joi.object({
 
   // Application base URL used for verification / reset links in emails
   BASE_URL: Joi.string().uri().default('http://localhost:3000'),
+
+  // ─── Audit logging ──────────────────────────────────────────────────────────
+  // Dedicated HMAC key for audit-entry integrity hashes. Optional: when unset
+  // the service falls back to JWT_SECRET, which keeps existing deployments
+  // working. Setting it is strongly recommended in production — sharing the key
+  // with JWT_SECRET means rotating that secret silently invalidates the
+  // integrity hash of every historical audit entry. AuditService logs a warning
+  // at startup when it is missing in production.
+  AUDIT_HMAC_SECRET: Joi.string().min(32).optional(),
+
+  // When true, a failed audit write also fails the mutation being audited.
+  AUDIT_LOG_FAIL_CLOSED: Joi.boolean().default(false),
+
+  // ─── Uploads: quarantine, scanning and quotas ───────────────────────────────
+  // Storage root for uploaded files. Must be outside any web-served directory.
+  UPLOAD_STORAGE_ROOT: Joi.string().default('var/uploads'),
+  UPLOAD_MAX_FILE_BYTES: Joi.number().integer().positive().default(5242880),
+  UPLOAD_QUOTA_MAX_BYTES: Joi.number().integer().positive().default(104857600),
+  UPLOAD_QUOTA_MAX_FILES: Joi.number().integer().positive().default(20),
+  UPLOAD_QUOTA_WINDOW_MS: Joi.number().integer().positive().default(86400000),
+  // Retain infected samples under `infected/` instead of deleting them.
+  UPLOAD_RETAIN_INFECTED: Joi.boolean().default(false),
+
+  MALWARE_SCAN_PROVIDER: Joi.string()
+    .valid('builtin', 'clamav')
+    .default('builtin'),
+  MALWARE_SCAN_HOST: Joi.string().default('127.0.0.1'),
+  MALWARE_SCAN_PORT: Joi.number().port().default(3310),
+  MALWARE_SCAN_TIMEOUT_MS: Joi.number().integer().positive().default(30000),
 });
 
 /**
