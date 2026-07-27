@@ -39,10 +39,16 @@ describe('Enrollment – E2E flow (#538)', () => {
     await app.init();
     server = app.getHttpServer() as Server;
 
-    studentModel = moduleFixture.get<Model<Student>>(getModelToken(Student.name));
+    studentModel = moduleFixture.get<Model<Student>>(
+      getModelToken(Student.name),
+    );
     courseModel = moduleFixture.get<Model<Course>>(getModelToken(Course.name));
-    enrollmentModel = moduleFixture.get<Model<Enrollment>>(getModelToken(Enrollment.name));
-    cartItemModel = moduleFixture.get<Model<CartItem>>(getModelToken(CartItem.name));
+    enrollmentModel = moduleFixture.get<Model<Enrollment>>(
+      getModelToken(Enrollment.name),
+    );
+    cartItemModel = moduleFixture.get<Model<CartItem>>(
+      getModelToken(CartItem.name),
+    );
 
     // Seed a published free course directly in DB
     const course = await courseModel.create({
@@ -58,9 +64,12 @@ describe('Enrollment – E2E flow (#538)', () => {
     courseId = (course as any)._id.toString();
 
     // Register + verify + login
-    await request(server)
-      .post('/student/register')
-      .send({ firstName: 'Enroll', lastName: 'User', email: EMAIL, password: PASSWORD });
+    await request(server).post('/student/register').send({
+      firstName: 'Enroll',
+      lastName: 'User',
+      email: EMAIL,
+      password: PASSWORD,
+    });
 
     const student = await studentModel.findOne({ email: EMAIL }).exec();
     if (student?.verificationToken) {
@@ -102,7 +111,9 @@ describe('Enrollment – E2E flow (#538)', () => {
       .send({ courseId })
       .expect((r) => {
         if (r.status !== 200 && r.status !== 201) {
-          throw new Error(`Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`);
+          throw new Error(
+            `Expected 200/201, got ${r.status}: ${JSON.stringify(r.body)}`,
+          );
         }
       });
 
@@ -128,7 +139,8 @@ describe('Enrollment – E2E flow (#538)', () => {
 
     expect(Array.isArray(res.body)).toBe(true);
     const enrolled = (res.body as any[]).some(
-      (item) => item.course?.id === courseId || item.enrollment?.courseId === courseId,
+      (item) =>
+        item.course?.id === courseId || item.enrollment?.courseId === courseId,
     );
     expect(enrolled).toBe(true);
   });

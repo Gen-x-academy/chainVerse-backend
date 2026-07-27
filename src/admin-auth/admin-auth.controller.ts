@@ -1,6 +1,15 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { AdminAuthService } from './admin-auth.service';
 import { CreateAdminAuthDto } from './dto/create-admin-auth.dto';
 import { UpdateAdminAuthDto } from './dto/update-admin-auth.dto';
@@ -35,7 +44,10 @@ export class AdminAuthController {
 
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   @Patch(':id')
-  update(@Param('id', new ParseObjectIdPipe()) id: string, @Body() payload: UpdateAdminAuthDto) {
+  update(
+    @Param('id', new ParseObjectIdPipe()) id: string,
+    @Body() payload: UpdateAdminAuthDto,
+  ) {
     return this.service.update(id, payload);
   }
 

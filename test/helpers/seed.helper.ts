@@ -36,7 +36,9 @@ export async function seedVerifiedStudent(
 ): Promise<SeededStudent> {
   const payload = { ...SEED_STUDENT, ...overrides };
 
-  const createRes = await request(server).post('/auth/student/register').send(payload);
+  const createRes = await request(server)
+    .post('/auth/student/register')
+    .send(payload);
 
   if (createRes.status !== 201 && createRes.status !== 200) {
     throw new Error(

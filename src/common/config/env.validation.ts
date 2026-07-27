@@ -67,7 +67,9 @@ export const envValidationSchema = Joi.object({
  * Validates a plain env object against the schema and returns the coerced
  * values. Throws a descriptive error on the first violation.
  */
-export function validateEnv(env: Record<string, unknown>): Record<string, unknown> {
+export function validateEnv(
+  env: Record<string, unknown>,
+): Record<string, unknown> {
   const { error, value } = envValidationSchema.validate(env, {
     abortEarly: true,
     allowUnknown: true,

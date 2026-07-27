@@ -80,11 +80,7 @@ export class StellarService {
       const expectedAmountString = expectedAmount.toString();
       const paymentOp = Array.isArray(operations?.records)
         ? operations.records.find(
-            (op: {
-              type?: string;
-              to?: string;
-              amount?: string;
-            }) =>
+            (op: { type?: string; to?: string; amount?: string }) =>
               [
                 'payment',
                 'path_payment_strict_receive',
@@ -130,6 +126,7 @@ export class StellarService {
     const chvLine = account.balances.find(
       (b): b is Horizon.HorizonApi.BalanceLineAsset =>
         b.asset_type !== 'native' &&
+        b.asset_type !== 'liquidity_pool_shares' &&
         (b.asset_code === 'CHV' ||
           ('asset_issuer' in b && b.asset_issuer === chvContractId)),
     );

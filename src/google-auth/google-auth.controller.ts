@@ -1,4 +1,12 @@
-import { Body, Controller, Post, Get, UseGuards, Req, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Get,
+  UseGuards,
+  Req,
+  Res,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Throttle } from '@nestjs/throttler';
 import { GoogleAuthService } from './google-auth.service';

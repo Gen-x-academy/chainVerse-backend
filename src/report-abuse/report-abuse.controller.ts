@@ -1,6 +1,16 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
-import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { ReportAbuseService } from './report-abuse.service';
 import { CreateReportAbuseDto } from './dto/create-report-abuse.dto';
 import { UpdateReportAbuseDto } from './dto/update-report-abuse.dto';
@@ -47,7 +57,10 @@ export class ReportAbuseController {
   @Patch(':id')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  update(@Param('id', new ParseObjectIdPipe()) id: string, @Body() payload: UpdateReportAbuseDto) {
+  update(
+    @Param('id', new ParseObjectIdPipe()) id: string,
+    @Body() payload: UpdateReportAbuseDto,
+  ) {
     return this.service.update(id, payload);
   }
 

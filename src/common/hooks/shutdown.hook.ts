@@ -42,5 +42,7 @@ export function formatUptime(): string {
 export function logMemoryUsage(logger: Logger): void {
   const { heapUsed, heapTotal, rss } = process.memoryUsage();
   const mb = (b: number) => `${(b / 1024 / 1024).toFixed(1)} MB`;
-  logger.debug(`Memory — heap: ${mb(heapUsed)}/${mb(heapTotal)}, rss: ${mb(rss)}`);
+  logger.debug(
+    `Memory — heap: ${mb(heapUsed)}/${mb(heapTotal)}, rss: ${mb(rss)}`,
+  );
 }

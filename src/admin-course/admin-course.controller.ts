@@ -1,6 +1,16 @@
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { AdminCourseService } from './admin-course.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
@@ -56,13 +66,19 @@ export class AdminCourseController {
 
   @Patch(':id/publish')
   @ApiOperation({ summary: 'Publish a course' })
-  publish(@Param('id', new ParseObjectIdPipe()) id: string, @CurrentUser('sub') adminId: string) {
+  publish(
+    @Param('id', new ParseObjectIdPipe()) id: string,
+    @CurrentUser('sub') adminId: string,
+  ) {
     return this.adminCourseService.publish(id, adminId, true);
   }
 
   @Patch(':id/unpublish')
   @ApiOperation({ summary: 'Unpublish a course' })
-  unpublish(@Param('id', new ParseObjectIdPipe()) id: string, @CurrentUser('sub') adminId: string) {
+  unpublish(
+    @Param('id', new ParseObjectIdPipe()) id: string,
+    @CurrentUser('sub') adminId: string,
+  ) {
     return this.adminCourseService.unpublish(id, adminId, true);
   }
 

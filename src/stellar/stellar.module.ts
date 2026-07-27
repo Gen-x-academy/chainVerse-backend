@@ -3,7 +3,11 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { MongooseModule } from '@nestjs/mongoose';
 import { StellarController } from './stellar.controller';
 import { StellarService } from './stellar.service';
-import { StellarSyncService, CertificateTx, CertificateTxSchema } from './stellar-sync.service';
+import {
+  StellarSyncService,
+  CertificateTx,
+  CertificateTxSchema,
+} from './stellar-sync.service';
 
 @Global()
 @Module({

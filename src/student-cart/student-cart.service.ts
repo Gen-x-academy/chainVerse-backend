@@ -1,4 +1,9 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { UpdateStudentCartDto } from './dto/update-student-cart.dto';
@@ -61,7 +66,7 @@ export class StudentCartService {
       .exec();
 
     const courseMap = new Map<string, any>();
-    courses.forEach(c => {
+    courses.forEach((c) => {
       courseMap.set(c.id.toString(), {
         id: c.id,
         title: c.title,
@@ -70,7 +75,6 @@ export class StudentCartService {
         tutorName: c.tutorName,
       });
     });
-
 
     const itemsWithDetails = items.map((item) => ({
       cartItem: item,
@@ -84,7 +88,7 @@ export class StudentCartService {
 
     return {
       studentId,
-      items: validItems as Array<{ cartItem: CartItem; course: unknown }>,
+      items: validItems,
       totalItems: validItems.length,
       totalPrice,
     };

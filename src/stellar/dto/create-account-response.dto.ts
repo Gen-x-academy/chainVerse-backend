@@ -2,7 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateAccountResponseDto {
   @ApiProperty({
-    description: 'Stellar public key (G...) for the newly created testnet account',
+    description:
+      'Stellar public key (G...) for the newly created testnet account',
     example: 'GAHJJJKMOKYE4RVPZEWZTKH5FVI4PA3VL7GK2LFNUBSGBV4UHEIPZXB',
   })
   publicKey: string;
@@ -19,7 +20,10 @@ export class CreateAccountResponseDto {
   })
   funded: boolean;
 
-  @ApiProperty({ description: 'Configured Stellar network', example: 'testnet' })
+  @ApiProperty({
+    description: 'Configured Stellar network',
+    example: 'testnet',
+  })
   network: string;
 
   @ApiProperty({

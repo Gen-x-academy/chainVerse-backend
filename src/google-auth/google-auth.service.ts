@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -15,7 +19,6 @@ export class GoogleAuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  private generateAccessToken(user: GoogleUserDocument): string {
   private createAccessToken(user: GoogleUserDocument): string {
     return this.jwtService.sign(
       { sub: user.id, email: user.email, role: user.role },
@@ -23,9 +26,7 @@ export class GoogleAuthService {
     );
   }
 
-  async register(
-    payload: GoogleAuthDto,
-  ): Promise<any> {
+  async register(payload: GoogleAuthDto): Promise<any> {
     const existing = await this.googleUserModel
       .findOne({
         $or: [{ googleId: payload.googleId }, { email: payload.email }],
@@ -36,9 +37,11 @@ export class GoogleAuthService {
     }
 
     const user = await new this.googleUserModel(payload).save();
+    const accessToken = this.createAccessToken(user);
 
     return {
-      accessToken: this.generateAccessToken(user),
+      accessToken,
+      expiresIn: ACCESS_TOKEN_EXPIRY,
       user: {
         id: user.id,
         email: user.email,
@@ -46,14 +49,9 @@ export class GoogleAuthService {
         role: user.role,
       },
     };
-    const accessToken = this.createAccessToken(user);
-
-    return { accessToken, expiresIn: ACCESS_TOKEN_EXPIRY };
   }
 
-  async login(
-    payload: GoogleAuthDto,
-  ): Promise<any> {
+  async login(payload: GoogleAuthDto): Promise<any> {
     const user = await this.googleUserModel
       .findOneAndUpdate(
         { googleId: payload.googleId },
@@ -65,8 +63,11 @@ export class GoogleAuthService {
       throw new NotFoundException('User not found. Please register first.');
     }
 
+    const accessToken = this.createAccessToken(user);
+
     return {
-      accessToken: this.generateAccessToken(user),
+      accessToken,
+      expiresIn: ACCESS_TOKEN_EXPIRY,
       user: {
         id: user.id,
         email: user.email,
@@ -74,8 +75,5 @@ export class GoogleAuthService {
         role: user.role,
       },
     };
-    const accessToken = this.createAccessToken(user);
-
-    return { accessToken, expiresIn: ACCESS_TOKEN_EXPIRY };
   }
 }
