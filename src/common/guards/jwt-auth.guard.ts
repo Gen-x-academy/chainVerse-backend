@@ -8,6 +8,7 @@ import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { SessionService } from '../../session/session.service';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -15,6 +16,7 @@ export class JwtAuthGuard implements CanActivate {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly reflector: Reflector,
+    private readonly sessionService: SessionService,
   ) {}
 
   canActivate(context: ExecutionContext): boolean {

@@ -584,7 +584,17 @@ export class StudentAuthService {
     }
 
     const tokenHash = this.hashToken(dto.refreshToken);
-    await this.refreshTokenModel.deleteOne({ tokenHash }).exec();
+    const storedToken = await this.refreshTokenModel.findOne({ tokenHash }).exec();
+    if (storedToken) {
+      // Invalidate the session
+      const allSessions = await this.sessionService.findAll();
+      const sessionToInvalidate = allSessions.find(s => s.token === dto.refreshToken && s.userId === storedToken.studentId);
+      if (sessionToInvalidate) {
+        await this.sessionService.invalidate(sessionToInvalidate.id, storedToken.studentId);
+      }
+      // Delete the refresh token
+      await this.refreshTokenModel.deleteOne({ tokenHash }).exec();
+    }
 
     return { message: 'Logged out successfully' };
   }
