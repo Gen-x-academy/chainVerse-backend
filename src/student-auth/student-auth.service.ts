@@ -342,7 +342,7 @@ export class StudentAuthService {
     };
   }
 
-  async login(dto: LoginStudentDto) {
+  async login(dto: LoginStudentDto, ipAddress?: string, userAgent?: string) {
     if (!dto.email || !dto.password) {
       throw new BadRequestException('Email and password are required');
     }
@@ -383,7 +383,7 @@ export class StudentAuthService {
     student.lockedUntil = null;
     await student.save();
 
-    const tokens = await this.generateTokenPair(student);
+    const tokens = await this.generateTokenPair(student, undefined, ipAddress, userAgent);
 
     return {
       user: this.sanitizeStudent(student),
