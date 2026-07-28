@@ -7,6 +7,7 @@ import {
   NotificationSchema,
 } from './schemas/notification.schema';
 import { PaginationModule } from '../common/pagination/pagination.module';
+import { NotificationControllerV2 } from './notification.controller.v2';
 
 @Module({
   imports: [
@@ -15,7 +16,7 @@ import { PaginationModule } from '../common/pagination/pagination.module';
     ]),
     PaginationModule,
   ],
-  controllers: [NotificationController],
+  controllers: [NotificationController, NotificationControllerV2],
   providers: [NotificationService],
   exports: [NotificationService],
 })

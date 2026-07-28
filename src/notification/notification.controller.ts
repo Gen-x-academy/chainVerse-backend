@@ -20,6 +20,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 import { FindNotificationsDto } from './dto/find-notifications.dto';
+import { Deprecated } from '../common/deprecation/deprecation.decorator';
 
 @ApiBearerAuth('access-token')
 @Controller('notifications')
@@ -37,6 +38,7 @@ export class NotificationController {
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
+  @Deprecated({ successorUrl: '/api/v2/notifications' })
   findAll(@Query() paginationDto: FindNotificationsDto) {
     return this.service.findAll(paginationDto);
   }
