@@ -14,6 +14,8 @@ import {
   systemAuditContext,
 } from '../common/audit/audit-context';
 import { snapshot } from '../common/audit/audit-redaction';
+import { PaginationService } from '../common/pagination/pagination.service';
+import { FindReportsDto } from './dto/find-reports.dto';
 
 const TARGET_TYPE = 'abuse_report';
 
@@ -33,6 +35,7 @@ export class ReportAbuseService {
     @InjectModel(AbuseReport.name)
     private readonly abuseReportModel: Model<AbuseReportDocument>,
     private readonly auditService: AuditService,
+    private readonly paginationService: PaginationService,
   ) {}
 
   async create(
@@ -43,12 +46,19 @@ export class ReportAbuseService {
     return report.save();
   }
 
-  async findAll(): Promise<AbuseReport[]> {
-    return this.abuseReportModel.find().exec();
+  async findAll(paginationDto: FindReportsDto) {
+    return this.paginationService.paginate(
+      this.abuseReportModel,
+      paginationDto,
+    );
   }
 
-  async findByReporter(reporterUserId: string): Promise<AbuseReport[]> {
-    return this.abuseReportModel.find({ reporterUserId }).exec();
+  async findByReporter(reporterUserId: string, paginationDto: FindReportsDto) {
+    return this.paginationService.paginate(
+      this.abuseReportModel,
+      paginationDto,
+      { reporterUserId },
+    );
   }
 
   async findOne(id: string): Promise<AbuseReportDocument> {

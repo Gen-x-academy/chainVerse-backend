@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { OrganizationMemberService } from './organization-member.service';
@@ -23,6 +24,7 @@ import { OrgMembership } from '../common/decorators/org-membership.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuditActor } from '../common/audit/audit-context';
 import type { AuditContext } from '../common/audit/audit-context';
+import { FindOrganizationMembersDto } from './dto/find-organization-members.dto';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Organization Members')
@@ -40,8 +42,11 @@ export class OrganizationMemberController {
     OrganizationRole.INSTRUCTOR,
     OrganizationRole.MEMBER,
   )
-  findByOrganization(@Param('orgId') orgId: string) {
-    return this.service.findByOrganization(orgId);
+  findByOrganization(
+    @Param('orgId') orgId: string,
+    @Query() paginationDto: FindOrganizationMembersDto,
+  ) {
+    return this.service.findByOrganization(orgId, paginationDto);
   }
 
   @Get('user/:userId')
@@ -50,11 +55,13 @@ export class OrganizationMemberController {
     @Param('userId') userId: string,
     @CurrentUser('sub') requesterId: string,
     @CurrentUser('role') requesterRole: string,
+    @Query() paginationDto: FindOrganizationMembersDto,
   ) {
     return this.service.findByUser(
       userId,
       requesterId,
       requesterRole === Role.ADMIN,
+      paginationDto,
     );
   }
 
