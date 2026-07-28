@@ -29,7 +29,6 @@ coverage/
 .cache/
 .parcel-cache/
 .nest-cli.json
-.tsbuildinfo
 
 # IDE/editor settings
 .vscode/
