@@ -8,9 +8,11 @@ import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { startTracing, shutdownTracing } from './observability/tracing';
 
-// Note: standalone src/express/ server has been removed — all routes are served by NestJS.
 async function bootstrap() {
+  await startTracing();
+
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
   app.useLogger(app.get(Logger));
@@ -18,18 +20,14 @@ async function bootstrap() {
   app.setGlobalPrefix('api', { exclude: ['/health'] });
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
 
-  // Compress all responses — must be first so every subsequent handler sends compressed output
   app.use(compression());
 
-  // Body size limits for security
   const express = await import('express');
   app.use(express.json({ limit: '1mb' }));
   app.use(express.urlencoded({ limit: '1mb', extended: true }));
 
-  // Security headers
   app.use(helmet());
 
-  // Configure CORS
   app.enableCors({
     origin: process.env.ALLOWED_ORIGINS?.split(',') ?? [
       'http://localhost:3000',
@@ -51,7 +49,6 @@ async function bootstrap() {
 
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  // Wrap all successful responses in the standard ApiResponse envelope
   app.useGlobalInterceptors(new TransformInterceptor());
 
   if (process.env.NODE_ENV !== 'production') {
@@ -79,3 +76,7 @@ async function bootstrap() {
   pinoLogger.log(`Application is running on port ${port}`);
 }
 bootstrap();
+
+process.on('beforeExit', async () => {
+  await shutdownTracing();
+});

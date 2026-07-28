@@ -14,7 +14,7 @@ const traceExporter = new OTLPTraceExporter({
 
 export const sdk = new NodeSDK({
   resource: new Resource({
-    'service.name': 'alian-structure-api',
+    'service.name': 'chainverse-api',
     'service.version': process.env.npm_package_version || '1.0.0',
     'deployment.environment': process.env.NODE_ENV || 'development',
   }),
@@ -50,7 +50,7 @@ export const shutdownTracing = async () => {
 
 // Helper to get the tracer
 export const getTracer = () => {
-  return trace.getTracer('alian-structure-api', '1.0.0');
+  return trace.getTracer('chainverse-api', '1.0.0');
 };
 
 // Helper to create a span with automatic error handling

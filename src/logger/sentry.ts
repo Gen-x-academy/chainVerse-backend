@@ -6,6 +6,7 @@ import {
   expressIntegration,
   getDefaultIntegrations,
 } from '@sentry/node';
+import { redact } from '../common/utils/redaction';
 
 const dsn = process.env.SENTRY_DSN;
 const environment =
@@ -43,10 +44,7 @@ export const initSentry = () => {
     attachStacktrace: true,
     normalizeDepth: 5,
     beforeSend(event) {
-      if (event.request && typeof event.request === 'object') {
-        delete (event.request as any).data;
-      }
-      return event;
+      return redact(event) as Sentry.Event;
     },
   });
 

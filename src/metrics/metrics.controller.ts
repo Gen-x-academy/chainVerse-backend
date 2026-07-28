@@ -12,18 +12,6 @@ export class MetricsController {
   constructor(private readonly metricsService: MetricsService) {}
 
   /**
-   * Returns application metrics as a JSON snapshot.
-   * Includes uptime, request counters, and latency percentiles per route.
-   *
-   * Restricted to internal/localhost callers only.
-   */
-  @Get()
-  @ApiOperation({ summary: 'Get application metrics (JSON) — internal only' })
-  getMetrics(): Record<string, unknown> {
-    return this.metricsService.snapshot();
-  }
-
-  /**
    * Returns application metrics in Prometheus text exposition format.
    * Suitable for scraping by a Prometheus server on the internal network.
    *
@@ -34,7 +22,7 @@ export class MetricsController {
   @ApiOperation({
     summary: 'Get application metrics (Prometheus format) — internal only',
   })
-  getPrometheusMetrics(): string {
+  async getPrometheusMetrics(): Promise<string> {
     return this.metricsService.prometheusText();
   }
 }
