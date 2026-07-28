@@ -17,7 +17,9 @@ Thumbs.db
 
 # Build output (if compiling TypeScript)
 dist/
+dist-test/
 build/
+*.tsbuildinfo
 
 # IDE/editor settings
 .vscode/
