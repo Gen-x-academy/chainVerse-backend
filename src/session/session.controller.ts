@@ -37,7 +37,7 @@ export class SessionController {
   @Get('me')
   @ApiOperation({ summary: 'Get all active sessions for the authenticated user' })
   findMySessions(@Req() req: { user: { id: string } }) {
-    return this.service.findByUserId(req.user.id);
+    return this.service.findActiveByUserId(req.user.id);
   }
 
   @Get()
@@ -50,14 +50,26 @@ export class SessionController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a session by ID' })
-  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
-    return this.service.findOne(id);
+  findOne(
+    @Param('id', new ParseObjectIdPipe()) id: string,
+    @Req() req: { user: { id: string } },
+  ) {
+    return this.service.findOne(id, req.user.id);
   }
 
   @Patch(':id/invalidate')
-  @ApiOperation({ summary: 'Invalidate (deactivate) a session by ID' })
-  invalidate(@Param('id', new ParseObjectIdPipe()) id: string) {
-    return this.service.invalidate(id);
+  @ApiOperation({ summary: 'Invalidate (deactivate) a specific session by ID' })
+  invalidate(
+    @Param('id', new ParseObjectIdPipe()) id: string,
+    @Req() req: { user: { id: string } },
+  ) {
+    return this.service.invalidate(id, req.user.id);
+  }
+
+  @Post('invalidate-all-except-current')
+  @ApiOperation({ summary: 'Invalidate all sessions except the current one' })
+  invalidateAllExceptCurrent(@Req() req: { user: { id: string }, sessionId: string }) {
+    return this.service.invalidateAllExceptCurrent(req.user.id, req.sessionId);
   }
 
   @Delete(':id')
