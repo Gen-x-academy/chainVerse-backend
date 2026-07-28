@@ -117,6 +117,7 @@ export class StudentAuthService {
       expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRY * 1000),
     }).save();
 
+    let sessionId: string | undefined;
     // Create a new session if IP and user agent are provided
     if (ipAddress && userAgent) {
       const sessionDto: CreateSessionDto = {
@@ -124,8 +125,14 @@ export class StudentAuthService {
         ipAddress,
         userAgent,
       };
-      await this.sessionService.create(student.id, sessionDto);
+      const newSession = await this.sessionService.create(student.id, sessionDto);
+      sessionId = newSession.id;
     }
+
+    const accessToken = this.jwtService.sign(
+      { sub: student.id, email: student.email, role: student.role, sessionId },
+      { expiresIn: ACCESS_TOKEN_EXPIRY },
+    );
 
     return { accessToken, refreshToken, expiresIn: ACCESS_TOKEN_EXPIRY };
   }
