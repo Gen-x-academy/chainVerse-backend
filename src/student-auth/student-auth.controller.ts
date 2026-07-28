@@ -142,8 +142,8 @@ export class StudentAuthController {
     description: 'New access and refresh tokens issued',
   })
   @ApiResponse({ status: 401, description: 'Invalid or revoked refresh token' })
-  refreshToken(@Body() dto: RefreshTokenDto) {
-    return this.studentAuthService.refreshToken(dto);
+  refreshToken(@Body() dto: RefreshTokenDto, @Req() req: Request) {
+    return this.studentAuthService.refreshToken(dto, (req as any).ip, req.headers['user-agent']);
   }
 
   @Public()
