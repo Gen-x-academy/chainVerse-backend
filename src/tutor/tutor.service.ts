@@ -269,22 +269,25 @@ export class TutorService {
     }
 
     const tokenHash = this.hashToken(dto.refreshToken);
-    const stored = await this.refreshTokenModel
-      .findOne({ tokenHash, revoked: false })
-      .exec();
+    const stored = await this.refreshTokenModel.findOne({ tokenHash }).exec();
 
     if (!stored) {
-      const family = payload.family as string | undefined;
-      if (family) {
-        await this.refreshTokenModel
-          .updateMany({ family, revoked: false }, { revoked: true })
-          .exec();
-      }
       throw new UnauthorizedException(
         'Refresh token has been revoked or already used',
       );
     }
 
+    if (stored.revoked) {
+      // Token is already revoked: revoke ALL tokens in the family (theft detected)
+      await this.refreshTokenModel
+        .updateMany({ family: stored.family, revoked: false }, { revoked: true })
+        .exec();
+      throw new UnauthorizedException(
+        'Refresh token has been revoked or already used',
+      );
+    }
+
+    // Mark old token revoked
     stored.revoked = true;
     await stored.save();
 
