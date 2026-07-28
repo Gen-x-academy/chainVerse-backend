@@ -94,8 +94,8 @@ export class StudentAuthController {
     status: 401,
     description: 'Invalid credentials or unverified email',
   })
-  login(@Body() dto: LoginStudentDto) {
-    return this.studentAuthService.login(dto);
+  login(@Body() dto: LoginStudentDto, @Req() req: Request) {
+    return this.studentAuthService.login(dto, (req as any).ip, req.headers['user-agent']);
   }
 
   @Throttle({ default: { limit: 3, ttl: 900_000 } }) // 3 per 15 minutes
