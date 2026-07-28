@@ -32,6 +32,8 @@ import {
   PasswordResetToken,
   PasswordResetTokenDocument,
 } from './schemas/password-reset-token.schema';
+import { SessionService } from '../session/session.service';
+import { CreateSessionDto } from '../session/dto/create-session.dto';
 
 const ACCESS_TOKEN_EXPIRY = 3600; // 1 hour
 const REFRESH_TOKEN_EXPIRY = 604800; // 7 days
@@ -55,6 +57,7 @@ export class StudentAuthService {
     private readonly configService: ConfigService,
     private readonly emailService: EmailService,
     private readonly jwtService: JwtService,
+    private readonly sessionService: SessionService,
   ) {}
 
   private async hashPassword(password: string): Promise<string> {
@@ -91,6 +94,8 @@ export class StudentAuthService {
   private async generateTokenPair(
     student: StudentDocument,
     tokenFamily?: string,
+    ipAddress?: string,
+    userAgent?: string,
   ) {
     const family = tokenFamily ?? crypto.randomUUID();
     const accessToken = this.jwtService.sign(
@@ -111,6 +116,17 @@ export class StudentAuthService {
       studentId: student.id,
       expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRY * 1000),
     }).save();
+
+    // Create a new session if IP and user agent are provided
+    if (ipAddress && userAgent) {
+      const sessionDto: CreateSessionDto = {
+        token: refreshToken,
+        ipAddress,
+        userAgent,
+      };
+      await this.sessionService.create(student.id, sessionDto);
+    }
+
     return { accessToken, refreshToken, expiresIn: ACCESS_TOKEN_EXPIRY };
   }
 
