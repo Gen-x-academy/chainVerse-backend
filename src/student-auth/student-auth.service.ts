@@ -87,7 +87,7 @@ export class StudentAuthService {
       return this.jwtService.verify<Record<string, unknown>>(token);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Invalid token';
-      throw new Error(message);
+      throw new UnauthorizedException(message);
     }
   }
 
