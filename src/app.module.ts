@@ -21,6 +21,7 @@ import { EmailModule } from './email/email.module';
 import { StellarModule } from './stellar/stellar.module';
 import { AppCacheModule } from './cache/app-cache.module';
 import { SessionModule } from './session/session.module';
+import { SessionService } from './session/session.service';
 
 // Auth modules
 import { StudentAuthModule } from './student-auth/student-auth.module';
