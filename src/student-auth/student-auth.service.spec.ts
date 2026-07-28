@@ -228,6 +228,16 @@ describe('StudentAuthService', () => {
       expect(bcrypt.hash).not.toHaveBeenCalled();
     });
 
+    it('should throw BadRequestException for weak password', async () => {
+      const weakPasswordDto: CreateStudentDto = {
+        ...createDto,
+        password: '123',
+      };
+      await expect(service.create(weakPasswordDto)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
     it('calls bcrypt.hash with the plaintext password', async () => {
       jest
         .spyOn(studentModel, 'findOne')
