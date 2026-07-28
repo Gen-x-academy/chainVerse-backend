@@ -515,7 +515,7 @@ export class StudentAuthService {
     return { message: 'Password reset successfully' };
   }
 
-  async refreshToken(dto: RefreshTokenDto) {
+  async refreshToken(dto: RefreshTokenDto, ipAddress?: string, userAgent?: string) {
     if (!dto.refreshToken) {
       throw new BadRequestException('Refresh token is required');
     }
@@ -555,12 +555,19 @@ export class StudentAuthService {
     stored.isRevoked = true;
     await stored.save();
 
+    // Find and invalidate the old session
+    const oldSession = await this.sessionService.findAll();
+    const sessionToInvalidate = oldSession.find(s => s.token === dto.refreshToken && s.userId === stored.studentId);
+    if (sessionToInvalidate) {
+      await this.sessionService.invalidate(sessionToInvalidate.id, stored.studentId);
+    }
+
     const student = await this.studentModel.findById(stored.studentId).exec();
     if (!student) {
       throw new NotFoundException('Student not found');
     }
 
-    return this.generateTokenPair(student, stored.tokenFamily);
+    return this.generateTokenPair(student, stored.tokenFamily, ipAddress, userAgent);
   }
 
   async getProfile(studentId: string) {
