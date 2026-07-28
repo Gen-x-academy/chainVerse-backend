@@ -21,6 +21,16 @@ dist-test/
 build/
 *.tsbuildinfo
 
+# Coverage reports
+coverage/
+*.lcov
+
+# Cache directories
+.cache/
+.parcel-cache/
+.nest-cli.json
+.tsbuildinfo
+
 # IDE/editor settings
 .vscode/
 .idea/
