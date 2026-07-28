@@ -47,7 +47,7 @@ export class JwtAuthGuard implements CanActivate {
 
       // Refresh tokens must not be used for authentication
       if (payload['type'] === 'refresh') {
-        throw new Error('Refresh tokens cannot be used for authentication');
+        throw new UnauthorizedException('Refresh tokens cannot be used for authentication');
       }
 
       // All identity and role claims must be present
@@ -59,7 +59,7 @@ export class JwtAuthGuard implements CanActivate {
         typeof payload['role'] !== 'string' ||
         !payload['role']
       ) {
-        throw new Error('Token is missing required claims');
+        throw new UnauthorizedException('Token is missing required claims');
       }
 
       request.user = {
