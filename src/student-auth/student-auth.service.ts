@@ -98,10 +98,6 @@ export class StudentAuthService {
     userAgent?: string,
   ) {
     const family = tokenFamily ?? crypto.randomUUID();
-    const accessToken = this.jwtService.sign(
-      { sub: student.id, email: student.email, role: student.role },
-      { expiresIn: ACCESS_TOKEN_EXPIRY },
-    );
     const refreshToken = this.jwtService.sign(
       {
         sub: student.id,

@@ -68,6 +68,10 @@ export class JwtAuthGuard implements CanActivate {
         email: payload['email'],
         role: payload['role'],
       };
+      // Attach session ID to request if it exists in the payload
+      if (payload['sessionId']) {
+        request.sessionId = payload['sessionId'];
+      }
       return true;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Invalid token';

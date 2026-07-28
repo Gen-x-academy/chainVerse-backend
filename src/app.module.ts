@@ -188,6 +188,7 @@ import { VerificationModule } from './verification/verification.module';
   controllers: [AppController],
   providers: [
     AppService,
+    SessionService,
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
