@@ -6,23 +6,41 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as crypto from 'crypto';
+import * as bcrypt from 'bcryptjs';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EmailService } from '../email/email.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { LoginStudentDto } from './dto/login-student.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
+import { ResendVerificationEmailDto } from './dto/resend-verification-email.dto';
 import { ForgetPasswordDto } from './dto/forget-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { DomainEvents } from '../events/event-names';
 import { StudentRegisteredPayload } from '../events/payloads/student-registered.payload';
+import { VerificationEmailResentPayload } from '../events/payloads/verification-email-resent.payload';
 import { Student, StudentDocument } from './schemas/student.schema';
-import { RefreshToken, RefreshTokenDocument } from './schemas/refresh-token.schema';
+import {
+  RefreshToken,
+  RefreshTokenDocument,
+} from './schemas/refresh-token.schema';
+import {
+  PasswordResetToken,
+  PasswordResetTokenDocument,
+} from './schemas/password-reset-token.schema';
 
-const ACCESS_TOKEN_EXPIRY = 3600;
-const REFRESH_TOKEN_EXPIRY = 604800;
+const ACCESS_TOKEN_EXPIRY = 3600; // 1 hour
+const REFRESH_TOKEN_EXPIRY = 604800; // 7 days
+const VERIFICATION_TOKEN_EXPIRY = 86400; // 24 hours
+const RESET_TOKEN_EXPIRY = 900; // 15 minutes
+const BCRYPT_SALT_ROUNDS = 10;
+const VERIFICATION_COOLDOWN = 60; // 1 minute cooldown between attempts
+const VERIFICATION_ATTEMPT_WINDOW = 900; // 15 minutes window for attempt counting
+const MAX_VERIFICATION_ATTEMPTS = 5; // Maximum 5 attempts per window
 
 @Injectable()
 export class StudentAuthService {
@@ -31,78 +49,61 @@ export class StudentAuthService {
     private readonly studentModel: Model<StudentDocument>,
     @InjectModel(RefreshToken.name)
     private readonly refreshTokenModel: Model<RefreshTokenDocument>,
+    @InjectModel(PasswordResetToken.name)
+    private readonly passwordResetTokenModel: Model<PasswordResetTokenDocument>,
     private readonly eventEmitter: EventEmitter2,
     private readonly configService: ConfigService,
+    private readonly emailService: EmailService,
+    private readonly jwtService: JwtService,
   ) {}
 
-  private get jwtSecret(): string {
-    return this.configService.get<string>('jwtSecret') ?? '';
+  private async hashPassword(password: string): Promise<string> {
+    return bcrypt.hash(password, BCRYPT_SALT_ROUNDS);
   }
 
-  private hashPassword(password: string): string {
-    const salt = crypto.randomBytes(16).toString('hex');
-    const hash = crypto
-      .pbkdf2Sync(password, salt, 10000, 64, 'sha512')
-      .toString('hex');
-    return `${salt}:${hash}`;
-  }
-
-  private verifyPassword(password: string, stored: string): boolean {
-    const [salt, hash] = stored.split(':');
-    const verify = crypto
-      .pbkdf2Sync(password, salt, 10000, 64, 'sha512')
-      .toString('hex');
-    return hash === verify;
+  private async verifyPassword(
+    password: string,
+    storedHash: string,
+  ): Promise<boolean> {
+    return bcrypt.compare(password, storedHash);
   }
 
   private hashToken(token: string): string {
     return crypto.createHash('sha256').update(token).digest('hex');
   }
 
-  private createJwt(
-    payload: Record<string, unknown>,
-    expiresIn: number,
-  ): string {
-    const header = Buffer.from(
-      JSON.stringify({ alg: 'HS256', typ: 'JWT' }),
-    ).toString('base64url');
-    const now = Math.floor(Date.now() / 1000);
-    const body = Buffer.from(
-      JSON.stringify({ ...payload, iat: now, exp: now + expiresIn }),
-    ).toString('base64url');
-    const sig = crypto
-      .createHmac('sha256', this.jwtSecret)
-      .update(`${header}.${body}`)
-      .digest('base64url');
-    return `${header}.${body}.${sig}`;
+  private createVerificationToken(studentId: string, email: string): string {
+    return this.jwtService.sign(
+      { sub: studentId, email, type: 'email_verification' },
+      { expiresIn: VERIFICATION_TOKEN_EXPIRY },
+    );
   }
 
   verifyJwt(token: string): Record<string, unknown> {
-    const parts = token.split('.');
-    if (parts.length !== 3) throw new Error('Malformed token');
-    const [header, body, sig] = parts;
-    const expected = crypto
-      .createHmac('sha256', this.jwtSecret)
-      .update(`${header}.${body}`)
-      .digest('base64url');
-    if (sig !== expected) throw new Error('Invalid token signature');
-    const decoded = JSON.parse(
-      Buffer.from(body, 'base64url').toString(),
-    ) as Record<string, unknown>;
-    if ((decoded.exp as number) < Math.floor(Date.now() / 1000))
-      throw new Error('Token expired');
-    return decoded;
+    try {
+      return this.jwtService.verify<Record<string, unknown>>(token);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Invalid token';
+      throw new Error(message);
+    }
   }
 
-  private async generateTokenPair(student: StudentDocument, tokenFamily?: string) {
+  private async generateTokenPair(
+    student: StudentDocument,
+    tokenFamily?: string,
+  ) {
     const family = tokenFamily ?? crypto.randomUUID();
-    const accessToken = this.createJwt(
+    const accessToken = this.jwtService.sign(
       { sub: student.id, email: student.email, role: student.role },
-      ACCESS_TOKEN_EXPIRY,
+      { expiresIn: ACCESS_TOKEN_EXPIRY },
     );
-    const refreshToken = this.createJwt(
-      { sub: student.id, type: 'refresh', jti: crypto.randomBytes(16).toString('hex') },
-      REFRESH_TOKEN_EXPIRY,
+    const refreshToken = this.jwtService.sign(
+      {
+        sub: student.id,
+        type: 'refresh',
+        jti: crypto.randomBytes(16).toString('hex'),
+      },
+      { expiresIn: REFRESH_TOKEN_EXPIRY },
     );
     await new this.refreshTokenModel({
       tokenHash: this.hashToken(refreshToken),
@@ -123,6 +124,14 @@ export class StudentAuthService {
       role: student.role,
       createdAt: student.createdAt,
     };
+  }
+
+  async findStudentById(studentId: string) {
+    const student = await this.studentModel.findById(studentId).exec();
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+    return this.sanitizeStudent(student);
   }
 
   async create(dto: CreateStudentDto) {
@@ -147,15 +156,29 @@ export class StudentAuthService {
       throw new ConflictException('Email already registered');
     }
 
-    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const passwordHash = await this.hashPassword(dto.password);
 
     const student = await new this.studentModel({
       firstName: dto.firstName,
       lastName: dto.lastName,
       email: dto.email,
-      passwordHash: this.hashPassword(dto.password),
-      verificationToken,
+      passwordHash,
     }).save();
+
+    const verificationToken = this.createVerificationToken(
+      student.id,
+      student.email,
+    );
+
+    student.verificationToken = verificationToken;
+    student.verificationTokenExpiry =
+      Date.now() + VERIFICATION_TOKEN_EXPIRY * 1000;
+    await student.save();
+
+    await this.emailService.sendVerificationEmail(
+      student.email,
+      verificationToken,
+    );
 
     this.eventEmitter.emit(
       DomainEvents.STUDENT_REGISTERED,
@@ -171,7 +194,6 @@ export class StudentAuthService {
     return {
       message: 'Account created. Please verify your email.',
       user: this.sanitizeStudent(student),
-      verificationToken,
       ...tokens,
     };
   }
@@ -181,18 +203,127 @@ export class StudentAuthService {
       throw new BadRequestException('Verification token is required');
     }
 
-    const student = await this.studentModel
-      .findOne({ verificationToken: dto.token })
-      .exec();
-    if (!student) {
-      throw new NotFoundException('Invalid verification token');
+    let payload: Record<string, unknown>;
+    try {
+      payload = this.verifyJwt(dto.token);
+    } catch {
+      throw new BadRequestException('Invalid or expired verification token');
     }
+
+    if (payload.type !== 'email_verification') {
+      throw new BadRequestException('Invalid verification token type');
+    }
+
+    const studentId = payload.sub as string;
+    const email = payload.email as string;
+
+    const student = await this.studentModel.findById(studentId).exec();
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+
+    if (student.email !== email) {
+      throw new BadRequestException('Token does not match student email');
+    }
+
+    if (student.emailVerified) {
+      throw new BadRequestException('Email already verified');
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+
+    if (
+      student.lastVerificationAttempt &&
+      now - student.lastVerificationAttempt < VERIFICATION_COOLDOWN
+    ) {
+      throw new BadRequestException(
+        'Too many verification attempts. Please wait before trying again.',
+      );
+    }
+
+    const attemptsInWindow =
+      student.lastVerificationAttempt &&
+      now - student.lastVerificationAttempt < VERIFICATION_ATTEMPT_WINDOW
+        ? student.verificationAttempts
+        : 0;
+
+    if (attemptsInWindow >= MAX_VERIFICATION_ATTEMPTS) {
+      throw new BadRequestException(
+        'Maximum verification attempts exceeded. Please request a new verification token.',
+      );
+    }
+
+    student.verificationAttempts += 1;
+    student.lastVerificationAttempt = now;
+    await student.save();
 
     student.emailVerified = true;
     student.verificationToken = null;
+    student.verificationTokenExpiry = null;
+    student.verificationAttempts = 0;
+    student.lastVerificationAttempt = null;
     await student.save();
 
     return { message: 'Email verified successfully' };
+  }
+
+  async resendVerificationEmail(dto: ResendVerificationEmailDto) {
+    if (!dto.email) {
+      throw new BadRequestException('Email is required');
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dto.email)) {
+      throw new BadRequestException('Invalid email format');
+    }
+
+    const student = await this.studentModel
+      .findOne({ email: dto.email })
+      .exec();
+    if (!student) {
+      return {
+        message: 'If the email exists, a verification link has been sent',
+      };
+    }
+
+    if (student.emailVerified) {
+      throw new BadRequestException('Email already verified');
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+
+    if (
+      student.lastVerificationAttempt &&
+      now - student.lastVerificationAttempt < VERIFICATION_COOLDOWN
+    ) {
+      throw new BadRequestException(
+        'Please wait before requesting another verification email.',
+      );
+    }
+
+    const verificationToken = this.createVerificationToken(
+      student.id,
+      student.email,
+    );
+
+    student.verificationToken = verificationToken;
+    student.verificationTokenExpiry =
+      Date.now() + VERIFICATION_TOKEN_EXPIRY * 1000;
+    student.verificationAttempts = 0;
+    student.lastVerificationAttempt = now;
+    await student.save();
+
+    this.eventEmitter.emit(
+      DomainEvents.VERIFICATION_EMAIL_RESENT,
+      Object.assign(new VerificationEmailResentPayload(), {
+        studentId: student.id,
+        email: student.email,
+        firstName: student.firstName,
+      }),
+    );
+
+    return {
+      message: 'If the email exists, a verification link has been sent',
+    };
   }
 
   async login(dto: LoginStudentDto) {
@@ -207,15 +338,34 @@ export class StudentAuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    if (!this.verifyPassword(dto.password, student.passwordHash)) {
+    if (student.lockedUntil && student.lockedUntil > new Date()) {
+      throw new UnauthorizedException(
+        'Account temporarily locked. Try again later.',
+      );
+    }
+
+    const passwordValid = await this.verifyPassword(
+      dto.password,
+      student.passwordHash,
+    );
+    if (!passwordValid) {
+      student.loginAttempts += 1;
+      if (student.loginAttempts >= 5) {
+        student.lockedUntil = new Date(Date.now() + 15 * 60 * 1000);
+      }
+      await student.save();
       throw new UnauthorizedException('Invalid email or password');
     }
 
     if (!student.emailVerified) {
       throw new UnauthorizedException(
-        'Please verify your email before logging in',
+        'Please verify your email address before logging in.',
       );
     }
+
+    student.loginAttempts = 0;
+    student.lockedUntil = null;
+    await student.save();
 
     const tokens = await this.generateTokenPair(student);
 
@@ -225,7 +375,11 @@ export class StudentAuthService {
     };
   }
 
-  async forgetPassword(dto: ForgetPasswordDto) {
+  async forgetPassword(
+    dto: ForgetPasswordDto,
+    ipAddress?: string,
+    userAgent?: string,
+  ) {
     if (!dto.email) {
       throw new BadRequestException('Email is required');
     }
@@ -234,21 +388,57 @@ export class StudentAuthService {
       .findOne({ email: dto.email })
       .exec();
     if (!student) {
+      // Return success even if email doesn't exist to prevent email enumeration
       return { message: 'If the email exists, a reset link has been sent' };
     }
 
+    // Invalidate any existing reset tokens for this student
+    await this.passwordResetTokenModel
+      .updateMany(
+        { studentId: student.id },
+        { $set: { used: true, usedAt: new Date() } },
+      )
+      .exec();
+
+    // Generate a new secure reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
-    student.resetToken = resetToken;
-    student.resetTokenExpiry = Date.now() + 15 * 60 * 1000;
+    const tokenHash = this.hashToken(resetToken);
+    const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRY * 1000);
+
+    // Persist the hashed token
+    await new this.passwordResetTokenModel({
+      tokenHash,
+      studentId: student.id,
+      expiresAt,
+      ipAddress,
+      userAgent,
+    }).save();
+
+    // Also update student record for backward compatibility (will be removed later)
+    student.resetToken = tokenHash;
+    student.resetTokenExpiry = expiresAt.getTime();
     await student.save();
 
+    // Send password reset email (token must only travel to user's inbox)
+    const baseUrl =
+      this.configService.get<string>('baseUrl') ?? 'http://localhost:3000';
+    await this.emailService.sendPasswordReset(
+      student.email,
+      resetToken,
+      baseUrl,
+    );
+
+    // Do NOT return the token in the response (security)
     return {
       message: 'If the email exists, a reset link has been sent',
-      resetToken,
     };
   }
 
-  async resetPassword(dto: ResetPasswordDto) {
+  async resetPassword(
+    dto: ResetPasswordDto,
+    ipAddress?: string,
+    userAgent?: string,
+  ) {
     if (!dto.token || !dto.newPassword) {
       throw new BadRequestException('Token and new password are required');
     }
@@ -257,24 +447,54 @@ export class StudentAuthService {
       throw new BadRequestException('Password must be at least 8 characters');
     }
 
-    const student = await this.studentModel
+    // Hash the provided token to compare with stored hash
+    const tokenHash = this.hashToken(dto.token);
+
+    // Find the reset token record
+    const resetTokenRecord = await this.passwordResetTokenModel
       .findOne({
-        resetToken: dto.token,
-        resetTokenExpiry: { $gt: Date.now() },
+        tokenHash,
+        used: false,
+        expiresAt: { $gt: new Date() },
       })
       .exec();
 
-    if (!student) {
+    if (!resetTokenRecord) {
       throw new BadRequestException('Invalid or expired reset token');
     }
 
-    student.passwordHash = this.hashPassword(dto.newPassword);
+    const student = await this.studentModel
+      .findById(resetTokenRecord.studentId)
+      .exec();
+    if (!student) throw new NotFoundException('Student not found');
+
+    const passwordHash = await this.hashPassword(dto.newPassword);
+    student.passwordHash = passwordHash;
     student.resetToken = null;
     student.resetTokenExpiry = null;
     await student.save();
 
-    // Invalidate all active sessions after password reset
+    // Mark the reset token as used (one-time use enforcement)
+    resetTokenRecord.used = true;
+    resetTokenRecord.usedAt = new Date();
+    if (ipAddress) {
+      resetTokenRecord.ipAddress = ipAddress;
+    }
+    if (userAgent) {
+      resetTokenRecord.userAgent = userAgent;
+    }
+    await resetTokenRecord.save();
+
+    // Invalidate all active sessions after password reset (security measure)
     await this.refreshTokenModel.deleteMany({ studentId: student.id }).exec();
+
+    // Emit password reset event for audit/logging
+    this.eventEmitter.emit('password.reset', {
+      studentId: student.id,
+      email: student.email,
+      resetAt: new Date(),
+      ipAddress,
+    });
 
     return { message: 'Password reset successfully' };
   }
@@ -287,26 +507,37 @@ export class StudentAuthService {
     // Verify JWT signature and expiry first to extract the token family claim
     let payload: Record<string, unknown>;
     try {
-      this.verifyJwt(dto.refreshToken);
+      payload = this.verifyJwt(dto.refreshToken);
     } catch {
       throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    if (payload.type !== 'refresh') {
+      throw new UnauthorizedException('Invalid token type');
     }
 
     const tokenHash = this.hashToken(dto.refreshToken);
     const stored = await this.refreshTokenModel.findOne({ tokenHash }).exec();
 
     if (!stored) {
-      // Token not in DB — possible replay of an already-rotated token.
-      // Revoke the entire token family to invalidate any sessions derived from it.
-      const family = payload.family as string | undefined;
-      if (family) {
-        await this.refreshTokenModel.deleteMany({ tokenFamily: family }).exec();
-      }
-      throw new UnauthorizedException('Refresh token has been revoked or already used');
+      throw new UnauthorizedException(
+        'Refresh token has been revoked or already used',
+      );
     }
 
-    // Rotate: delete consumed token, issue new pair in the same family
-    await this.refreshTokenModel.deleteOne({ tokenHash }).exec();
+    if (stored.isRevoked) {
+      // Token is already revoked: revoke ALL tokens in the family (theft detected)
+      await this.refreshTokenModel
+        .updateMany({ tokenFamily: stored.tokenFamily }, { isRevoked: true })
+        .exec();
+      throw new UnauthorizedException(
+        'Refresh token has been revoked or already used',
+      );
+    }
+
+    // Mark old token revoked
+    stored.isRevoked = true;
+    await stored.save();
 
     const student = await this.studentModel.findById(stored.studentId).exec();
     if (!student) {
@@ -314,6 +545,14 @@ export class StudentAuthService {
     }
 
     return this.generateTokenPair(student, stored.tokenFamily);
+  }
+
+  async getProfile(studentId: string) {
+    const student = await this.studentModel.findById(studentId).exec();
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+    return this.sanitizeStudent(student);
   }
 
   async logout(dto: RefreshTokenDto) {

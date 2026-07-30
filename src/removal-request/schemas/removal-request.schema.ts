@@ -40,5 +40,6 @@ export class RemovalRequest {
   restoreBy?: Date | null;
 }
 
-export const RemovalRequestSchema = SchemaFactory.createForClass(RemovalRequest);
+export const RemovalRequestSchema =
+  SchemaFactory.createForClass(RemovalRequest);
 applySoftDeleteSchema(RemovalRequestSchema);

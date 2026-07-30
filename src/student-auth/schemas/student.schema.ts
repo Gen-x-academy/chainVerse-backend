@@ -23,6 +23,15 @@ export class Student {
   @Prop({ type: String, default: null })
   verificationToken: string | null;
 
+  @Prop({ type: Number, default: null })
+  verificationTokenExpiry: number | null;
+
+  @Prop({ type: Number, default: 0 })
+  verificationAttempts: number;
+
+  @Prop({ type: Number, default: null })
+  lastVerificationAttempt: number | null;
+
   @Prop({ type: String, default: null })
   resetToken: string | null;
 
@@ -32,8 +41,17 @@ export class Student {
   @Prop({ default: 'student' })
   role: string;
 
+  @Prop({ type: Number, default: 0 })
+  loginAttempts: number;
+
+  @Prop({ type: Date, default: null })
+  lockedUntil: Date | null;
+
   createdAt?: Date;
   updatedAt?: Date;
 }
 
 export const StudentSchema = SchemaFactory.createForClass(Student);
+
+StudentSchema.index({ email: 1 }, { unique: true });
+StudentSchema.index({ emailVerified: 1 });

@@ -1,5 +1,15 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { StudentCertificateNameChangeRequestService } from './student-certificate-name-change-request.service';
 import { CreateStudentCertificateNameChangeRequestDto } from './dto/create-student-certificate-name-change-request.dto';
 import { UpdateStudentCertificateNameChangeRequestDto } from './dto/update-student-certificate-name-change-request.dto';
@@ -10,21 +20,25 @@ import { Roles } from '../common/decorators/roles.decorator';
 
 @ApiBearerAuth('access-token')
 @Controller('student/certificates/name-change-request')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class StudentCertificateNameChangeRequestController {
-  constructor(private readonly service: StudentCertificateNameChangeRequestService) {}
+  constructor(
+    private readonly service: StudentCertificateNameChangeRequestService,
+  ) {}
 
+  @Roles(Role.ADMIN, Role.MODERATOR)
   @Get()
   findAll() {
     return this.service.findAll();
   }
 
+  @Roles(Role.ADMIN, Role.MODERATOR)
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   create(@Body() payload: CreateStudentCertificateNameChangeRequestDto) {
     return this.service.create(payload);
@@ -33,14 +47,17 @@ export class StudentCertificateNameChangeRequestController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
-  update(@Param('id') id: string, @Body() payload: UpdateStudentCertificateNameChangeRequestDto) {
+  update(
+    @Param('id', new ParseObjectIdPipe()) id: string,
+    @Body() payload: UpdateStudentCertificateNameChangeRequestDto,
+  ) {
     return this.service.update(id, payload);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.remove(id);
   }
 }

@@ -1,4 +1,5 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 import {
   Body,
   Controller,
@@ -33,8 +34,8 @@ export class NotificationController {
   }
 
   @Get()
-  @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN, Role.MODERATOR)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   findAll(@Query('page') page?: string, @Query('limit') limit?: string) {
     return this.service.findAll(
       page ? parseInt(page, 10) : 1,
@@ -56,22 +57,27 @@ export class NotificationController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() payload: UpdateNotificationDto) {
+  update(
+    @Param('id', new ParseObjectIdPipe()) id: string,
+    @Body() payload: UpdateNotificationDto,
+  ) {
     return this.service.update(id, payload);
   }
 
   @Patch(':id/read')
-  markAsRead(@Param('id') id: string) {
+  markAsRead(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.markAsRead(id);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.remove(id);
   }
 }

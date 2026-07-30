@@ -42,8 +42,9 @@ Moving to NestJS enables:
 | Language       | TypeScript                          | Type safety & maintainability |
 | Authentication | JWT (Access + Refresh Tokens)       | Secure user sessions          |
 | Validation     | class-validator / class-transformer | DTO validation                |
-| ORM            | Prisma / TypeORM                    | Database abstraction          |
-| Database       | PostgreSQL                          | Relational data storage       |
+| ODM            | Mongoose                            | Database abstraction          |
+| ORM            | Mongoose                            | MongoDB object modeling       |
+| Database       | MongoDB                             | Document data storage         |
 | Caching        | Redis (optional)                    | Performance optimization      |
 | Documentation  | Swagger                             | API exploration               |
 | Storage        | Local / S3-compatible               | File uploads                  |
@@ -121,10 +122,28 @@ Supported roles:
 * `TUTOR`
 * `STUDENT`
 
+### 🏢 Organization-Scoped Roles
+
+Global roles describe what a user is on the platform. Membership in an
+organization is a separate axis with its own roles:
+
+* `owner` · `admin` · `instructor` · `member`
+
+Holding a role in one organization grants nothing in another. See
+[docs/security/organization-authorization.md](docs/security/organization-authorization.md).
+
 ### 🔒 Guards
 
 * `JwtAuthGuard` → validates authenticated users
-* `RolesGuard` → enforces role-based permissions
+* `RolesGuard` → enforces platform role-based permissions
+* `OrganizationRolesGuard` → enforces organization membership roles
+
+### 📝 Security Documentation
+
+* [Immutable audit logging](docs/security/audit-logging.md) — append-only trail
+  for privileged actions
+* [Organization-scoped authorization](docs/security/organization-authorization.md)
+* [Upload quarantine and malware scanning](docs/security/uploads.md)
 
 ---
 
@@ -214,7 +233,8 @@ Create a `.env` file in the root directory:
 ```
 PORT=3000
 
-DATABASE_URL=postgresql://user:password@localhost:5432/chainverse
+MONGODB_URI=mongodb://localhost:27017/chainverse
+MONGO_URI=mongodb://localhost:27017/chainverse
 
 JWT_SECRET=your_access_secret
 JWT_REFRESH_SECRET=your_refresh_secret
@@ -244,7 +264,7 @@ npm run start:prod
 After starting the server:
 
 ```
-http://localhost:3000/api
+http://localhost:3000/docs
 ```
 
 This provides:
@@ -335,4 +355,3 @@ We welcome contributions! Follow these steps:
 MIT License
 
 ---
-

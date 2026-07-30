@@ -1,0 +1,339 @@
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { isValidObjectId, Model } from 'mongoose';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Enrollment, EnrollmentDocument } from './schemas/enrollment.schema';
+import { Course, CourseDocument } from '../admin-course/schemas/course.schema';
+import {
+  CartItem,
+  CartItemDocument,
+} from '../student-cart/schemas/cart-item.schema';
+import { DomainEvents } from '../events/event-names';
+import { StellarService } from '../stellar/stellar.service';
+
+@Injectable()
+export class StudentEnrollmentService {
+  constructor(
+    @InjectModel(Enrollment.name)
+    private readonly enrollmentModel: Model<EnrollmentDocument>,
+    @InjectModel(Course.name)
+    private readonly courseModel: Model<CourseDocument>,
+    @InjectModel(CartItem.name)
+    private readonly cartItemModel: Model<CartItemDocument>,
+    private readonly eventEmitter: EventEmitter2,
+    private readonly stellarService: StellarService,
+  ) {}
+
+  async enrollFree(studentId: string, courseId: string): Promise<Enrollment> {
+    const course = await this.courseModel.findById(courseId).exec();
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+
+    if (course.status !== 'published') {
+      throw new BadRequestException('Course is not available for enrollment');
+    }
+
+    if (course.price > 0) {
+      throw new BadRequestException(
+        'This course is not free. Please use checkout.',
+      );
+    }
+
+    // Check if already enrolled
+    const existing = await this.enrollmentModel
+      .findOne({ studentId, courseId })
+      .exec();
+    if (existing) {
+      throw new ConflictException('Already enrolled in this course');
+    }
+
+    const enrollment = new this.enrollmentModel({
+      studentId,
+      courseId,
+      type: 'free',
+      amountPaid: 0,
+      status: 'completed',
+    });
+
+    const savedEnrollment = await enrollment.save();
+
+    // Update course total enrollments counter
+    await this.courseModel
+      .findByIdAndUpdate(courseId, {
+        $inc: { totalEnrollments: 1 },
+      })
+      .exec();
+
+    // Emit enrollment event
+    this.eventEmitter.emit(DomainEvents.STUDENT_ENROLLED, {
+      studentId,
+      courseId,
+      tutorId: course.tutorId,
+      tutorEmail: course.tutorEmail,
+    });
+
+    return savedEnrollment;
+  }
+
+  async checkoutCart(
+    studentId: string,
+    paymentMethod?: string,
+    transactionHash?: string,
+  ): Promise<{ enrolled: string[]; failed: string[]; totalAmount: number }> {
+    const cartItems = await this.cartItemModel.find({ studentId }).exec();
+    if (cartItems.length === 0) {
+      throw new BadRequestException('Cart is empty');
+    }
+
+    const courseIds = cartItems
+      .filter((i) => isValidObjectId(i.courseId))
+      .map((i) => i.courseId);
+    const courses = await this.courseModel
+      .find({ _id: { $in: courseIds } })
+      .exec();
+    const courseMap = new Map(courses.map((c) => [c._id.toString(), c]));
+    const enrolled: string[] = [];
+    const failed: string[] = [];
+    let totalAmount = 0;
+
+    for (const item of cartItems) {
+      try {
+        if (!isValidObjectId(item.courseId)) {
+          failed.push(item.courseId);
+          continue;
+        }
+
+        const course = courseMap.get(item.courseId);
+        if (!course) {
+          failed.push(item.courseId);
+          continue;
+        }
+
+        if (course.status !== 'published') {
+          failed.push(item.courseId);
+          await this.cartItemModel.findByIdAndDelete(item._id).exec();
+          continue;
+        }
+
+        // Check if already enrolled
+        const existing = await this.enrollmentModel
+          .findOne({ studentId, courseId: item.courseId })
+          .exec();
+        if (existing) {
+          await this.cartItemModel.findByIdAndDelete(item._id).exec();
+          continue;
+        }
+
+        if (course.price > 0) {
+          if (!transactionHash) {
+            throw new BadRequestException(
+              'Transaction hash is required for paid course enrollment.',
+            );
+          }
+
+          const platformAddress = process.env.PLATFORM_STELLAR_ADDRESS;
+          if (!platformAddress) {
+            throw new BadRequestException(
+              'Platform Stellar address is not configured.',
+            );
+          }
+
+          const payment = await this.stellarService.verifyPayment({
+            transactionHash,
+            expectedAmount: course.price,
+            expectedDestination: platformAddress,
+          });
+
+          if (!payment.verified) {
+            throw new BadRequestException('Payment not confirmed on-chain');
+          }
+        }
+
+        const enrollment = new this.enrollmentModel({
+          studentId,
+          courseId: item.courseId,
+          type: course.price > 0 ? 'paid' : 'free',
+          amountPaid: course.price,
+          status: 'completed',
+          paymentMethod,
+          transactionHash: transactionHash,
+        });
+
+        await enrollment.save();
+
+        // Update course total enrollments counter
+        await this.courseModel
+          .findByIdAndUpdate(item.courseId, {
+            $inc: { totalEnrollments: 1 },
+          })
+          .exec();
+
+        // Remove from cart
+        await this.cartItemModel.findByIdAndDelete(item._id).exec();
+        enrolled.push(item.courseId);
+        totalAmount += course.price;
+
+        // Emit enrollment event
+        this.eventEmitter.emit(DomainEvents.STUDENT_ENROLLED, {
+          studentId,
+          courseId: item.courseId,
+          tutorId: course.tutorId,
+          tutorEmail: course.tutorEmail,
+          amountPaid: course.price,
+        });
+      } catch (error) {
+        failed.push(item.courseId);
+      }
+    }
+
+    return { enrolled, failed, totalAmount };
+  }
+
+  async getMyCourses(studentId: string): Promise<
+    Array<{
+      enrollment: EnrollmentDocument;
+      course: {
+        id: string;
+        title: string;
+        description: string;
+        thumbnailUrl: string | null;
+        tutorName: string;
+        progress?: number;
+      };
+    }>
+  > {
+    const enrollments = await this.enrollmentModel.find({ studentId }).exec();
+    if (enrollments.length === 0) return [];
+
+    const courseIds = enrollments.map((e) => e.courseId);
+    const courses = await this.courseModel
+      .find({ _id: { $in: courseIds } })
+      .exec();
+    const courseMap = new Map(courses.map((c) => [c.id, c]));
+
+    return enrollments.reduce(
+      (acc, enrollment) => {
+        const course = courseMap.get(enrollment.courseId);
+        if (!course) return acc;
+        const totalLessons = enrollment.lessons?.length ?? 0;
+        const completedLessons =
+          enrollment.lessons?.filter((l) => l.completed).length ?? 0;
+        const progress =
+          totalLessons > 0
+            ? Math.round((completedLessons / totalLessons) * 100)
+            : 0;
+        acc.push({
+          enrollment,
+          course: {
+            id: course.id,
+            title: course.title,
+            description: course.description,
+            thumbnailUrl: course.thumbnailUrl,
+            tutorName: course.tutorName,
+            progress,
+          },
+        });
+        return acc;
+      },
+      [] as Array<{
+        enrollment: EnrollmentDocument;
+        course: {
+          id: string;
+          title: string;
+          description: string;
+          thumbnailUrl: string | null;
+          tutorName: string;
+          progress?: number;
+        };
+      }>,
+    );
+  }
+
+  async isEnrolled(studentId: string, courseId: string): Promise<boolean> {
+    const enrollment = await this.enrollmentModel
+      .findOne({ studentId, courseId })
+      .exec();
+    return !!enrollment;
+  }
+
+  async getEnrollmentStats(courseId: string): Promise<{
+    totalEnrollments: number;
+    recentEnrollments: number;
+  }> {
+    const course = await this.courseModel.findById(courseId).exec();
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const recentEnrollments = await this.enrollmentModel
+      .countDocuments({
+        courseId,
+        createdAt: { $gte: thirtyDaysAgo },
+      })
+      .exec();
+
+    return {
+      totalEnrollments: course.totalEnrollments,
+      recentEnrollments,
+    };
+  }
+
+  async getStudentEnrollmentCount(studentId: string): Promise<number> {
+    return this.enrollmentModel.countDocuments({ studentId }).exec();
+  }
+
+  async updateProgress(
+    studentId: string,
+    courseId: string,
+    lessonIndex: number,
+    completed: boolean,
+  ) {
+    const enrollment = await this.enrollmentModel
+      .findOne({ studentId, courseId })
+      .exec();
+
+    if (!enrollment) {
+      throw new NotFoundException('Enrollment not found');
+    }
+
+    const existingLesson = enrollment.lessons?.find(
+      (l) => l.lessonIndex === lessonIndex,
+    );
+
+    if (existingLesson) {
+      existingLesson.completed = completed;
+      existingLesson.completedAt = completed ? new Date() : null;
+    } else {
+      enrollment.lessons.push({
+        lessonIndex,
+        completed,
+        completedAt: completed ? new Date() : null,
+      });
+    }
+
+    await enrollment.save();
+
+    const totalLessons = enrollment.lessons.length;
+    const completedLessons = enrollment.lessons.filter(
+      (l) => l.completed,
+    ).length;
+    const progress =
+      totalLessons > 0
+        ? Math.round((completedLessons / totalLessons) * 100)
+        : 0;
+
+    return {
+      enrollment,
+      progress,
+      completedLessons,
+      totalLessons,
+    };
+  }
+}

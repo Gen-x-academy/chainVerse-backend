@@ -1,41 +1,52 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { CreateTutorJwtAuthDto } from './dto/create-tutor-jwt-auth.dto';
 import { UpdateTutorJwtAuthDto } from './dto/update-tutor-jwt-auth.dto';
+import {
+  TutorJwtAuth,
+  TutorJwtAuthDocument,
+} from './schemas/tutor-jwt-auth.schema';
 
 @Injectable()
 export class TutorJwtAuthService {
-  private readonly items: Array<{ id: string } & CreateTutorJwtAuthDto> = [];
+  constructor(
+    @InjectModel(TutorJwtAuth.name)
+    private readonly tutorJwtAuthModel: Model<TutorJwtAuthDocument>,
+  ) {}
 
-  findAll() {
-    return this.items;
+  async findAll() {
+    return this.tutorJwtAuthModel.find().exec();
   }
 
-  findOne(id: string) {
-    const item = this.items.find((entry) => entry.id === id);
+  async findOne(id: string) {
+    const item = await this.tutorJwtAuthModel.findById(id).exec();
     if (!item) {
       throw new NotFoundException('TutorJwtAuth item not found');
     }
     return item;
   }
 
-  create(payload: CreateTutorJwtAuthDto) {
-    const created = { id: crypto.randomUUID(), ...payload };
-    this.items.push(created);
-    return created;
+  async create(payload: CreateTutorJwtAuthDto) {
+    const created = new this.tutorJwtAuthModel(payload);
+    return created.save();
   }
 
-  update(id: string, payload: UpdateTutorJwtAuthDto) {
-    const item = this.findOne(id);
-    Object.assign(item, payload);
+  async update(id: string, payload: UpdateTutorJwtAuthDto) {
+    const item = await this.tutorJwtAuthModel
+      .findByIdAndUpdate(id, payload, { new: true })
+      .exec();
+    if (!item) {
+      throw new NotFoundException('TutorJwtAuth item not found');
+    }
     return item;
   }
 
-  remove(id: string) {
-    const index = this.items.findIndex((entry) => entry.id === id);
-    if (index === -1) {
+  async remove(id: string) {
+    const result = await this.tutorJwtAuthModel.findByIdAndDelete(id).exec();
+    if (!result) {
       throw new NotFoundException('TutorJwtAuth item not found');
     }
-    this.items.splice(index, 1);
     return { id, deleted: true };
   }
 }
