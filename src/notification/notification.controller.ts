@@ -19,6 +19,8 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
+import { FindNotificationsDto } from './dto/find-notifications.dto';
+import { Deprecated } from '../common/deprecation/deprecation.decorator';
 
 @ApiBearerAuth('access-token')
 @Controller('notifications')
@@ -36,24 +38,17 @@ export class NotificationController {
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  findAll(@Query('page') page?: string, @Query('limit') limit?: string) {
-    return this.service.findAll(
-      page ? parseInt(page, 10) : 1,
-      limit ? parseInt(limit, 10) : 10,
-    );
+  @Deprecated({ successorUrl: '/api/v2/notifications' })
+  findAll(@Query() paginationDto: FindNotificationsDto) {
+    return this.service.findAll(paginationDto);
   }
 
   @Get('me')
   findMyNotifications(
     @Req() req: { user: { id: string } },
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
+    @Query() paginationDto: FindNotificationsDto,
   ) {
-    return this.service.findByUserId(
-      req.user.id,
-      page ? parseInt(page, 10) : 1,
-      limit ? parseInt(limit, 10) : 10,
-    );
+    return this.service.findByUserId(req.user.id, paginationDto);
   }
 
   @Get(':id')

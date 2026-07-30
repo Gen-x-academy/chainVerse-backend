@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { DeprecationInterceptor } from './common/deprecation/deprecation.interceptor';
 
 // Note: standalone src/express/ server has been removed — all routes are served by NestJS.
 async function bootstrap() {
@@ -52,7 +53,10 @@ async function bootstrap() {
   app.useGlobalFilters(new AllExceptionsFilter());
 
   // Wrap all successful responses in the standard ApiResponse envelope
-  app.useGlobalInterceptors(new TransformInterceptor());
+  app.useGlobalInterceptors(
+    new TransformInterceptor(),
+    new DeprecationInterceptor(app.get('Reflector')),
+  );
 
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
