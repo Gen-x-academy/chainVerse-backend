@@ -8,6 +8,7 @@ import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { SessionService } from '../../session/session.service';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -15,6 +16,7 @@ export class JwtAuthGuard implements CanActivate {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly reflector: Reflector,
+    private readonly sessionService: SessionService,
   ) {}
 
   canActivate(context: ExecutionContext): boolean {
@@ -45,7 +47,7 @@ export class JwtAuthGuard implements CanActivate {
 
       // Refresh tokens must not be used for authentication
       if (payload['type'] === 'refresh') {
-        throw new Error('Refresh tokens cannot be used for authentication');
+        throw new UnauthorizedException('Refresh tokens cannot be used for authentication');
       }
 
       // All identity and role claims must be present
@@ -57,7 +59,7 @@ export class JwtAuthGuard implements CanActivate {
         typeof payload['role'] !== 'string' ||
         !payload['role']
       ) {
-        throw new Error('Token is missing required claims');
+        throw new UnauthorizedException('Token is missing required claims');
       }
 
       request.user = {
@@ -66,6 +68,10 @@ export class JwtAuthGuard implements CanActivate {
         email: payload['email'],
         role: payload['role'],
       };
+      // Attach session ID to request if it exists in the payload
+      if (payload['sessionId']) {
+        request.sessionId = payload['sessionId'];
+      }
       return true;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Invalid token';

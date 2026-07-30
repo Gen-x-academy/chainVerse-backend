@@ -141,7 +141,7 @@ export class CourseDiscoveryService {
   async findOne(id: string) {
     const course = await this.courseModel.findById(id).exec();
     if (!course) {
-      throw new Error('Course not found');
+      throw new NotFoundException('Course not found');
     }
 
     // Increment view count

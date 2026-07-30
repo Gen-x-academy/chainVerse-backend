@@ -21,6 +21,7 @@ import { EmailModule } from './email/email.module';
 import { StellarModule } from './stellar/stellar.module';
 import { AppCacheModule } from './cache/app-cache.module';
 import { SessionModule } from './session/session.module';
+import { SessionService } from './session/session.service';
 
 // Auth modules
 import { StudentAuthModule } from './student-auth/student-auth.module';
@@ -188,6 +189,7 @@ import { VerificationModule } from './verification/verification.module';
   controllers: [AppController],
   providers: [
     AppService,
+    SessionService,
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
