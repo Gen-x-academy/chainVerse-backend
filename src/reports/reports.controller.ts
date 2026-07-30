@@ -3,7 +3,7 @@ import { ReportsService } from './reports.service';
 import { Public } from '../common/decorators/public.decorator';
 import { ExportService } from './export.service';
 import { ExportRequest } from './dto/export-request.dto';
-import { Response } from 'express';
+import type { Response } from 'express';
 
 @Public()
 @Controller('reports')

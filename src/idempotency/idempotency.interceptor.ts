@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable, from, switchMap, tap } from 'rxjs';
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { IdempotencyService } from './idempotency.service';
 import { IDEMPOTENT_KEY } from './decorators/idempotent.decorator';
 import { ErrorCode } from '../common/errors/error-codes.enum';
