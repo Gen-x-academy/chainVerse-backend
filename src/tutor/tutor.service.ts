@@ -1,4 +1,10 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
@@ -263,22 +269,25 @@ export class TutorService {
     }
 
     const tokenHash = this.hashToken(dto.refreshToken);
-    const stored = await this.refreshTokenModel
-      .findOne({ tokenHash, revoked: false })
-      .exec();
+    const stored = await this.refreshTokenModel.findOne({ tokenHash }).exec();
 
     if (!stored) {
-      const family = payload.family as string | undefined;
-      if (family) {
-        await this.refreshTokenModel
-          .updateMany({ family, revoked: false }, { revoked: true })
-          .exec();
-      }
       throw new UnauthorizedException(
         'Refresh token has been revoked or already used',
       );
     }
 
+    if (stored.revoked) {
+      // Token is already revoked: revoke ALL tokens in the family (theft detected)
+      await this.refreshTokenModel
+        .updateMany({ family: stored.family, revoked: false }, { revoked: true })
+        .exec();
+      throw new UnauthorizedException(
+        'Refresh token has been revoked or already used',
+      );
+    }
+
+    // Mark old token revoked
     stored.revoked = true;
     await stored.save();
 
@@ -288,19 +297,6 @@ export class TutorService {
     }
 
     return this.generateTokenPair(tutor, stored.family);
-  }
-
-  async logout(dto: RefreshTokenDto) {
-    if (!dto.refreshToken) {
-      throw new BadRequestException('Refresh token is required');
-    }
-
-    const tokenHash = this.hashToken(dto.refreshToken);
-    await this.refreshTokenModel
-      .updateOne({ tokenHash }, { revoked: true })
-      .exec();
-
-    return { message: 'Logged out successfully' };
   }
 
   private hashToken(token: string): string {
@@ -442,15 +438,15 @@ export class TutorService {
     return this.sanitizeTutor(tutor);
   }
 
-
-
   async logout(dto: RefreshTokenDto) {
     if (!dto.refreshToken) {
       throw new BadRequestException('Refresh token is required');
     }
 
     const tokenHash = this.hashToken(dto.refreshToken);
-    await this.refreshTokenModel.updateOne({ tokenHash }, { $set: { revoked: true } }).exec();
+    await this.refreshTokenModel
+      .updateOne({ tokenHash }, { $set: { revoked: true } })
+      .exec();
 
     return { message: 'Logged out successfully' };
   }

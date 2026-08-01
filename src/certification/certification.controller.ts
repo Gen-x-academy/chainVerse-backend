@@ -1,5 +1,5 @@
 import { Controller, Get, Param, Res } from '@nestjs/common';
-import { Response } from 'express';
+import type { Response } from 'express';
 import { CertificationService } from './certification.service';
 import { Public } from '../common/decorators/public.decorator';
 

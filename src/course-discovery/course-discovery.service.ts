@@ -3,12 +3,14 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Course, CourseDocument } from '../admin-course/schemas/course.schema';
 import { SearchCoursesDto } from './dto/search-courses.dto';
+import { PaginationService } from '../common/pagination/pagination.service';
 
 @Injectable()
 export class CourseDiscoveryService {
   constructor(
     @InjectModel(Course.name)
     private readonly courseModel: Model<CourseDocument>,
+    private readonly paginationService: PaginationService,
   ) {}
 
   /**
@@ -56,62 +58,12 @@ export class CourseDiscoveryService {
       query.averageRating = { $gte: dto.minRating };
     }
 
-    // Build sort option
-    const hasTextSearch = !!dto.query;
-    const sort: Record<string, unknown> = {};
-    switch (dto.sortBy) {
-      case 'price-asc':
-        sort.price = 1;
-        break;
-      case 'price-desc':
-        sort.price = -1;
-        break;
-      case 'rating':
-        sort.averageRating = -1;
-        break;
-      case 'popular':
-        sort.totalEnrollments = -1;
-        break;
-      case 'newest':
-        sort.createdAt = -1;
-        break;
-      default:
-        // When text search is active, sort by text relevance score;
-        // otherwise fall back to newest-first.
-        if (hasTextSearch) {
-          sort.score = { $meta: 'textScore' };
-        } else {
-          sort.createdAt = -1;
-        }
-    }
-
-    const limit = Math.min(dto.limit || 20, 50);
-    let page = Math.max(dto.page || 1, 1);
-    const skip = dto.skip !== undefined ? dto.skip : (page - 1) * limit;
-    if (dto.skip !== undefined) {
-      page = Math.max(Math.floor(dto.skip / limit) + 1, 1);
-    }
-
-    // Include textScore metadata in the projection when using $text search
-    const projection = hasTextSearch ? { score: { $meta: 'textScore' } } : {};
-
-    const [courses, total] = await Promise.all([
-      this.courseModel
-        .find(query, projection)
-        .sort(sort)
-        .limit(limit)
-        .skip(skip)
-        .exec(),
-      this.courseModel.countDocuments(query).exec(),
-    ]);
-
-    return {
-      data: courses.map((c) => this.sanitizeCourse(c)),
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
+    return this.paginationService.paginate(
+      this.courseModel,
+      dto,
+      query,
+      this.sanitizeCourse,
+    );
   }
 
   /**
@@ -151,7 +103,13 @@ export class CourseDiscoveryService {
    * Get all categories with course counts
    */
   async getCategories() {
-    const categories = await this.courseModel.aggregate([
+    interface CategoryAggResult {
+      _id: string;
+      count: number;
+      avgPrice: number;
+    }
+
+    const categories = await this.courseModel.aggregate<CategoryAggResult>([
       {
         $match: {
           status: 'published',
@@ -183,7 +141,7 @@ export class CourseDiscoveryService {
   async findOne(id: string) {
     const course = await this.courseModel.findById(id).exec();
     if (!course) {
-      throw new Error('Course not found');
+      throw new NotFoundException('Course not found');
     }
 
     // Increment view count

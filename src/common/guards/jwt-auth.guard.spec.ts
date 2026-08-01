@@ -41,9 +41,7 @@ describe('JwtAuthGuard', () => {
   it('should throw when Authorization header is missing', () => {
     const { context } = createContext();
 
-    expect(() => guard.canActivate(context)).toThrow(
-      UnauthorizedException,
-    );
+    expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
   });
 
   it('should throw for invalid signature', () => {
@@ -53,9 +51,7 @@ describe('JwtAuthGuard', () => {
 
     const { context } = createContext('Bearer invalid.token');
 
-    expect(() => guard.canActivate(context)).toThrow(
-      UnauthorizedException,
-    );
+    expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
   });
 
   it('should throw for expired token', () => {
@@ -65,9 +61,7 @@ describe('JwtAuthGuard', () => {
 
     const { context } = createContext('Bearer expired.token');
 
-    expect(() => guard.canActivate(context)).toThrow(
-      UnauthorizedException,
-    );
+    expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
   });
 
   it('should throw if refresh token is used as access token', () => {
@@ -80,9 +74,7 @@ describe('JwtAuthGuard', () => {
 
     const { context } = createContext('Bearer refresh.token');
 
-    expect(() => guard.canActivate(context)).toThrow(
-      UnauthorizedException,
-    );
+    expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
   });
 
   it('should throw if required claims are missing', () => {
@@ -93,9 +85,7 @@ describe('JwtAuthGuard', () => {
 
     const { context } = createContext('Bearer invalid.claims');
 
-    expect(() => guard.canActivate(context)).toThrow(
-      UnauthorizedException,
-    );
+    expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
   });
 
   it('should validate token, set request.user, and return true', () => {
@@ -124,17 +114,13 @@ describe('JwtAuthGuard', () => {
   it('should throw when Authorization header does not start with Bearer', () => {
     const { context } = createContext('Basic some-token');
 
-    expect(() => guard.canActivate(context)).toThrow(
-      UnauthorizedException,
-    );
+    expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
   });
 
   it('should throw when Bearer token is empty string', () => {
     const { context } = createContext('Bearer ');
 
-    expect(() => guard.canActivate(context)).toThrow(
-      UnauthorizedException,
-    );
+    expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
   });
 
   it('should throw when sub claim is empty string', () => {
@@ -147,8 +133,6 @@ describe('JwtAuthGuard', () => {
 
     const { context } = createContext('Bearer empty-sub.token');
 
-    expect(() => guard.canActivate(context)).toThrow(
-      UnauthorizedException,
-    );
+    expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
   });
 });

@@ -9,7 +9,10 @@ import {
   TransactionBuilder,
   nativeToScVal,
 } from '@stellar/stellar-sdk';
-import { Server as SorobanServer, Api as SorobanApi } from '@stellar/stellar-sdk/rpc';
+import {
+  Server as SorobanServer,
+  Api as SorobanApi,
+} from '@stellar/stellar-sdk/rpc';
 import { StellarService } from '../stellar/stellar.service';
 import { CreateCourseCertificationNftAchievementsDto } from './dto/create-course-certification-nft-achievements.dto';
 import { UpdateCourseCertificationNftAchievementsDto } from './dto/update-course-certification-nft-achievements.dto';
@@ -19,9 +22,14 @@ import { CertificateTx } from '../stellar/stellar-sync.service';
 
 @Injectable()
 export class CourseCertificationNftAchievementsService {
-  private readonly logger = new Logger(CourseCertificationNftAchievementsService.name);
+  private readonly logger = new Logger(
+    CourseCertificationNftAchievementsService.name,
+  );
   private readonly items: Array<
-    { id: string; transactionHash?: string } & CreateCourseCertificationNftAchievementsDto
+    {
+      id: string;
+      transactionHash?: string;
+    } & CreateCourseCertificationNftAchievementsDto
   > = [];
 
   constructor(
@@ -47,7 +55,10 @@ export class CourseCertificationNftAchievementsService {
   }
 
   async create(payload: CreateCourseCertificationNftAchievementsDto) {
-    const created: { id: string; transactionHash?: string } & CreateCourseCertificationNftAchievementsDto = {
+    const created: {
+      id: string;
+      transactionHash?: string;
+    } & CreateCourseCertificationNftAchievementsDto = {
       id: crypto.randomUUID(),
       ...payload,
     };
@@ -61,7 +72,9 @@ export class CourseCertificationNftAchievementsService {
       );
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      this.logger.warn(`On-chain certificate issuance failed for ${created.id}: ${msg}`);
+      this.logger.warn(
+        `On-chain certificate issuance failed for ${created.id}: ${msg}`,
+      );
     }
 
     // Record the on-chain transaction so StellarSyncService can poll Horizon
@@ -79,7 +92,9 @@ export class CourseCertificationNftAchievementsService {
         );
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
-        this.logger.warn(`Failed to create CertificateTx record for ${created.id}: ${msg}`);
+        this.logger.warn(
+          `Failed to create CertificateTx record for ${created.id}: ${msg}`,
+        );
       }
     }
 
@@ -116,7 +131,9 @@ export class CourseCertificationNftAchievementsService {
     certificateId: string,
     studentId: string,
   ): Promise<string> {
-    const contractAddress = this.configService.get<string>('CONTRACT_CERTIFICATES');
+    const contractAddress = this.configService.get<string>(
+      'CONTRACT_CERTIFICATES',
+    );
     const secretKey = this.configService.get<string>('STELLAR_BACKEND_SECRET');
     const rpcUrl =
       this.configService.get<string>('STELLAR_RPC_URL') ??
@@ -126,7 +143,9 @@ export class CourseCertificationNftAchievementsService {
       'Test SDF Network ; September 2015';
 
     if (!contractAddress || !secretKey) {
-      throw new Error('CONTRACT_CERTIFICATES or STELLAR_BACKEND_SECRET is not configured');
+      throw new Error(
+        'CONTRACT_CERTIFICATES or STELLAR_BACKEND_SECRET is not configured',
+      );
     }
 
     const keypair = Keypair.fromSecret(secretKey);
@@ -154,7 +173,9 @@ export class CourseCertificationNftAchievementsService {
     const result = await rpc.sendTransaction(preparedTx);
 
     if (result.status === 'ERROR') {
-      throw new Error(`Soroban tx error: ${JSON.stringify(result.errorResult)}`);
+      throw new Error(
+        `Soroban tx error: ${JSON.stringify(result.errorResult)}`,
+      );
     }
 
     // Poll for confirmation (up to ~20 seconds)

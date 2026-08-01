@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -20,6 +21,7 @@ import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 import { AuditActor } from '../common/audit/audit-context';
 import type { AuditContext } from '../common/audit/audit-context';
+import { FindReportsDto } from './dto/find-reports.dto';
 
 @ApiBearerAuth('access-token')
 @Controller('report-abuse')
@@ -40,13 +42,16 @@ export class ReportAbuseController {
   @Get()
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  findAll() {
-    return this.service.findAll();
+  findAll(@Query() paginationDto: FindReportsDto) {
+    return this.service.findAll(paginationDto);
   }
 
   @Get('me')
-  findMyReports(@Req() req: { user: { id: string } }) {
-    return this.service.findByReporter(req.user.id);
+  findMyReports(
+    @Req() req: { user: { id: string } },
+    @Query() paginationDto: FindReportsDto,
+  ) {
+    return this.service.findByReporter(req.user.id, paginationDto);
   }
 
   @Get(':id')

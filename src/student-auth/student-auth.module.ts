@@ -12,6 +12,8 @@ import {
   PasswordResetTokenSchema,
 } from './schemas/password-reset-token.schema';
 import { EmailModule } from '../email/email.module';
+import { SessionModule } from '../session/session.module';
+import { SessionService } from '../session/session.service';
 
 @Module({
   imports: [
@@ -21,9 +23,10 @@ import { EmailModule } from '../email/email.module';
       { name: PasswordResetToken.name, schema: PasswordResetTokenSchema },
     ]),
     EmailModule,
+    SessionModule,
   ],
   controllers: [StudentAuthController],
-  providers: [StudentAuthService],
+  providers: [StudentAuthService, SessionService],
   exports: [StudentAuthService],
 })
 export class StudentAuthModule {}

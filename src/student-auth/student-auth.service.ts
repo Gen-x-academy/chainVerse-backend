@@ -1,4 +1,10 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
@@ -26,6 +32,8 @@ import {
   PasswordResetToken,
   PasswordResetTokenDocument,
 } from './schemas/password-reset-token.schema';
+import { SessionService } from '../session/session.service';
+import { CreateSessionDto } from '../session/dto/create-session.dto';
 
 const ACCESS_TOKEN_EXPIRY = 3600; // 1 hour
 const REFRESH_TOKEN_EXPIRY = 604800; // 7 days
@@ -49,6 +57,7 @@ export class StudentAuthService {
     private readonly configService: ConfigService,
     private readonly emailService: EmailService,
     private readonly jwtService: JwtService,
+    private readonly sessionService: SessionService,
   ) {}
 
   private async hashPassword(password: string): Promise<string> {
@@ -78,19 +87,17 @@ export class StudentAuthService {
       return this.jwtService.verify<Record<string, unknown>>(token);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Invalid token';
-      throw new Error(message);
+      throw new UnauthorizedException(message);
     }
   }
 
   private async generateTokenPair(
     student: StudentDocument,
     tokenFamily?: string,
+    ipAddress?: string,
+    userAgent?: string,
   ) {
     const family = tokenFamily ?? crypto.randomUUID();
-    const accessToken = this.jwtService.sign(
-      { sub: student.id, email: student.email, role: student.role },
-      { expiresIn: ACCESS_TOKEN_EXPIRY },
-    );
     const refreshToken = this.jwtService.sign(
       {
         sub: student.id,
@@ -105,6 +112,24 @@ export class StudentAuthService {
       studentId: student.id,
       expiresAt: new Date(Date.now() + REFRESH_TOKEN_EXPIRY * 1000),
     }).save();
+
+    let sessionId: string | undefined;
+    // Create a new session if IP and user agent are provided
+    if (ipAddress && userAgent) {
+      const sessionDto: CreateSessionDto = {
+        token: refreshToken,
+        ipAddress,
+        userAgent,
+      };
+      const newSession = await this.sessionService.create(student.id, sessionDto);
+      sessionId = newSession.id;
+    }
+
+    const accessToken = this.jwtService.sign(
+      { sub: student.id, email: student.email, role: student.role, sessionId },
+      { expiresIn: ACCESS_TOKEN_EXPIRY },
+    );
+
     return { accessToken, refreshToken, expiresIn: ACCESS_TOKEN_EXPIRY };
   }
 
@@ -320,7 +345,7 @@ export class StudentAuthService {
     };
   }
 
-  async login(dto: LoginStudentDto) {
+  async login(dto: LoginStudentDto, ipAddress?: string, userAgent?: string) {
     if (!dto.email || !dto.password) {
       throw new BadRequestException('Email and password are required');
     }
@@ -333,7 +358,9 @@ export class StudentAuthService {
     }
 
     if (student.lockedUntil && student.lockedUntil > new Date()) {
-      throw new UnauthorizedException('Account temporarily locked. Try again later.');
+      throw new UnauthorizedException(
+        'Account temporarily locked. Try again later.',
+      );
     }
 
     const passwordValid = await this.verifyPassword(
@@ -359,7 +386,7 @@ export class StudentAuthService {
     student.lockedUntil = null;
     await student.save();
 
-    const tokens = await this.generateTokenPair(student);
+    const tokens = await this.generateTokenPair(student, undefined, ipAddress, userAgent);
 
     return {
       user: this.sanitizeStudent(student),
@@ -491,7 +518,7 @@ export class StudentAuthService {
     return { message: 'Password reset successfully' };
   }
 
-  async refreshToken(dto: RefreshTokenDto) {
+  async refreshToken(dto: RefreshTokenDto, ipAddress?: string, userAgent?: string) {
     if (!dto.refreshToken) {
       throw new BadRequestException('Refresh token is required');
     }
@@ -531,12 +558,19 @@ export class StudentAuthService {
     stored.isRevoked = true;
     await stored.save();
 
+    // Find and invalidate the old session
+    const oldSession = await this.sessionService.findAll();
+    const sessionToInvalidate = oldSession.find(s => s.token === dto.refreshToken && s.userId === stored.studentId);
+    if (sessionToInvalidate) {
+      await this.sessionService.invalidate(sessionToInvalidate.id, stored.studentId);
+    }
+
     const student = await this.studentModel.findById(stored.studentId).exec();
     if (!student) {
       throw new NotFoundException('Student not found');
     }
 
-    return this.generateTokenPair(student, stored.tokenFamily);
+    return this.generateTokenPair(student, stored.tokenFamily, ipAddress, userAgent);
   }
 
   async getProfile(studentId: string) {
@@ -553,7 +587,17 @@ export class StudentAuthService {
     }
 
     const tokenHash = this.hashToken(dto.refreshToken);
-    await this.refreshTokenModel.deleteOne({ tokenHash }).exec();
+    const storedToken = await this.refreshTokenModel.findOne({ tokenHash }).exec();
+    if (storedToken) {
+      // Invalidate the session
+      const allSessions = await this.sessionService.findAll();
+      const sessionToInvalidate = allSessions.find(s => s.token === dto.refreshToken && s.userId === storedToken.studentId);
+      if (sessionToInvalidate) {
+        await this.sessionService.invalidate(sessionToInvalidate.id, storedToken.studentId);
+      }
+      // Delete the refresh token
+      await this.refreshTokenModel.deleteOne({ tokenHash }).exec();
+    }
 
     return { message: 'Logged out successfully' };
   }

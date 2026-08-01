@@ -1,6 +1,15 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { TutorReportsAnalyticsService } from './tutor-reports-analytics.service';
 import { CreateTutorReportsAnalyticsDto } from './dto/create-tutor-reports-analytics.dto';
 import { UpdateTutorReportsAnalyticsDto } from './dto/update-tutor-reports-analytics.dto';

@@ -202,7 +202,7 @@ export class CourseAnalyticsService {
         studentId: r.studentId,
         rating: r.rating,
         feedback: r.feedback,
-        createdAt: r.createdAt,
+        createdAt: (r as unknown as { createdAt: Date }).createdAt,
       })),
       studentDemographics: {
         newStudents: last30DaysEnrollments,
@@ -272,7 +272,7 @@ export class CourseAnalyticsService {
           courseId: enrollment.courseId,
           courseTitle: course?.title || 'Unknown',
           studentId: enrollment.studentId,
-          enrolledAt: enrollment.createdAt,
+          enrolledAt: enrollment.createdAt ?? new Date(),
           amount: enrollment.amountPaid,
         };
       }),
@@ -430,7 +430,7 @@ export class CourseAnalyticsService {
     courseIds: string[],
   ): Promise<Array<{ period: string; amount: number }>> {
     const now = new Date();
-    const periods = [];
+    const periods: Array<{ period: string; amount: number }> = [];
 
     for (let i = 5; i >= 0; i--) {
       const startDate = new Date(now.getFullYear(), now.getMonth() - i, 1);

@@ -16,7 +16,10 @@ const mockFaqModelInstance = {
 };
 
 // Constructor function that can be used with `new`
-const mockFaqModel: any = jest.fn().mockImplementation(function (this: any, payload: any) {
+const mockFaqModel: any = jest.fn().mockImplementation(function (
+  this: any,
+  payload: any,
+) {
   Object.assign(this, payload);
   this.save = mockFaqModelInstance.save;
 });

@@ -19,9 +19,10 @@ import { ApiResponse } from '../dto/api-response.dto';
  * Registration: `app.useGlobalInterceptors(new TransformInterceptor())` in main.ts
  */
 @Injectable()
-export class TransformInterceptor<T>
-  implements NestInterceptor<T, ApiResponse<T>>
-{
+export class TransformInterceptor<T> implements NestInterceptor<
+  T,
+  ApiResponse<T>
+> {
   intercept(
     context: ExecutionContext,
     next: CallHandler<T>,

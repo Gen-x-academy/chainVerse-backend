@@ -8,8 +8,9 @@ import {
   IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { PaginationDto } from '../../common/dto/pagination.dto';
 
-export class SearchCoursesDto {
+export class SearchCoursesDto extends PaginationDto {
   @ApiProperty({ example: 'blockchain', required: false })
   @IsString()
   @IsOptional()
@@ -56,41 +57,11 @@ export class SearchCoursesDto {
   @Type(() => Number)
   @IsOptional()
   minRating?: number;
-
-  @ApiProperty({
-    example: 'price-asc',
-    enum: ['price-asc', 'price-desc', 'rating', 'popular', 'newest'],
-    required: false,
-  })
-  @IsEnum(['price-asc', 'price-desc', 'rating', 'popular', 'newest'])
-  @IsOptional()
-  sortBy?: 'price-asc' | 'price-desc' | 'rating' | 'popular' | 'newest';
-
-  @ApiProperty({ example: 20, required: false })
-  @IsNumber()
-  @Min(1)
-  @Type(() => Number)
-  @IsOptional()
-  limit?: number;
-
-  @ApiProperty({ example: 1, required: false })
-  @IsNumber()
-  @Min(1)
-  @Type(() => Number)
-  @IsOptional()
-  page?: number;
-
-  @ApiProperty({ example: 0, required: false })
-  @IsNumber()
-  @Min(0)
-  @Type(() => Number)
-  @IsOptional()
-  skip?: number;
 }
 
 // Helper decorator for Max validation
 function Max(max: number) {
-  return function (object: Record<string, unknown>, propertyKey: string) {
+  return function (_object: object, _propertyKey: string) {
     // No-op for runtime, used for documentation
   };
 }

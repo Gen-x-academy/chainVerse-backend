@@ -1,142 +1,94 @@
-import { Controller, Post, Get, Body, Param, UseGuards, HttpCode, HttpStatus, UnprocessableEntityException, ParseUUIDPipe } from '@nestjs/common';
 import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiParam,
-} from '@nestjs/swagger';
+  Controller,
+  Post,
+  Get,
+  Body,
+  Param,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { IsString, IsOptional, IsEnum } from 'class-validator';
 import { VerificationService } from './verification.service';
-import { VerifyTicketDto, CheckInDto } from './dto';
-import { JwtAuthGuard } from '../auth/guard/jwt.auth.guard';
-import { RolesGuard } from '../auth/guard/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorators';
-import { CurrentUser } from '../auth/decorators/current.user.decorators';
-import { UserRole } from '../auth/common/enum/user-role-enum';
-import { User } from '../auth/entities/user.entity';
-import { Public } from '../common/decorators/public.decorator';
 import type {
   VerificationResult,
   VerificationStats,
+  VerificationLog,
 } from './interfaces/verification.interface';
-import type { VerificationLog } from './interfaces/verification.interface';
+import { VerificationStatus } from './interfaces/verification.interface';
+
+// ─── inline DTOs ────────────────────────────────────────────────────────────
+
+class VerifyTicketDto {
+  @IsString()
+  ticketCode: string;
+
+  @IsOptional()
+  @IsString()
+  eventId?: string;
+
+  @IsOptional()
+  @IsString()
+  verifierId?: string;
+
+  @IsOptional()
+  @IsEnum(VerificationStatus)
+  status?: VerificationStatus;
+}
+
+// ─── Controller ─────────────────────────────────────────────────────────────
 
 @ApiTags('Verification')
-@Controller('verification')
+@Controller(['verification', 'v1/verification'])
 export class VerificationController {
   constructor(private readonly verificationService: VerificationService) {}
 
   @Post('verify')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ORGANIZER, UserRole.ADMIN)
-  @ApiBearerAuth('access-token')
-  @ApiOperation({ summary: 'Verify a ticket code (organizer or admin only)' })
-  @ApiResponse({ status: 200, description: 'Ticket is valid' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({
-    status: 403,
-    description: 'Forbidden – organizer or admin role required',
-  })
-  @ApiResponse({
-    status: 422,
-    description: 'Ticket is invalid, already used, expired, or for wrong event',
-  })
-  async verify(
-    @Body() dto: VerifyTicketDto,
-    @CurrentUser() user: User,
-  ): Promise<VerificationResult> {
-    const result = await this.verificationService.verifyTicket({
+  @ApiOperation({ summary: 'Record a ticket verification attempt' })
+  @ApiResponse({ status: 200, description: 'Verification attempt recorded' })
+  async verify(@Body() dto: VerifyTicketDto): Promise<VerificationResult> {
+    const status = dto.status ?? VerificationStatus.VALID;
+    return this.verificationService.logVerification({
       ticketCode: dto.ticketCode,
       eventId: dto.eventId,
-      verifierId: dto.verifierId ?? user.id,
-      markAsUsed: dto.markAsUsed ?? false,
+      verifierId: dto.verifierId,
+      status,
+      message: this.verificationService.getStatusMessage(status),
     });
-    if (!result.isValid) {
-      throw new UnprocessableEntityException(result);
-    }
-    return result;
-  }
-
-  @Post('check-in')
-  @HttpCode(HttpStatus.OK)
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ORGANIZER, UserRole.ADMIN)
-  @ApiBearerAuth('access-token')
-  @ApiOperation({
-    summary: 'Check in an attendee by ticket code (organizer or admin only)',
-  })
-  @ApiResponse({ status: 200, description: 'Attendee checked in successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({
-    status: 403,
-    description: 'Forbidden – organizer or admin role required',
-  })
-  @ApiResponse({
-    status: 422,
-    description: 'Ticket is invalid or attendee already checked in',
-  })
-  async checkIn(
-    @Body() dto: CheckInDto,
-    @CurrentUser() user: User,
-  ): Promise<VerificationResult> {
-    const result = await this.verificationService.checkIn(
-      dto.ticketCode,
-      dto.verifierId ?? user.id,
-    );
-    if (!result.isValid) {
-      throw new UnprocessableEntityException(result);
-    }
-    return result;
-  }
-
-  @Public()
-  @Get('peek/:ticketCode')
-  @ApiOperation({
-    summary: 'Preview ticket validity without marking it as used (public)',
-  })
-  @ApiParam({
-    name: 'ticketCode',
-    type: String,
-    description: 'The ticket code to inspect',
-  })
-  @ApiResponse({ status: 200, description: 'Ticket validity result returned' })
-  @ApiResponse({ status: 422, description: 'Ticket is invalid or expired' })
-  async peek(
-    @Param('ticketCode') ticketCode: string,
-  ): Promise<VerificationResult> {
-    const result = await this.verificationService.peek(ticketCode);
-    if (!result.isValid) {
-      throw new UnprocessableEntityException(result);
-    }
-    return result;
   }
 
   @Get('stats/:eventId')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Get verification statistics for an event' })
-  @ApiParam({ name: 'eventId', type: String, description: 'Event UUID' })
+  @ApiParam({ name: 'eventId', type: String, description: 'Event identifier' })
   @ApiResponse({ status: 200, description: 'Verification statistics returned' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'Event not found' })
   async getStats(
-    @Param('eventId', ParseUUIDPipe) eventId: string,
+    @Param('eventId') eventId: string,
   ): Promise<VerificationStats> {
     return this.verificationService.getStatsForEvent(eventId);
   }
 
-  @Get('logs/:eventId')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('access-token')
+  @Get('logs/event/:eventId')
   @ApiOperation({ summary: 'Get all verification logs for an event' })
-  @ApiParam({ name: 'eventId', type: String, description: 'Event UUID' })
+  @ApiParam({ name: 'eventId', type: String, description: 'Event identifier' })
   @ApiResponse({ status: 200, description: 'Verification logs returned' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 404, description: 'Event not found' })
-  async getLogs(
-    @Param('eventId', ParseUUIDPipe) eventId: string,
+  async getLogsForEvent(
+    @Param('eventId') eventId: string,
   ): Promise<VerificationLog[]> {
     return this.verificationService.getLogsForEvent(eventId);
+  }
+
+  @Get('logs/ticket/:ticketCode')
+  @ApiOperation({ summary: 'Get all verification logs for a ticket' })
+  @ApiParam({
+    name: 'ticketCode',
+    type: String,
+    description: 'Ticket code / QR value',
+  })
+  @ApiResponse({ status: 200, description: 'Verification logs returned' })
+  async getLogsForTicket(
+    @Param('ticketCode') ticketCode: string,
+  ): Promise<VerificationLog[]> {
+    return this.verificationService.getLogsForTicket(ticketCode);
   }
 }

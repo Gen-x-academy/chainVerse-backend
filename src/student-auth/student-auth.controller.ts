@@ -1,5 +1,11 @@
 import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -11,7 +17,6 @@ import { ResendVerificationEmailDto } from './dto/resend-verification-email.dto'
 import { ForgetPasswordDto } from './dto/forget-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { Public } from '../common/decorators/public.decorator';
 
 // Auth endpoints are more sensitive to brute-force: tighten to 10 req/min
@@ -25,7 +30,10 @@ export class StudentAuthController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   @ApiOperation({ summary: 'Get authenticated student profile' })
-  @ApiResponse({ status: 200, description: 'Returns the authenticated student profile' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns the authenticated student profile',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async me(@Req() req: any) {
     return this.studentAuthService.findStudentById(req.user.sub);
@@ -36,7 +44,10 @@ export class StudentAuthController {
   @Post('register')
   @ApiOperation({ summary: 'Register a new student' })
   @ApiBody({ type: CreateStudentDto })
-  @ApiResponse({ status: 201, description: 'Student registered. Verification email sent.' })
+  @ApiResponse({
+    status: 201,
+    description: 'Student registered. Verification email sent.',
+  })
   @ApiResponse({ status: 400, description: 'Invalid input or missing fields' })
   @ApiResponse({ status: 409, description: 'Email already registered.' })
   create(@Body() dto: CreateStudentDto) {
@@ -83,8 +94,8 @@ export class StudentAuthController {
     status: 401,
     description: 'Invalid credentials or unverified email',
   })
-  login(@Body() dto: LoginStudentDto) {
-    return this.studentAuthService.login(dto);
+  login(@Body() dto: LoginStudentDto, @Req() req: Request) {
+    return this.studentAuthService.login(dto, (req as any).ip, req.headers['user-agent']);
   }
 
   @Throttle({ default: { limit: 3, ttl: 900_000 } }) // 3 per 15 minutes
@@ -131,8 +142,8 @@ export class StudentAuthController {
     description: 'New access and refresh tokens issued',
   })
   @ApiResponse({ status: 401, description: 'Invalid or revoked refresh token' })
-  refreshToken(@Body() dto: RefreshTokenDto) {
-    return this.studentAuthService.refreshToken(dto);
+  refreshToken(@Body() dto: RefreshTokenDto, @Req() req: Request) {
+    return this.studentAuthService.refreshToken(dto, (req as any).ip, req.headers['user-agent']);
   }
 
   @Public()
