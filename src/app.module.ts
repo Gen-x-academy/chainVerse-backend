@@ -38,6 +38,7 @@ import { TutorReportsAnalyticsModule } from './tutor-reports-analytics/tutor-rep
 // Course modules
 import { AdminCourseModule } from './admin-course/admin-course.module';
 import { CourseDiscoveryModule } from './course-discovery/course-discovery.module';
+import { CurriculumModule } from './curriculum/curriculum.module';
 import { CourseRatingsFeedbackModule } from './course-ratings-feedback/course-ratings-feedback.module';
 import { CourseCategorizationFilteringModule } from './course-categorization-filtering/course-categorization-filtering.module';
 import { CourseCertificationNftAchievementsModule } from './course-certification-nft-achievements/course-certification-nft-achievements.module';
@@ -142,6 +143,7 @@ import { VerificationModule } from './verification/verification.module';
     TutorReportsAnalyticsModule,
     // Course
     AdminCourseModule,
+    CurriculumModule,
     CourseDiscoveryModule,
     CourseRatingsFeedbackModule,
     CourseCategorizationFilteringModule,

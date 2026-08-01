@@ -53,7 +53,7 @@ export class CourseDiscoveryController {
 
   @Get('tutor/:tutorId')
   @ApiOperation({ summary: 'Get all published courses by a tutor' })
-  findByTutor(@Param('tutorId') tutorId: string) {
+  findByTutor(@Param('tutorId', new ParseObjectIdPipe()) tutorId: string) {
     return this.courseDiscoveryService.findByTutorPublic(tutorId);
   }
 }

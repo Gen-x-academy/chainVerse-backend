@@ -142,6 +142,12 @@ Holding a role in one organization grants nothing in another. See
   for privileged actions
 - [Organization-scoped authorization](docs/security/organization-authorization.md)
 - [Upload quarantine and malware scanning](docs/security/uploads.md)
+- [Resource ownership for student-scoped records](docs/security/resource-ownership.md)
+- [ObjectId validation on route parameters](docs/security/object-id-validation.md)
+
+### 📚 Feature Documentation
+
+- [Course curriculum and transactional reordering](docs/courses/curriculum.md)
 
 ---
 

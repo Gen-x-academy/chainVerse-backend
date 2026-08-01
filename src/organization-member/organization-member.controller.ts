@@ -43,7 +43,7 @@ export class OrganizationMemberController {
     OrganizationRole.MEMBER,
   )
   findByOrganization(
-    @Param('orgId') orgId: string,
+    @Param('orgId', new ParseObjectIdPipe()) orgId: string,
     @Query() paginationDto: FindOrganizationMembersDto,
   ) {
     return this.service.findByOrganization(orgId, paginationDto);
@@ -52,7 +52,7 @@ export class OrganizationMemberController {
   @Get('user/:userId')
   @ApiOperation({ summary: 'List your own organization memberships' })
   findByUser(
-    @Param('userId') userId: string,
+    @Param('userId', new ParseObjectIdPipe()) userId: string,
     @CurrentUser('sub') requesterId: string,
     @CurrentUser('role') requesterRole: string,
     @Query() paginationDto: FindOrganizationMembersDto,

@@ -38,7 +38,7 @@ export class PointsController {
   }
 
   @Get('user/:userId')
-  getUserPoints(@Param('userId') userId: string) {
+  getUserPoints(@Param('userId', new ParseObjectIdPipe()) userId: string) {
     return this.service.getUserPoints(userId);
   }
 
