@@ -5,7 +5,7 @@ import { CourseCertificationNftAchievementsService } from './course-certificatio
 import {
   CertificateTx,
   CertificateTxSchema,
-} from '../stellar/stellar-sync.service';
+} from '../stellar/schemas/certificate-tx.schema';
 
 @Module({
   imports: [

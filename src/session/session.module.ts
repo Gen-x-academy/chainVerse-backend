@@ -10,5 +10,6 @@ import { Session, SessionSchema } from './schemas/session.schema';
   ],
   controllers: [SessionController],
   providers: [SessionService],
+  exports: [SessionService],
 })
 export class SessionModule {}
