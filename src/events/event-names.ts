@@ -19,14 +19,11 @@ export const DomainEvents = {
   /** Fired after a certificate (NFT achievement) is issued to a student. */
   CERTIFICATE_ISSUED: 'certificate.issued',
 
-  /** Fired when a student completes a course. */
-  COURSE_COMPLETED: 'course.completed',
+  /** Fired after a library item is checked out and a receipt is created. */
+  LIBRARY_CHECKOUT_RECEIPT_CREATED: 'library.checkout.receipt_created',
 
-  /** Fired when a student passes a quiz. */
-  QUIZ_PASSED: 'quiz.passed',
-
-  /** Fired when learning hours are logged for a student. */
-  HOURS_LOGGED: 'hours.logged',
+  /** Fired after a library item is returned and a receipt is created. */
+  LIBRARY_RETURN_RECEIPT_CREATED: 'library.return.receipt_created',
 } as const;
 
 export type DomainEventName = (typeof DomainEvents)[keyof typeof DomainEvents];

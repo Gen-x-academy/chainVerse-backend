@@ -33,6 +33,9 @@ export enum AuditAction {
   ORGANIZATION_MEMBER_ADDED = 'organization_member.added',
   ORGANIZATION_MEMBER_ROLE_CHANGED = 'organization_member.role_changed',
   ORGANIZATION_MEMBER_REMOVED = 'organization_member.removed',
+  ORGANIZATION_INVITATION_CREATED = 'organization_invitation.created',
+  ORGANIZATION_INVITATION_ACCEPTED = 'organization_invitation.accepted',
+  ORGANIZATION_INVITATION_REVOKED = 'organization_invitation.revoked',
 
   // Upload lifecycle (src/worker)
   FILE_UPLOAD_QUARANTINED = 'file_upload.quarantined',
@@ -40,6 +43,20 @@ export enum AuditAction {
   FILE_UPLOAD_RELEASED = 'file_upload.released',
   FILE_UPLOAD_REJECTED = 'file_upload.rejected',
   FILE_UPLOAD_DELETED = 'file_upload.deleted',
+
+  // Library configuration (src/library)
+  LIBRARY_CONFIG_UPDATED = 'library_config.updated',
+
+  // Library patron notes (src/library)
+  PATRON_NOTE_CREATED = 'patron_note.created',
+  PATRON_NOTE_UPDATED = 'patron_note.updated',
+  PATRON_NOTE_DELETED = 'patron_note.deleted',
+
+  // Book review / content reports (src/library)
+  BOOK_REVIEW_CREATED = 'book_review.created',
+  BOOK_REVIEW_DELETED = 'book_review.deleted',
+  CONTENT_REPORT_CREATED = 'content_report.created',
+  CONTENT_REPORT_RESOLVED = 'content_report.resolved',
 }
 
 /**
