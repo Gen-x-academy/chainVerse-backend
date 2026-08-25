@@ -13,6 +13,10 @@ import {
   AutoRenewalRun,
   AutoRenewalRunSchema,
 } from './schemas/auto-renewal-run.schema';
+import {
+  AuditLog,
+  AuditLogSchema,
+} from './schemas/audit-log.schema';
 import { BooksService } from './books.service';
 import { BooksController } from './books.controller';
 import { LibraryPolicyService } from './library-policy.service';
@@ -23,6 +27,10 @@ import { LoansService } from './loans.service';
 import { LoansController } from './loans.controller';
 import { AutoRenewalService } from './auto-renewal.service';
 import { LibraryTransactionRunner } from './mongo-transaction-runner';
+import { ELibraryAuditService } from './services/elibrary-audit.service';
+import { ELibraryAuditController } from './controllers/elibrary-audit.controller';
+import { LibraryOwnerGuard } from './guards/library-owner.guard';
+import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
 
 @Module({
   imports: [
@@ -32,6 +40,7 @@ import { LibraryTransactionRunner } from './mongo-transaction-runner';
       { name: Hold.name, schema: HoldSchema },
       { name: Loan.name, schema: LoanSchema },
       { name: AutoRenewalRun.name, schema: AutoRenewalRunSchema },
+      { name: AuditLog.name, schema: AuditLogSchema },
     ]),
     PaginationModule,
     NotificationModule,
@@ -41,6 +50,7 @@ import { LibraryTransactionRunner } from './mongo-transaction-runner';
     LibraryPolicyController,
     HoldsController,
     LoansController,
+    ELibraryAuditController,
   ],
   providers: [
     BooksService,
@@ -49,6 +59,9 @@ import { LibraryTransactionRunner } from './mongo-transaction-runner';
     LoansService,
     AutoRenewalService,
     LibraryTransactionRunner,
+    ELibraryAuditService,
+    LibraryOwnerGuard,
+    LibraryRateLimitGuard,
   ],
   exports: [BooksService, LibraryPolicyService, HoldsService, LoansService],
 })
