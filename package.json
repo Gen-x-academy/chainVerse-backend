@@ -29,7 +29,10 @@
     "@nestjs/mongoose": "^11.0.4",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.2.6",
+    "@nestjs/throttler": "^6.5.0",
     "cache-manager": "^7.2.8",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.4",
     "joi": "^18.1.1",
     "mongoose": "^9.3.3",
     "nestjs-pino": "^4.6.1",
@@ -82,7 +85,11 @@
       "!**/main.ts"
     ],
     "coverageDirectory": "../coverage",
-    "coverageReporters": ["text", "lcov", "html"],
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "html"
+    ],
     "coverageThresholds": {
       "global": {
         "statements": 60,

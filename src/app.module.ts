@@ -23,6 +23,8 @@ import { StudentSavedCoursesModule } from './student-saved-courses/student-saved
 import { StudentCartModule } from './student-cart/student-cart.module';
 import { StudentEnrollmentModule } from './student-enrollment/student-enrollment.module';
 import { CourseAnalyticsModule } from './course-analytics/course-analytics.module';
+import { EventsModule } from './events/events.module';
+import { LibraryCirculationModule } from './library-circulation/library-circulation.module';
 
 @Module({
   imports: [
@@ -60,6 +62,10 @@ import { CourseAnalyticsModule } from './course-analytics/course-analytics.modul
     StudentEnrollmentModule,
     // Analytics
     CourseAnalyticsModule,
+    // Domain event listeners (notifications, points, etc.)
+    EventsModule,
+    // E-Library / Circulation
+    LibraryCirculationModule,
   ],
   controllers: [AppController],
   providers: [
