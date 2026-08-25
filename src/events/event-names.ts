@@ -18,6 +18,15 @@ export const DomainEvents = {
 
   /** Fired after a certificate (NFT achievement) is issued to a student. */
   CERTIFICATE_ISSUED: 'certificate.issued',
+
+  /** Fired when a student completes a course. */
+  COURSE_COMPLETED: 'course.completed',
+
+  /** Fired when a student passes a quiz. */
+  QUIZ_PASSED: 'quiz.passed',
+
+  /** Fired when learning hours are logged for a student. */
+  HOURS_LOGGED: 'hours.logged',
 } as const;
 
 export type DomainEventName = (typeof DomainEvents)[keyof typeof DomainEvents];

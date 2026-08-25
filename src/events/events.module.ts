@@ -6,15 +6,24 @@ import { NotificationListener } from './listeners/notification.listener';
 import { PointsListener } from './listeners/points.listener';
 import { RewardListener } from './listeners/reward.listener';
 import { LearningEventListener } from './listeners/learning-event.listener';
+import { BadgeEvaluationListener } from './listeners/badge-evaluation.listener';
 import { CourseAnalyticsModule } from '../course-analytics/course-analytics.module';
+import { BadgeModule } from '../badge/badge.module';
 
 @Module({
-  imports: [NotificationModule, PointsModule, EmailModule, CourseAnalyticsModule],
+  imports: [
+    NotificationModule,
+    PointsModule,
+    EmailModule,
+    CourseAnalyticsModule,
+    BadgeModule,
+  ],
   providers: [
     NotificationListener,
     PointsListener,
     RewardListener,
     LearningEventListener,
+    BadgeEvaluationListener,
   ],
 })
 export class EventsModule {}
