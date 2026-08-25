@@ -58,6 +58,13 @@ export interface AppConfig {
       timeoutMs: number;
     };
   };
+  /** Webhook signature verification and replay protection settings. */
+  webhook: {
+    /** Shared secret for HMAC-SHA256 signature verification. */
+    secret: string | undefined;
+    /** Maximum age of a webhook timestamp before it is rejected (ms). */
+    timestampToleranceMs: number;
+  };
 }
 
 export default (): AppConfig => ({
@@ -148,5 +155,12 @@ export default (): AppConfig => ({
       port: parseInt(process.env.MALWARE_SCAN_PORT ?? '3310', 10),
       timeoutMs: parseInt(process.env.MALWARE_SCAN_TIMEOUT_MS ?? '30000', 10),
     },
+  },
+  webhook: {
+    secret: process.env.WEBHOOK_SECRET,
+    timestampToleranceMs: parseInt(
+      process.env.WEBHOOK_TIMESTAMP_TOLERANCE_MS ?? '300000',
+      10,
+    ),
   },
 });
