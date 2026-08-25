@@ -50,6 +50,9 @@ import { CourseAnalyticsModule } from './course-analytics/course-analytics.modul
 import { StudentSavedCoursesModule } from './student-saved-courses/student-saved-courses.module';
 import { StudentCartModule } from './student-cart/student-cart.module';
 import { StudentEnrollmentModule } from './student-enrollment/student-enrollment.module';
+import { CourseAnalyticsModule } from './course-analytics/course-analytics.module';
+import { EventsModule } from './events/events.module';
+import { LibraryCirculationModule } from './library-circulation/library-circulation.module';
 import { StudentAccountSettingsModule } from './student-account-settings/student-account-settings.module';
 import { StudentCertificateNameChangeRequestModule } from './student-certificate-name-change-request/student-certificate-name-change-request.module';
 import { StudentReportsAnalyticsModule } from './student-reports-analytics/student-reports-analytics.module';
@@ -156,6 +159,12 @@ import { ELibraryModule } from './e-library/e-library.module';
     StudentSavedCoursesModule,
     StudentCartModule,
     StudentEnrollmentModule,
+    // Analytics
+    CourseAnalyticsModule,
+    // Domain event listeners (notifications, points, etc.)
+    EventsModule,
+    // E-Library / Circulation
+    LibraryCirculationModule,
     StudentAccountSettingsModule,
     StudentCertificateNameChangeRequestModule,
     StudentReportsAnalyticsModule,
