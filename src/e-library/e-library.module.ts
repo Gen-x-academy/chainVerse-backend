@@ -13,6 +13,14 @@ import {
   AutoRenewalRun,
   AutoRenewalRunSchema,
 } from './schemas/auto-renewal-run.schema';
+import {
+  ReminderPreference,
+  ReminderPreferenceSchema,
+} from './schemas/reminder-preference.schema';
+import {
+  ReminderLog,
+  ReminderLogSchema,
+} from './schemas/reminder-log.schema';
 import { BooksService } from './books.service';
 import { BooksController } from './books.controller';
 import { LibraryPolicyService } from './library-policy.service';
@@ -23,6 +31,14 @@ import { LoansService } from './loans.service';
 import { LoansController } from './loans.controller';
 import { AutoRenewalService } from './auto-renewal.service';
 import { LibraryTransactionRunner } from './mongo-transaction-runner';
+import { ReminderSchedulerService } from './services/reminder-scheduler.service';
+import { ReminderController } from './controllers/reminder.controller';
+import { CirculationMetricsService } from './services/circulation-metrics.service';
+import { CirculationMetricsController } from './controllers/circulation-metrics.controller';
+import { CollectionReportService } from './services/collection-report.service';
+import { CollectionReportController } from './controllers/collection-report.controller';
+import { ReadingListReportService } from './services/reading-list-report.service';
+import { ReadingListReportController } from './controllers/reading-list-report.controller';
 
 @Module({
   imports: [
@@ -32,6 +48,8 @@ import { LibraryTransactionRunner } from './mongo-transaction-runner';
       { name: Hold.name, schema: HoldSchema },
       { name: Loan.name, schema: LoanSchema },
       { name: AutoRenewalRun.name, schema: AutoRenewalRunSchema },
+      { name: ReminderPreference.name, schema: ReminderPreferenceSchema },
+      { name: ReminderLog.name, schema: ReminderLogSchema },
     ]),
     PaginationModule,
     NotificationModule,
@@ -41,6 +59,10 @@ import { LibraryTransactionRunner } from './mongo-transaction-runner';
     LibraryPolicyController,
     HoldsController,
     LoansController,
+    ReminderController,
+    CirculationMetricsController,
+    CollectionReportController,
+    ReadingListReportController,
   ],
   providers: [
     BooksService,
@@ -49,6 +71,10 @@ import { LibraryTransactionRunner } from './mongo-transaction-runner';
     LoansService,
     AutoRenewalService,
     LibraryTransactionRunner,
+    ReminderSchedulerService,
+    CirculationMetricsService,
+    CollectionReportService,
+    ReadingListReportService,
   ],
   exports: [BooksService, LibraryPolicyService, HoldsService, LoansService],
 })
