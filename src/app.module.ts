@@ -2,6 +2,7 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
@@ -24,6 +25,9 @@ import { StudentCartModule } from './student-cart/student-cart.module';
 import { StudentEnrollmentModule } from './student-enrollment/student-enrollment.module';
 import { CourseAnalyticsModule } from './course-analytics/course-analytics.module';
 
+// E-Library modules
+import { ELibraryModule } from './e-library/e-library.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -32,6 +36,7 @@ import { CourseAnalyticsModule } from './course-analytics/course-analytics.modul
       validationSchema: envValidationSchema,
     }),
     EventEmitterModule.forRoot(),
+    ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([
       {
         ttl: 60,
@@ -60,6 +65,8 @@ import { CourseAnalyticsModule } from './course-analytics/course-analytics.modul
     StudentEnrollmentModule,
     // Analytics
     CourseAnalyticsModule,
+    // E-Library
+    ELibraryModule,
   ],
   controllers: [AppController],
   providers: [
