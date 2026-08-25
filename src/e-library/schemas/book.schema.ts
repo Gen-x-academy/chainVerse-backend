@@ -3,79 +3,40 @@ import { HydratedDocument } from 'mongoose';
 
 export type BookDocument = HydratedDocument<Book>;
 
-export enum BookStatus {
-  ACTIVE = 'active',
-  ARCHIVED = 'archived',
-  WITHDRAWN = 'withdrawn',
+export enum BookFormat {
+  PHYSICAL = 'physical',
+  EBOOK = 'ebook',
+  AUDIOBOOK = 'audiobook',
 }
 
 /**
- * Bibliographic Book schema - immutable identifiers (ISBN) are set on creation
- * and cannot be changed afterwards to preserve catalog integrity.
- *
- * For issue #976: create bibliographic Book schema with immutable identifiers.
+ * A single edition/format of a work (e.g. the hardcover vs. the ebook of the
+ * same title). `workKey` groups editions of the same underlying work so
+ * duplicate-edition hold rules can be enforced across them.
  */
-@Schema({ timestamps: true, collection: 'elibrary_books' })
+@Schema({ timestamps: true, collection: 'library_books' })
 export class Book {
-  /** Human-readable title. */
   @Prop({ required: true, trim: true })
   title: string;
 
-  @Prop({ trim: true })
-  subtitle?: string;
+  @Prop({ required: true, trim: true })
+  author: string;
 
-  @Prop({ trim: true })
-  description?: string;
+  @Prop({ required: true, index: true })
+  workKey: string;
 
-  /**
-   * ISBN-13 is the canonical identifier. Stored without dashes, validated to
-   * 13 digits. Immutable after first save.
-   */
-  @Prop({
-    required: true,
-    unique: true,
-    index: true,
-    match: /^\d{13}$/,
-  })
-  isbn13: string;
+  @Prop({ required: true, enum: BookFormat })
+  format: BookFormat;
 
-  /** Optional ISBN-10 for legacy records. Stored without dashes. */
-  @Prop({ match: /^\d{9}[\dX]$/ })
-  isbn10?: string;
+  @Prop({ required: true, min: 0 })
+  totalCopies: number;
 
-  @Prop({ required: true })
-  authors: string[];
+  @Prop({ required: true, min: 0 })
+  availableCopies: number;
 
-  @Prop({ trim: true })
-  publisher?: string;
-
-  @Prop()
-  publicationDate?: Date;
-
-  @Prop({ default: 'en', maxlength: 10 })
-  language: string;
-
-  @Prop({ trim: true })
-  edition?: string;
-
-  /** Library of Congress or user-defined subject headings. */
-  @Prop({ index: true })
-  subjects: string[];
-
-  /** URL or storage path for the cover image. */
-  @Prop()
-  coverUrl?: string;
-
-  @Prop({
-    type: String,
-    enum: BookStatus,
-    default: BookStatus.ACTIVE,
-    index: true,
-  })
-  status: BookStatus;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export const BookSchema = SchemaFactory.createForClass(Book);
-
-// Compound index for common catalog queries
-BookSchema.index({ title: 'text', subjects: 'text' });
+BookSchema.index({ workKey: 1 });
