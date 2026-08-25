@@ -33,6 +33,9 @@ export enum AuditAction {
   ORGANIZATION_MEMBER_ADDED = 'organization_member.added',
   ORGANIZATION_MEMBER_ROLE_CHANGED = 'organization_member.role_changed',
   ORGANIZATION_MEMBER_REMOVED = 'organization_member.removed',
+  ORGANIZATION_INVITATION_CREATED = 'organization_invitation.created',
+  ORGANIZATION_INVITATION_ACCEPTED = 'organization_invitation.accepted',
+  ORGANIZATION_INVITATION_REVOKED = 'organization_invitation.revoked',
 
   // Upload lifecycle (src/worker)
   FILE_UPLOAD_QUARANTINED = 'file_upload.quarantined',
