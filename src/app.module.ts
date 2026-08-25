@@ -82,6 +82,7 @@ import { IdempotencyModule } from './idempotency/idempotency.module';
 import { PrivacyPolicyManagementModule } from './privacy-policy-management/privacy-policy-management.module';
 import { VerificationModule } from './verification/verification.module';
 import { DeFiModule } from './protocols/de-fi/de-fi.module';
+import { WebhookSecurityModule } from './webhook-security/webhook-security.module';
 
 @Module({
   imports: [
@@ -189,6 +190,7 @@ import { DeFiModule } from './protocols/de-fi/de-fi.module';
     IdempotencyModule,
     VerificationModule,
     DeFiModule,
+    WebhookSecurityModule,
   ],
   controllers: [AppController],
   providers: [
