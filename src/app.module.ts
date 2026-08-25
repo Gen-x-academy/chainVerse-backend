@@ -81,7 +81,7 @@ import { ReportsModule } from './reports/reports.module';
 import { IdempotencyModule } from './idempotency/idempotency.module';
 import { PrivacyPolicyManagementModule } from './privacy-policy-management/privacy-policy-management.module';
 import { VerificationModule } from './verification/verification.module';
-import { LibraryModule } from './library/library.module';
+import { LibraryHoldsModule } from './library-holds/library-holds.module';
 
 @Module({
   imports: [
@@ -188,7 +188,7 @@ import { LibraryModule } from './library/library.module';
     StellarModule,
     IdempotencyModule,
     VerificationModule,
-    LibraryModule,
+    LibraryHoldsModule,
   ],
   controllers: [AppController],
   providers: [
