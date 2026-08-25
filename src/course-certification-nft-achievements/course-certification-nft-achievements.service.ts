@@ -18,7 +18,7 @@ import { CreateCourseCertificationNftAchievementsDto } from './dto/create-course
 import { UpdateCourseCertificationNftAchievementsDto } from './dto/update-course-certification-nft-achievements.dto';
 import { DomainEvents } from '../events/event-names';
 import { CertificateIssuedPayload } from '../events/payloads/certificate-issued.payload';
-import { CertificateTx } from '../stellar/stellar-sync.service';
+import { CertificateTx } from '../stellar/schemas/certificate-tx.schema';
 
 @Injectable()
 export class CourseCertificationNftAchievementsService {

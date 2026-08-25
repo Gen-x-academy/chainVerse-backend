@@ -17,7 +17,7 @@ const NON_OBJECT_ID_PARAMS: Record<string, string> = {
   'badge/badge.controller.ts:tokenId':
     'on-chain NFT token id, not a Mongo document id',
   'certification/certification.controller.ts:id':
-    'placeholder certificate reference; the service generates a file and never queries Mongo',
+    'on-chain certificate id looked up via CertificateTx, not a Mongo document id',
   'reports/reports.controller.ts:id':
     'stub report endpoint backed by static data, not Mongo',
   'addup/organization-user.controller.ts:id':
