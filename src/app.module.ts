@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppLoggerModule } from './logger/logger.module';
 import { JwtModule } from '@nestjs/jwt';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -86,6 +87,9 @@ import { PrivacyPolicyManagementModule } from './privacy-policy-management/priva
 import { VerificationModule } from './verification/verification.module';
 import { ELibraryModule } from './e-library/e-library.module';
 
+// E-Library modules
+import { ELibraryModule } from './e-library/e-library.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -94,6 +98,11 @@ import { ELibraryModule } from './e-library/e-library.module';
       validationSchema: envValidationSchema,
     }),
     EventEmitterModule.forRoot(),
+    ScheduleModule.forRoot(),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60,
+        limit: 10,
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => {
@@ -161,10 +170,8 @@ import { ELibraryModule } from './e-library/e-library.module';
     StudentEnrollmentModule,
     // Analytics
     CourseAnalyticsModule,
-    // Domain event listeners (notifications, points, etc.)
-    EventsModule,
-    // E-Library / Circulation
-    LibraryCirculationModule,
+    // E-Library
+    ELibraryModule,
     StudentAccountSettingsModule,
     StudentCertificateNameChangeRequestModule,
     StudentReportsAnalyticsModule,
