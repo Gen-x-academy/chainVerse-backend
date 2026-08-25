@@ -13,7 +13,7 @@ export type IdempotencyKeyDocument = HydratedDocument<IdempotencyKey>;
 @Schema({ timestamps: true })
 export class IdempotencyKey {
   /** The raw key value supplied by the client in X-Idempotency-Key. */
-  @Prop({ required: true, unique: true, index: true })
+  @Prop({ required: true, index: true })
   key: string;
 
   /** Originating user id – prevents cross-user key collisions. */
@@ -23,6 +23,14 @@ export class IdempotencyKey {
   /** Request path the key was first used on. */
   @Prop({ required: true })
   path: string;
+
+  /**
+   * Hash of the request payload (method + path + body) the key was first
+   * used with. A replay with the same key but a different hash is a
+   * conflicting reuse of the key, not a retry, and is rejected with 409.
+   */
+  @Prop({ required: true })
+  requestHash: string;
 
   /** HTTP status code of the original response. */
   @Prop({ required: true })
@@ -42,6 +50,9 @@ export class IdempotencyKey {
 
 export const IdempotencyKeySchema =
   SchemaFactory.createForClass(IdempotencyKey);
+
+// A key only needs to be unique per actor + endpoint, not globally.
+IdempotencyKeySchema.index({ key: 1, userId: 1, path: 1 }, { unique: true });
 
 // Let MongoDB automatically remove expired records.
 IdempotencyKeySchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });

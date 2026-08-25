@@ -1,34 +1,80 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
-import { LoanStatus } from '../enums/loan-status.enum';
+import { HydratedDocument, Types } from 'mongoose';
 
 export type LoanDocument = HydratedDocument<Loan>;
 
-@Schema({ timestamps: true })
-export class Loan {
+export enum LoanStatus {
+  ACTIVE = 'active',
+  RETURNED = 'returned',
+}
+
+/** Condition of the specific copy a patron is holding for this loan. */
+export enum CopyStatus {
+  NORMAL = 'normal',
+  DAMAGED = 'damaged',
+  LOST = 'lost',
+  FLAGGED = 'flagged',
+}
+
+export type RenewalMethod = 'manual' | 'auto';
+
+@Schema({ _id: false })
+export class RenewalHistoryEntry {
   @Prop({ required: true })
+  previousDueDate: Date;
+
+  @Prop({ required: true })
+  newDueDate: Date;
+
+  @Prop({ required: true, default: Date.now })
+  renewedAt: Date;
+
+  @Prop({ required: true })
+  policyVersion: number;
+
+  @Prop({ required: true, enum: ['manual', 'auto'] })
+  method: RenewalMethod;
+}
+
+export const RenewalHistoryEntrySchema =
+  SchemaFactory.createForClass(RenewalHistoryEntry);
+
+@Schema({ timestamps: true, collection: 'library_loans' })
+export class Loan {
+  @Prop({ required: true, index: true })
   patronId: string;
 
-  @Prop({ required: true })
-  itemId: string;
+  @Prop({ required: true, type: Types.ObjectId, ref: 'Book', index: true })
+  bookId: Types.ObjectId;
 
-  @Prop({ required: true })
-  borrowedAt: Date;
+  @Prop({ required: true, index: true })
+  workKey: string;
+
+  @Prop({ required: true, default: Date.now })
+  checkedOutAt: Date;
 
   @Prop({ required: true })
   dueDate: Date;
 
-  @Prop({ type: Date, default: null })
-  returnedAt: Date | null;
+  @Prop({ required: true, default: 0, min: 0 })
+  renewalCount: number;
 
-  @Prop({ type: String, enum: LoanStatus, default: LoanStatus.ACTIVE })
+  @Prop({ required: true, enum: LoanStatus, default: LoanStatus.ACTIVE })
   status: LoanStatus;
 
-  // Last time the overdue scheduler evaluated this loan; used for observability.
-  @Prop({ type: Date, default: null })
-  lastOverdueCheckAt: Date | null;
+  @Prop({ required: true, enum: CopyStatus, default: CopyStatus.NORMAL })
+  copyStatus: CopyStatus;
+
+  @Prop({ required: true, default: false })
+  autoRenewEnabled: boolean;
+
+  @Prop({ type: [RenewalHistoryEntrySchema], default: [] })
+  renewalHistory: RenewalHistoryEntry[];
+
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export const LoanSchema = SchemaFactory.createForClass(Loan);
-LoanSchema.index({ status: 1, dueDate: 1 });
-LoanSchema.index({ patronId: 1 });
+LoanSchema.index({ bookId: 1, status: 1 });
+LoanSchema.index({ status: 1, autoRenewEnabled: 1, dueDate: 1 });
