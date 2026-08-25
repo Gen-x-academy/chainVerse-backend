@@ -9,6 +9,9 @@ import { LearningEventListener } from './listeners/learning-event.listener';
 import { StreakListener } from './listeners/streak.listener';
 import { CourseAnalyticsModule } from '../course-analytics/course-analytics.module';
 import { StreakModule } from '../session/streak.module';
+import { BadgeEvaluationListener } from './listeners/badge-evaluation.listener';
+import { CourseAnalyticsModule } from '../course-analytics/course-analytics.module';
+import { BadgeModule } from '../badge/badge.module';
 
 @Module({
   imports: [
@@ -17,6 +20,7 @@ import { StreakModule } from '../session/streak.module';
     EmailModule,
     CourseAnalyticsModule,
     StreakModule,
+    BadgeModule,
   ],
   providers: [
     NotificationListener,
@@ -24,6 +28,7 @@ import { StreakModule } from '../session/streak.module';
     RewardListener,
     LearningEventListener,
     StreakListener,
+    BadgeEvaluationListener,
   ],
 })
 export class EventsModule {}

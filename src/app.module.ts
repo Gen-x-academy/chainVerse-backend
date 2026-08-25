@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppLoggerModule } from './logger/logger.module';
 import { JwtModule } from '@nestjs/jwt';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -51,6 +52,9 @@ import { CourseAnalyticsModule } from './course-analytics/course-analytics.modul
 import { StudentSavedCoursesModule } from './student-saved-courses/student-saved-courses.module';
 import { StudentCartModule } from './student-cart/student-cart.module';
 import { StudentEnrollmentModule } from './student-enrollment/student-enrollment.module';
+import { CourseAnalyticsModule } from './course-analytics/course-analytics.module';
+import { EventsModule } from './events/events.module';
+import { LibraryCirculationModule } from './library-circulation/library-circulation.module';
 import { StudentAccountSettingsModule } from './student-account-settings/student-account-settings.module';
 import { StudentCertificateNameChangeRequestModule } from './student-certificate-name-change-request/student-certificate-name-change-request.module';
 import { StudentReportsAnalyticsModule } from './student-reports-analytics/student-reports-analytics.module';
@@ -82,6 +86,10 @@ import { ReportsModule } from './reports/reports.module';
 import { IdempotencyModule } from './idempotency/idempotency.module';
 import { PrivacyPolicyManagementModule } from './privacy-policy-management/privacy-policy-management.module';
 import { VerificationModule } from './verification/verification.module';
+import { ELibraryModule } from './e-library/e-library.module';
+
+// E-Library modules
+import { ELibraryModule } from './e-library/e-library.module';
 
 @Module({
   imports: [
@@ -91,6 +99,11 @@ import { VerificationModule } from './verification/verification.module';
       validationSchema: envValidationSchema,
     }),
     EventEmitterModule.forRoot(),
+    ScheduleModule.forRoot(),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60,
+        limit: 10,
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => {
@@ -157,6 +170,10 @@ import { VerificationModule } from './verification/verification.module';
     StudentSavedCoursesModule,
     StudentCartModule,
     StudentEnrollmentModule,
+    // Analytics
+    CourseAnalyticsModule,
+    // E-Library
+    ELibraryModule,
     StudentAccountSettingsModule,
     StudentCertificateNameChangeRequestModule,
     StudentReportsAnalyticsModule,
@@ -189,6 +206,7 @@ import { VerificationModule } from './verification/verification.module';
     StellarModule,
     IdempotencyModule,
     VerificationModule,
+    ELibraryModule,
   ],
   controllers: [AppController],
   providers: [
