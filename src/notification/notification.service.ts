@@ -7,20 +7,15 @@ import {
   Notification,
   NotificationDocument,
 } from './schemas/notification.schema';
-
-export interface PaginatedResult<T> {
-  data: T[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
+import { PaginationService } from '../common/pagination/pagination.service';
+import { FindNotificationsDto } from './dto/find-notifications.dto';
 
 @Injectable()
 export class NotificationService {
   constructor(
     @InjectModel(Notification.name)
     private readonly notificationModel: Model<NotificationDocument>,
+    private readonly paginationService: PaginationService,
   ) {}
 
   async create(payload: CreateNotificationDto): Promise<Notification> {
@@ -28,33 +23,19 @@ export class NotificationService {
     return notification.save();
   }
 
-  async findAll(
-    page = 1,
-    limit = 10,
-  ): Promise<PaginatedResult<Notification>> {
-    const skip = (page - 1) * limit;
-    const [data, total] = await Promise.all([
-      this.notificationModel.find().skip(skip).limit(limit).exec(),
-      this.notificationModel.countDocuments().exec(),
-    ]);
-    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
+  async findAll(paginationDto: FindNotificationsDto) {
+    return this.paginationService.paginate(
+      this.notificationModel,
+      paginationDto,
+    );
   }
 
-  async findByUserId(
-    userId: string,
-    page = 1,
-    limit = 10,
-  ): Promise<PaginatedResult<Notification>> {
-    const skip = (page - 1) * limit;
-    const [data, total] = await Promise.all([
-      this.notificationModel
-        .find({ userId })
-        .skip(skip)
-        .limit(limit)
-        .exec(),
-      this.notificationModel.countDocuments({ userId }).exec(),
-    ]);
-    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
+  async findByUserId(userId: string, paginationDto: FindNotificationsDto) {
+    return this.paginationService.paginate(
+      this.notificationModel,
+      paginationDto,
+      { userId },
+    );
   }
 
   async findOne(id: string): Promise<NotificationDocument> {

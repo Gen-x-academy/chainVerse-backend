@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { NotificationService } from '../../notification/notification.service';
+import { EmailService } from '../../email/email.service';
 import { DomainEvents } from '../event-names';
 import { StudentRegisteredPayload } from '../payloads/student-registered.payload';
 import { StudentEnrolledPayload } from '../payloads/student-enrolled.payload';
@@ -11,13 +12,12 @@ import {
   LibraryReturnReceiptCreatedPayload,
 } from '../payloads/library-receipt-created.payload';
 
-/**
- * Listens to domain events and creates in-app notifications so
- * the notification module stays completely unaware of any other module's logic.
- */
 @Injectable()
 export class NotificationListener {
-  constructor(private readonly notificationService: NotificationService) {}
+  constructor(
+    private readonly notificationService: NotificationService,
+    private readonly emailService: EmailService,
+  ) {}
 
   @OnEvent(DomainEvents.STUDENT_REGISTERED)
   onStudentRegistered(payload: StudentRegisteredPayload): void {
@@ -27,6 +27,15 @@ export class NotificationListener {
       message: `Hi ${payload.firstName}, your account is ready. Please verify your email to continue.`,
       type: 'welcome',
     });
+    this.emailService
+      .send(
+        payload.email,
+        'Welcome to ChainVerse Academy!',
+        `Hi ${payload.firstName}, your account is ready. Please verify your email to continue.`,
+      )
+      .catch(() => {
+        /* non-blocking */
+      });
   }
 
   @OnEvent(DomainEvents.STUDENT_ENROLLED)

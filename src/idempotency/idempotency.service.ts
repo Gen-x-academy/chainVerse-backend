@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { IdempotencyKey, IdempotencyKeyDocument } from './schemas/idempotency-key.schema';
+import {
+  IdempotencyKey,
+  IdempotencyKeyDocument,
+} from './schemas/idempotency-key.schema';
 
 /** Default TTL for idempotency records: 24 hours. */
 const DEFAULT_TTL_MS = 24 * 60 * 60 * 1000;
@@ -75,6 +78,7 @@ export class IdempotencyService {
     const expiresAt = new Date(Date.now() + ttlMs);
     await this.idempotencyModel.updateOne(
       { key, userId, path },
+      { key, userId },
       {
         $setOnInsert: {
           key,

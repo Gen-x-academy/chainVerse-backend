@@ -10,7 +10,9 @@ import { FinancialAidApplication } from './financial-aid-application.entity';
  */
 export abstract class FinancialAidApplicationRepository {
   /** Persist a new or updated application.  Returns the saved instance. */
-  abstract save(application: FinancialAidApplication): Promise<FinancialAidApplication>;
+  abstract save(
+    application: FinancialAidApplication,
+  ): Promise<FinancialAidApplication>;
 
   /** Return all applications, or an empty array when none exist. */
   abstract findAll(): Promise<FinancialAidApplication[]>;
@@ -19,7 +21,15 @@ export abstract class FinancialAidApplicationRepository {
   abstract findById(id: string): Promise<FinancialAidApplication | null>;
 
   /** Return all applications belonging to a student. */
-  abstract findByStudentId(studentId: string): Promise<FinancialAidApplication[]>;
+  abstract findByStudentId(
+    studentId: string,
+  ): Promise<FinancialAidApplication[]>;
+
+  /** Return the application for a specific student+course pair, or null. */
+  abstract findByStudentAndCourse(
+    studentId: string,
+    courseId: string,
+  ): Promise<FinancialAidApplication | null>;
 
   /** Permanently remove the application with the given id. */
   abstract delete(id: string): Promise<void>;

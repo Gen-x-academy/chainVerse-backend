@@ -48,7 +48,8 @@ export class IdempotencyKey {
   updatedAt?: Date;
 }
 
-export const IdempotencyKeySchema = SchemaFactory.createForClass(IdempotencyKey);
+export const IdempotencyKeySchema =
+  SchemaFactory.createForClass(IdempotencyKey);
 
 // A key only needs to be unique per actor + endpoint, not globally.
 IdempotencyKeySchema.index({ key: 1, userId: 1, path: 1 }, { unique: true });

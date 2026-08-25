@@ -3,12 +3,14 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Course, CourseDocument } from '../admin-course/schemas/course.schema';
 import { SearchCoursesDto } from './dto/search-courses.dto';
+import { PaginationService } from '../common/pagination/pagination.service';
 
 @Injectable()
 export class CourseDiscoveryService {
   constructor(
     @InjectModel(Course.name)
     private readonly courseModel: Model<CourseDocument>,
+    private readonly paginationService: PaginationService,
   ) {}
 
   /**
@@ -56,50 +58,12 @@ export class CourseDiscoveryService {
       query.averageRating = { $gte: dto.minRating };
     }
 
-    // Build sort option
-    const sort: Record<string, number> = {};
-    switch (dto.sortBy) {
-      case 'price-asc':
-        sort.price = 1;
-        break;
-      case 'price-desc':
-        sort.price = -1;
-        break;
-      case 'rating':
-        sort.averageRating = -1;
-        break;
-      case 'popular':
-        sort.totalEnrollments = -1;
-        break;
-      case 'newest':
-        sort.createdAt = -1;
-        break;
-      default:
-        sort.createdAt = -1;
-    }
-
-    const limit = dto.limit || 20;
-    const skip = dto.skip || 0;
-
-    const [courses, total] = await Promise.all([
-      this.courseModel
-        .find(query)
-        .sort(sort)
-        .limit(limit)
-        .skip(skip)
-        .exec(),
-      this.courseModel.countDocuments(query).exec(),
-    ]);
-
-    return {
-      courses: courses.map((c) => this.sanitizeCourse(c)),
-      pagination: {
-        total,
-        limit,
-        skip,
-        hasMore: skip + limit < total,
-      },
-    };
+    return this.paginationService.paginate(
+      this.courseModel,
+      dto,
+      query,
+      this.sanitizeCourse,
+    );
   }
 
   /**
@@ -139,7 +103,13 @@ export class CourseDiscoveryService {
    * Get all categories with course counts
    */
   async getCategories() {
-    const categories = await this.courseModel.aggregate([
+    interface CategoryAggResult {
+      _id: string;
+      count: number;
+      avgPrice: number;
+    }
+
+    const categories = await this.courseModel.aggregate<CategoryAggResult>([
       {
         $match: {
           status: 'published',
@@ -171,13 +141,15 @@ export class CourseDiscoveryService {
   async findOne(id: string) {
     const course = await this.courseModel.findById(id).exec();
     if (!course) {
-      throw new Error('Course not found');
+      throw new NotFoundException('Course not found');
     }
 
     // Increment view count
-    await this.courseModel.findByIdAndUpdate(id, {
-      $inc: { viewCount: 1 },
-    }).exec();
+    await this.courseModel
+      .findByIdAndUpdate(id, {
+        $inc: { viewCount: 1 },
+      })
+      .exec();
 
     return this.sanitizeCourse(course);
   }

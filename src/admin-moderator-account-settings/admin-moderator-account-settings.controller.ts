@@ -1,4 +1,5 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 import {
   Body,
   Controller,
@@ -18,22 +19,24 @@ import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 
 @ApiBearerAuth('access-token')
-@Controller('admin-moderator/account-settings')
+@Controller('admin/moderator/account-settings')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class AdminModeratorAccountSettingsController {
   constructor(private readonly service: AdminModeratorAccountSettingsService) {}
 
+  @Roles(Role.ADMIN)
   @Get()
   findAll() {
     return this.service.findAll();
   }
 
+  @Roles(Role.ADMIN)
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   create(@Body() payload: CreateAdminModeratorAccountSettingsDto) {
     return this.service.create(payload);
@@ -43,7 +46,7 @@ export class AdminModeratorAccountSettingsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   update(
-    @Param('id') id: string,
+    @Param('id', new ParseObjectIdPipe()) id: string,
     @Body() payload: UpdateAdminModeratorAccountSettingsDto,
   ) {
     return this.service.update(id, payload);
@@ -52,7 +55,7 @@ export class AdminModeratorAccountSettingsController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.remove(id);
   }
 }

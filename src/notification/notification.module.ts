@@ -6,14 +6,17 @@ import {
   Notification,
   NotificationSchema,
 } from './schemas/notification.schema';
+import { PaginationModule } from '../common/pagination/pagination.module';
+import { NotificationControllerV2 } from './notification.controller.v2';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Notification.name, schema: NotificationSchema },
     ]),
+    PaginationModule,
   ],
-  controllers: [NotificationController],
+  controllers: [NotificationController, NotificationControllerV2],
   providers: [NotificationService],
   exports: [NotificationService],
 })
