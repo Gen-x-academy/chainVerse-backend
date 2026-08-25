@@ -40,7 +40,8 @@ export class IdempotencyKey {
   updatedAt?: Date;
 }
 
-export const IdempotencyKeySchema = SchemaFactory.createForClass(IdempotencyKey);
+export const IdempotencyKeySchema =
+  SchemaFactory.createForClass(IdempotencyKey);
 
 // Let MongoDB automatically remove expired records.
 IdempotencyKeySchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });

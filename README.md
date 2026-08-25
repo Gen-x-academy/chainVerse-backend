@@ -1,5 +1,3 @@
-
-
 ---
 
 # 🚀 ChainVerse Backend (NestJS)
@@ -14,23 +12,23 @@ This project represents a **full architectural migration** from **Express.js to 
 
 The backend is designed to support a modern learning platform with features such as:
 
-* User authentication & role management
-* Course creation and enrollment
-* Certification and achievements
-* Gamification systems
-* Financial aid workflows
-* Analytics and reporting
-* Notifications and communication systems
+- User authentication & role management
+- Course creation and enrollment
+- Certification and achievements
+- Gamification systems
+- Financial aid workflows
+- Analytics and reporting
+- Notifications and communication systems
 
 ### 🎯 Why This Migration Matters
 
 Moving to NestJS enables:
 
-* **Clear modular boundaries** → easier to scale teams and features
-* **Dependency Injection (DI)** → better testability and loose coupling
-* **Consistent architecture** → predictable code organization
-* **Built-in best practices** → guards, interceptors, pipes, etc.
-* **Future microservice readiness**
+- **Clear modular boundaries** → easier to scale teams and features
+- **Dependency Injection (DI)** → better testability and loose coupling
+- **Consistent architecture** → predictable code organization
+- **Built-in best practices** → guards, interceptors, pipes, etc.
+- **Future microservice readiness**
 
 ---
 
@@ -42,8 +40,9 @@ Moving to NestJS enables:
 | Language       | TypeScript                          | Type safety & maintainability |
 | Authentication | JWT (Access + Refresh Tokens)       | Secure user sessions          |
 | Validation     | class-validator / class-transformer | DTO validation                |
-| ORM            | Prisma / TypeORM                    | Database abstraction          |
-| Database       | PostgreSQL                          | Relational data storage       |
+| ODM            | Mongoose                            | Database abstraction          |
+| ORM            | Mongoose                            | MongoDB object modeling       |
+| Database       | MongoDB                             | Document data storage         |
 | Caching        | Redis (optional)                    | Performance optimization      |
 | Documentation  | Swagger                             | API exploration               |
 | Storage        | Local / S3-compatible               | File uploads                  |
@@ -92,10 +91,10 @@ module/
 
 ### 🧠 Architectural Principles
 
-* **Separation of concerns** (Controller vs Service vs Data)
-* **Single Responsibility Principle**
-* **Domain-driven structure**
-* **Reusable shared utilities in `common/`**
+- **Separation of concerns** (Controller vs Service vs Data)
+- **Single Responsibility Principle**
+- **Domain-driven structure**
+- **Reusable shared utilities in `common/`**
 
 ---
 
@@ -106,9 +105,9 @@ The system uses **JWT-based authentication** with support for **access and refre
 ### 🔑 Authentication Flow
 
 1. User logs in → receives:
+   - Access Token (short-lived)
+   - Refresh Token (long-lived)
 
-   * Access Token (short-lived)
-   * Refresh Token (long-lived)
 2. Access token is used for API requests
 3. Refresh token is used to issue new access tokens
 
@@ -116,15 +115,39 @@ The system uses **JWT-based authentication** with support for **access and refre
 
 Supported roles:
 
-* `ADMIN`
-* `MODERATOR`
-* `TUTOR`
-* `STUDENT`
+- `ADMIN`
+- `MODERATOR`
+- `TUTOR`
+- `STUDENT`
+
+### 🏢 Organization-Scoped Roles
+
+Global roles describe what a user is on the platform. Membership in an
+organization is a separate axis with its own roles:
+
+- `owner` · `admin` · `instructor` · `member`
+
+Holding a role in one organization grants nothing in another. See
+[docs/security/organization-authorization.md](docs/security/organization-authorization.md).
 
 ### 🔒 Guards
 
-* `JwtAuthGuard` → validates authenticated users
-* `RolesGuard` → enforces role-based permissions
+- `JwtAuthGuard` → validates authenticated users
+- `RolesGuard` → enforces platform role-based permissions
+- `OrganizationRolesGuard` → enforces organization membership roles
+
+### 📝 Security Documentation
+
+- [Immutable audit logging](docs/security/audit-logging.md) — append-only trail
+  for privileged actions
+- [Organization-scoped authorization](docs/security/organization-authorization.md)
+- [Upload quarantine and malware scanning](docs/security/uploads.md)
+- [Resource ownership for student-scoped records](docs/security/resource-ownership.md)
+- [ObjectId validation on route parameters](docs/security/object-id-validation.md)
+
+### 📚 Feature Documentation
+
+- [Course curriculum and transactional reordering](docs/courses/curriculum.md)
 
 ---
 
@@ -132,63 +155,63 @@ Supported roles:
 
 ### 👤 Account & Identity
 
-* Multi-role authentication (Admin, Tutor, Student)
-* Profile management per role
-* Secure session handling
+- Multi-role authentication (Admin, Tutor, Student)
+- Profile management per role
+- Secure session handling
 
 ---
 
 ### 📚 Course System
 
-* Course creation & categorization
-* Advanced filtering & search
-* Reviews, ratings, and feedback
-* Course analytics & reporting
+- Course creation & categorization
+- Advanced filtering & search
+- Reviews, ratings, and feedback
+- Course analytics & reporting
 
 ---
 
 ### 🏆 Gamification Engine
 
-* Points accumulation system
-* Leaderboards (ranking users)
-* Achievement badges
-* NFT-based rewards (extensible)
+- Points accumulation system
+- Leaderboards (ranking users)
+- Achievement badges
+- NFT-based rewards (extensible)
 
 ---
 
 ### 🎓 Certification System
 
-* Certificate generation
-* Download & verification
-* Social sharing capabilities
-* Controlled name-change request flow
+- Certificate generation
+- Download & verification
+- Social sharing capabilities
+- Controlled name-change request flow
 
 ---
 
 ### 💰 Financial Aid
 
-* Student application workflow
-* Admin review system
-* Approval/rejection lifecycle
+- Student application workflow
+- Admin review system
+- Approval/rejection lifecycle
 
 ---
 
 ### 📊 Reporting & Analytics
 
-* Tutor performance insights
-* Student progress tracking
-* Course-level analytics
+- Tutor performance insights
+- Student progress tracking
+- Course-level analytics
 
 ---
 
 ### 🛎 Platform Systems
 
-* Notifications (email/in-app ready)
-* FAQ & legal pages
-* Contact & messaging system
-* Organization management
-* Subscription plans
-* Abuse reporting & moderation
+- Notifications (email/in-app ready)
+- FAQ & legal pages
+- Contact & messaging system
+- Organization management
+- Subscription plans
+- Abuse reporting & moderation
 
 ---
 
@@ -214,7 +237,8 @@ Create a `.env` file in the root directory:
 ```
 PORT=3000
 
-DATABASE_URL=postgresql://user:password@localhost:5432/chainverse
+MONGODB_URI=mongodb://localhost:27017/chainverse
+MONGO_URI=mongodb://localhost:27017/chainverse
 
 JWT_SECRET=your_access_secret
 JWT_REFRESH_SECRET=your_refresh_secret
@@ -244,14 +268,14 @@ npm run start:prod
 After starting the server:
 
 ```
-http://localhost:3000/api
+http://localhost:3000/docs
 ```
 
 This provides:
 
-* Interactive API testing
-* Request/response schemas
-* Authentication support
+- Interactive API testing
+- Request/response schemas
+- Authentication support
 
 ---
 
@@ -267,9 +291,9 @@ npm run test:e2e
 
 ### ✅ Testing Philosophy
 
-* Services should be **unit tested**
-* Critical flows should have **e2e coverage**
-* Mock external dependencies where needed
+- Services should be **unit tested**
+- Critical flows should have **e2e coverage**
+- Mock external dependencies where needed
 
 ---
 
@@ -277,10 +301,10 @@ npm run test:e2e
 
 This migration was not just a rewrite—it was a **system redesign** focused on:
 
-* Long-term maintainability
-* Predictable development patterns
-* Improved onboarding for new developers
-* Scalability toward microservices
+- Long-term maintainability
+- Predictable development patterns
+- Improved onboarding for new developers
+- Scalability toward microservices
 
 ---
 
@@ -288,13 +312,49 @@ This migration was not just a rewrite—it was a **system redesign** focused on:
 
 To maintain consistency across the codebase:
 
-* ✅ Keep controllers thin (no business logic)
-* ✅ Place logic inside services
-* ✅ Use DTOs for all inputs
-* ✅ Validate all external data
-* ✅ Protect routes with guards
-* ✅ Document endpoints with Swagger decorators
-* ✅ Follow SOLID principles
+- ✅ Keep controllers thin (no business logic)
+- ✅ Place logic inside services
+- ✅ Use DTOs for all inputs
+- ✅ Validate all external data
+- ✅ Protect routes with guards
+- ✅ Document endpoints with Swagger decorators
+- ✅ Follow SOLID principles
+
+---
+
+## 📜 API Versioning and Deprecation
+
+This project uses URI-based versioning. When an endpoint is deprecated, it will return `Sunset` and `Link` headers to provide clients with information about the endpoint's retirement and its successor.
+
+### Deprecation Policy
+
+- **Sunset Header**: Indicates the date when the endpoint will be removed.
+- **Link Header**: Provides a link to the successor endpoint.
+
+### Example
+
+To deprecate an endpoint, use the `@Deprecated()` decorator:
+
+```typescript
+import { Deprecated } from '../common/deprecation/deprecation.decorator';
+
+@Get()
+@Deprecated({
+  sunset: '2024-12-31T23:59:59Z',
+  successorUrl: '/api/v2/notifications',
+  documentationUrl: '/api/docs'
+})
+findAll() {
+  // ...
+}
+```
+
+This will result in the following headers being added to the response:
+
+```
+Sunset: 2024-12-31T23:59:59Z
+Link: <http://localhost:3000/api/v2/notifications>; rel="successor", <http://localhost:3000/api/docs>; rel="documentation"
+```
 
 ---
 
@@ -302,12 +362,12 @@ To maintain consistency across the codebase:
 
 Planned enhancements include:
 
-* Microservices architecture (gRPC / Redis / RMQ)
-* Real-time features (WebSockets)
-* Blockchain/NFT integrations
-* Payment gateway integration
-* CI/CD pipelines
-* Docker & container orchestration
+- Microservices architecture (gRPC / Redis / RMQ)
+- Real-time features (WebSockets)
+- Blockchain/NFT integrations
+- Payment gateway integration
+- CI/CD pipelines
+- Docker & container orchestration
 
 ---
 
@@ -323,10 +383,10 @@ We welcome contributions! Follow these steps:
 
 ### 📌 Contribution Requirements
 
-* Must follow NestJS best practices
-* Must include DTO validation
-* Must include Swagger docs
-* Must pass all tests
+- Must follow NestJS best practices
+- Must include DTO validation
+- Must include Swagger docs
+- Must pass all tests
 
 ---
 
@@ -335,4 +395,3 @@ We welcome contributions! Follow these steps:
 MIT License
 
 ---
-

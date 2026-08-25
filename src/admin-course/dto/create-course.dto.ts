@@ -19,7 +19,10 @@ export class CurriculumItemDto {
   @IsNotEmpty()
   title: string;
 
-  @ApiProperty({ example: 'Learn the basics of blockchain technology', required: false })
+  @ApiProperty({
+    example: 'Learn the basics of blockchain technology',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   description?: string;
@@ -51,7 +54,10 @@ export class ResourceDto {
   @IsNotEmpty()
   title: string;
 
-  @ApiProperty({ example: 'video', enum: ['video', 'pdf', 'quiz', 'assignment', 'link'] })
+  @ApiProperty({
+    example: 'video',
+    enum: ['video', 'pdf', 'quiz', 'assignment', 'link'],
+  })
   @IsEnum(['video', 'pdf', 'quiz', 'assignment', 'link'])
   type: string;
 
@@ -66,7 +72,9 @@ export class CreateCourseDto {
   @IsNotEmpty()
   title: string;
 
-  @ApiProperty({ example: 'Learn the fundamentals of blockchain technology...' })
+  @ApiProperty({
+    example: 'Learn the fundamentals of blockchain technology...',
+  })
   @IsString()
   @IsNotEmpty()
   description: string;
@@ -88,7 +96,10 @@ export class CreateCourseDto {
   @IsNotEmpty()
   price: number;
 
-  @ApiProperty({ example: 'https://example.com/thumbnail.jpg', required: false })
+  @ApiProperty({
+    example: 'https://example.com/thumbnail.jpg',
+    required: false,
+  })
   @IsUrl()
   @IsOptional()
   thumbnailUrl?: string;

@@ -1,7 +1,10 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { FinancialAidController } from './financial-aid.controller';
-import { FinancialAid, FinancialAidSchema } from './schemas/financial-aid.schema';
+import {
+  FinancialAid,
+  FinancialAidSchema,
+} from './schemas/financial-aid.schema';
 import { FinancialAidApplicationRepository } from './domain/financial-aid-application.repository';
 import { MongooseFinancialAidApplicationRepository } from './infrastructure/mongoose-financial-aid-application.repository';
 import { ApplyForFinancialAidUseCase } from './use-cases/apply-for-financial-aid.use-case';
@@ -16,7 +19,9 @@ import { DeleteFinancialAidApplicationUseCase } from './use-cases/delete-financi
  */
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: FinancialAid.name, schema: FinancialAidSchema }]),
+    MongooseModule.forFeature([
+      { name: FinancialAid.name, schema: FinancialAidSchema },
+    ]),
   ],
   controllers: [FinancialAidController],
   providers: [

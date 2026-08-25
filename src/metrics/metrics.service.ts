@@ -59,7 +59,9 @@ export class MetricsService {
           ? {
               count: histogram.count,
               sumMs: histogram.sum,
-              avgMs: histogram.count ? +(histogram.sum / histogram.count).toFixed(2) : 0,
+              avgMs: histogram.count
+                ? +(histogram.sum / histogram.count).toFixed(2)
+                : 0,
               p50Ms: this.percentile(histogram.values, 50),
               p95Ms: this.percentile(histogram.values, 95),
               p99Ms: this.percentile(histogram.values, 99),
