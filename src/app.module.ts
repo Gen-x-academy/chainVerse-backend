@@ -23,6 +23,7 @@ import { StellarModule } from './stellar/stellar.module';
 import { AppCacheModule } from './cache/app-cache.module';
 import { SessionModule } from './session/session.module';
 import { SessionService } from './session/session.service';
+import { StreakModule } from './session/streak.module';
 
 // Auth modules
 import { StudentAuthModule } from './student-auth/student-auth.module';
@@ -144,6 +145,7 @@ import { ELibraryModule } from './e-library/e-library.module';
     EmailModule,
     StellarModule,
     SessionModule,
+    StreakModule,
     // Auth
     StudentAuthModule,
     AdminAuthModule,
