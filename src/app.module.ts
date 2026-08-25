@@ -81,6 +81,7 @@ import { ReportsModule } from './reports/reports.module';
 import { IdempotencyModule } from './idempotency/idempotency.module';
 import { PrivacyPolicyManagementModule } from './privacy-policy-management/privacy-policy-management.module';
 import { VerificationModule } from './verification/verification.module';
+import { DeFiModule } from './protocols/de-fi/de-fi.module';
 import { WebhookSecurityModule } from './webhook-security/webhook-security.module';
 
 @Module({
@@ -188,6 +189,7 @@ import { WebhookSecurityModule } from './webhook-security/webhook-security.modul
     StellarModule,
     IdempotencyModule,
     VerificationModule,
+    DeFiModule,
     WebhookSecurityModule,
   ],
   controllers: [AppController],
