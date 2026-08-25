@@ -90,6 +90,16 @@ export const envValidationSchema = Joi.object({
   MALWARE_SCAN_HOST: Joi.string().default('127.0.0.1'),
   MALWARE_SCAN_PORT: Joi.number().port().default(3310),
   MALWARE_SCAN_TIMEOUT_MS: Joi.number().integer().positive().default(30000),
+
+  // ─── Webhook security ─────────────────────────────────────────────────────
+  // Shared secret for verifying incoming webhook HMAC-SHA256 signatures.
+  WEBHOOK_SECRET: Joi.string().min(16).optional(),
+
+  // Maximum age of a webhook timestamp before it is rejected (default 5 min).
+  WEBHOOK_TIMESTAMP_TOLERANCE_MS: Joi.number()
+    .integer()
+    .positive()
+    .default(300000),
 });
 
 /**
