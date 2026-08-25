@@ -43,6 +43,20 @@ export enum AuditAction {
   FILE_UPLOAD_RELEASED = 'file_upload.released',
   FILE_UPLOAD_REJECTED = 'file_upload.rejected',
   FILE_UPLOAD_DELETED = 'file_upload.deleted',
+
+  // Library configuration (src/library)
+  LIBRARY_CONFIG_UPDATED = 'library_config.updated',
+
+  // Library patron notes (src/library)
+  PATRON_NOTE_CREATED = 'patron_note.created',
+  PATRON_NOTE_UPDATED = 'patron_note.updated',
+  PATRON_NOTE_DELETED = 'patron_note.deleted',
+
+  // Book review / content reports (src/library)
+  BOOK_REVIEW_CREATED = 'book_review.created',
+  BOOK_REVIEW_DELETED = 'book_review.deleted',
+  CONTENT_REPORT_CREATED = 'content_report.created',
+  CONTENT_REPORT_RESOLVED = 'content_report.resolved',
 }
 
 /**
