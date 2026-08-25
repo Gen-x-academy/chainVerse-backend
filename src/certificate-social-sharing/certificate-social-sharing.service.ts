@@ -1,43 +1,48 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateCertificateSocialSharingDto } from './dto/create-certificate-social-sharing.dto';
-import { UpdateCertificateSocialSharingDto } from './dto/update-certificate-social-sharing.dto';
+import { ConfigService } from '@nestjs/config';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { CertificateTx, CertificateTxDocument } from '../stellar/schemas/certificate-tx.schema';
+
+export interface ShareLink {
+  certificateId: string;
+  linkedInUrl: string;
+  openGraphUrl: string;
+  shareUrl: string;
+}
 
 @Injectable()
 export class CertificateSocialSharingService {
-  private readonly items: Array<
-    { id: string } & CreateCertificateSocialSharingDto
-  > = [];
+  constructor(
+    private readonly configService: ConfigService,
+    @InjectModel(CertificateTx.name)
+    private readonly certTxModel: Model<CertificateTxDocument>,
+  ) {}
 
-  findAll() {
-    return this.items;
-  }
+  async generateShareLink(certificateId: string): Promise<ShareLink> {
+    const certificate = await this.certTxModel
+      .findOne({ certificateId })
+      .exec();
 
-  findOne(id: string) {
-    const item = this.items.find((entry) => entry.id === id);
-    if (!item) {
-      throw new NotFoundException('CertificateSocialSharing item not found');
+    if (!certificate) {
+      throw new NotFoundException(`Certificate ${certificateId} not found`);
     }
-    return item;
-  }
 
-  create(payload: CreateCertificateSocialSharingDto) {
-    const created = { id: crypto.randomUUID(), ...payload };
-    this.items.push(created);
-    return created;
-  }
+    const baseUrl = (this.configService.get<string>('baseUrl') ?? '').replace(/\/$/, '');
+    const shareUrl = `${baseUrl}/certificates/${encodeURIComponent(certificateId)}`;
 
-  update(id: string, payload: UpdateCertificateSocialSharingDto) {
-    const item = this.findOne(id);
-    Object.assign(item, payload);
-    return item;
-  }
+    // LinkedIn share URL — uses the public certificate page as the share target
+    const linkedInUrl =
+      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
 
-  remove(id: string) {
-    const index = this.items.findIndex((entry) => entry.id === id);
-    if (index === -1) {
-      throw new NotFoundException('CertificateSocialSharing item not found');
-    }
-    this.items.splice(index, 1);
-    return { id, deleted: true };
+    // Generic Open Graph share URL (usable in any og-aware platform)
+    const openGraphUrl = shareUrl;
+
+    return {
+      certificateId,
+      linkedInUrl,
+      openGraphUrl,
+      shareUrl,
+    };
   }
 }
