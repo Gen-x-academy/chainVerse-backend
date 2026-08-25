@@ -1,36 +1,43 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { PointsService } from '../../points/points.service';
 import { DomainEvents } from '../event-names';
 import { StudentEnrolledPayload } from '../payloads/student-enrolled.payload';
 import { CertificateIssuedPayload } from '../payloads/certificate-issued.payload';
+import { LedgerEntryEventType } from '../../points/schemas/point-ledger-entry.schema';
 
 /**
- * Listens to domain events and awards gamification points.
- * The points module never needs to know about enrollment or certificates directly.
+ * Listens to domain events and creates append-only ledger entries.
+ * Balances are derived from the ledger, never mutated directly.
  */
 @Injectable()
 export class PointsListener {
+  private readonly logger = new Logger(PointsListener.name);
+
   constructor(private readonly pointsService: PointsService) {}
 
   @OnEvent(DomainEvents.STUDENT_ENROLLED)
   onStudentEnrolled(payload: StudentEnrolledPayload): void {
-    this.pointsService.awardPoints({
+    void this.pointsService.createLedgerEntry({
       userId: payload.studentId,
-      points: 10,
-      reason: `Enrolled in course ${payload.courseId}`,
-      activityType: 'course_enrollment',
+      eventType: LedgerEntryEventType.AWARD,
+      amount: 10,
+      source: 'course_enrollment',
+      idempotencyKey: `${DomainEvents.STUDENT_ENROLLED}:${payload.studentId}:${payload.courseId}`,
+      referenceId: payload.courseId,
       metadata: { courseId: payload.courseId },
     });
   }
 
   @OnEvent(DomainEvents.CERTIFICATE_ISSUED)
   onCertificateIssued(payload: CertificateIssuedPayload): void {
-    this.pointsService.awardPoints({
+    void this.pointsService.createLedgerEntry({
       userId: payload.studentId,
-      points: 100,
-      reason: `Completed course: ${payload.courseTitle}`,
-      activityType: 'certificate_earned',
+      eventType: LedgerEntryEventType.AWARD,
+      amount: 100,
+      source: 'certificate_earned',
+      idempotencyKey: `${DomainEvents.CERTIFICATE_ISSUED}:${payload.studentId}:${payload.certificateId}`,
+      referenceId: payload.certificateId,
       metadata: { certificateId: payload.certificateId },
     });
   }
