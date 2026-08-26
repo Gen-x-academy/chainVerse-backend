@@ -10,9 +10,12 @@ import { Hold, HoldSchema } from './schemas/hold.schema';
 import { Loan, LoanSchema } from './schemas/loan.schema';
 import { AutoRenewalRun, AutoRenewalRunSchema } from './schemas/auto-renewal-run.schema';
 
-// New schemas (demilade18: #1013 physical checkout, #1014 digital checkout)
+// New schemas (monique-7arch: #993 donor/provenance, #995 locations, #996 stocktake, #994 barcode)
 import { BookCopy, BookCopySchema } from './schemas/book-copy.schema';
-import { DigitalLoan, DigitalLoanSchema } from './schemas/digital-loan.schema';
+import { Donor, DonorSchema } from './schemas/donor.schema';
+import { Donation, DonationSchema } from './schemas/donation.schema';
+import { LibraryLocation, LibraryLocationSchema } from './schemas/library-location.schema';
+import { StocktakeSession, StocktakeSessionSchema } from './schemas/stocktake-session.schema';
 
 // Existing services
 import { BooksService } from './books.service';
@@ -91,6 +94,24 @@ import { BarcodeController } from './controllers/barcode.controller';
 import { PhysicalCirculationController } from './controllers/physical-circulation.controller';
 import { DigitalCirculationController } from './controllers/digital-circulation.controller';
 
+// Existing controllers
+import { BooksController } from './books.controller';
+import { LibraryPolicyController } from './library-policy.controller';
+import { HoldsController } from './holds.controller';
+import { LoansController } from './loans.controller';
+
+// New services (monique-7arch)
+import { DonorService } from './services/donor.service';
+import { LocationService } from './services/location.service';
+import { StocktakeService } from './services/stocktake.service';
+import { BarcodeService } from './services/barcode.service';
+
+// New controllers (monique-7arch)
+import { DonorController } from './controllers/donor.controller';
+import { LocationController } from './controllers/location.controller';
+import { StocktakeController } from './controllers/stocktake.controller';
+import { BarcodeController } from './controllers/barcode.controller';
+
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -100,7 +121,10 @@ import { DigitalCirculationController } from './controllers/digital-circulation.
       { name: Loan.name, schema: LoanSchema },
       { name: AutoRenewalRun.name, schema: AutoRenewalRunSchema },
       { name: BookCopy.name, schema: BookCopySchema },
-      { name: DigitalLoan.name, schema: DigitalLoanSchema },
+      { name: Donor.name, schema: DonorSchema },
+      { name: Donation.name, schema: DonationSchema },
+      { name: LibraryLocation.name, schema: LibraryLocationSchema },
+      { name: StocktakeSession.name, schema: StocktakeSessionSchema },
     ]),
     PaginationModule,
     NotificationModule,
@@ -110,9 +134,10 @@ import { DigitalCirculationController } from './controllers/digital-circulation.
     LibraryPolicyController,
     HoldsController,
     LoansController,
+    DonorController,
+    LocationController,
+    StocktakeController,
     BarcodeController,
-    PhysicalCirculationController,
-    DigitalCirculationController,
   ],
   providers: [
     BooksService,
@@ -121,11 +146,10 @@ import { DigitalCirculationController } from './controllers/digital-circulation.
     LoansService,
     AutoRenewalService,
     LibraryTransactionRunner,
+    DonorService,
+    LocationService,
+    StocktakeService,
     BarcodeService,
-    PhysicalCheckoutService,
-    PhysicalReturnService,
-    DigitalCheckoutService,
-    DigitalReturnService,
   ],
   exports: [BooksService, LibraryPolicyService, HoldsService, LoansService, BarcodeService],
 })
