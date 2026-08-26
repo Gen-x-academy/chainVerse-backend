@@ -16,12 +16,68 @@ import { DigitalLoan, DigitalLoanSchema } from './schemas/digital-loan.schema';
 import { ClosureCalendar, ClosureCalendarSchema } from './schemas/closure-calendar.schema';
 
 // Existing services
+import {
+  AutoRenewalRun,
+  AutoRenewalRunSchema,
+} from './schemas/auto-renewal-run.schema';
+import {
+  AuditLog,
+  AuditLogSchema,
+} from './schemas/audit-log.schema';
+  PatronNote,
+  PatronNoteSchema,
+} from './schemas/patron-note.schema';
+import {
+  ContentReport,
+  ContentReportSchema,
+} from './schemas/content-report.schema';
+import {
+  BookReview,
+  BookReviewSchema,
+} from './schemas/book-review.schema';
+import {
+  NotificationEvent,
+  NotificationEventSchema,
+} from './schemas/notification-event.schema';
+import {
+  BorrowerPreference,
+  BorrowerPreferenceSchema,
+} from './schemas/borrower-preference.schema';
+  ReminderPreference,
+  ReminderPreferenceSchema,
+} from './schemas/reminder-preference.schema';
+import {
+  ReminderLog,
+  ReminderLogSchema,
+} from './schemas/reminder-log.schema';
 import { BooksService } from './books.service';
 import { LibraryPolicyService } from './library-policy.service';
 import { HoldsService } from './holds.service';
 import { LoansService } from './loans.service';
 import { AutoRenewalService } from './auto-renewal.service';
 import { LibraryTransactionRunner } from './mongo-transaction-runner';
+import { ELibraryAuditService } from './services/elibrary-audit.service';
+import { ELibraryAuditController } from './controllers/elibrary-audit.controller';
+import { LibraryOwnerGuard } from './guards/library-owner.guard';
+import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
+import { PatronNoteService } from './services/patron-note.service';
+import { PatronNoteController } from './controllers/patron-note.controller';
+import { ContentReportService } from './services/content-report.service';
+import { ContentReportController } from './controllers/content-report.controller';
+import { BookReviewService } from './services/book-review.service';
+import { BookReviewController } from './controllers/book-review.controller';
+import { NotificationEventService } from './services/notification-event.service';
+import { NotificationEventController } from './controllers/notification-event.controller';
+import { BorrowerPreferenceService } from './services/borrower-preference.service';
+import { BorrowerPreferenceController } from './controllers/borrower-preference.controller';
+import { ReminderSchedulerService } from './services/reminder-scheduler.service';
+import { ReminderController } from './controllers/reminder.controller';
+import { CirculationMetricsService } from './services/circulation-metrics.service';
+import { CirculationMetricsController } from './controllers/circulation-metrics.controller';
+import { CollectionReportService } from './services/collection-report.service';
+import { CollectionReportController } from './controllers/collection-report.controller';
+import { ReadingListReportService } from './services/reading-list-report.service';
+import { ReadingListReportController } from './controllers/reading-list-report.controller';
 
 // Existing controllers
 import { BooksController } from './books.controller';
@@ -48,6 +104,14 @@ import { BorrowerController } from './controllers/borrower.controller';
       { name: BookCopy.name, schema: BookCopySchema },
       { name: DigitalLoan.name, schema: DigitalLoanSchema },
       { name: ClosureCalendar.name, schema: ClosureCalendarSchema },
+      { name: AuditLog.name, schema: AuditLogSchema },
+      { name: PatronNote.name, schema: PatronNoteSchema },
+      { name: ContentReport.name, schema: ContentReportSchema },
+      { name: BookReview.name, schema: BookReviewSchema },
+      { name: NotificationEvent.name, schema: NotificationEventSchema },
+      { name: BorrowerPreference.name, schema: BorrowerPreferenceSchema },
+      { name: ReminderPreference.name, schema: ReminderPreferenceSchema },
+      { name: ReminderLog.name, schema: ReminderLogSchema },
     ]),
     PaginationModule,
     NotificationModule,
@@ -59,6 +123,16 @@ import { BorrowerController } from './controllers/borrower.controller';
     LoansController,
     ClosureCalendarController,
     BorrowerController,
+    ELibraryAuditController,
+    PatronNoteController,
+    ContentReportController,
+    BookReviewController,
+    NotificationEventController,
+    BorrowerPreferenceController,
+    ReminderController,
+    CirculationMetricsController,
+    CollectionReportController,
+    ReadingListReportController,
   ],
   providers: [
     BooksService,
@@ -69,6 +143,18 @@ import { BorrowerController } from './controllers/borrower.controller';
     LibraryTransactionRunner,
     ClosureCalendarService,
     BorrowerLoansService,
+    ELibraryAuditService,
+    LibraryOwnerGuard,
+    LibraryRateLimitGuard,
+    PatronNoteService,
+    ContentReportService,
+    BookReviewService,
+    NotificationEventService,
+    BorrowerPreferenceService,
+    ReminderSchedulerService,
+    CirculationMetricsService,
+    CollectionReportService,
+    ReadingListReportService,
   ],
   exports: [BooksService, LibraryPolicyService, HoldsService, LoansService],
 })
