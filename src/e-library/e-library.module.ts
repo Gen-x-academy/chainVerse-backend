@@ -10,46 +10,11 @@ import { Hold, HoldSchema } from './schemas/hold.schema';
 import { Loan, LoanSchema } from './schemas/loan.schema';
 import { AutoRenewalRun, AutoRenewalRunSchema } from './schemas/auto-renewal-run.schema';
 
-// New schemas (BigBen-7: #1017 due-date calendar, #1019/#1020 borrower loans)
+// New schemas (demilade18: #1013 physical checkout, #1014 digital checkout)
 import { BookCopy, BookCopySchema } from './schemas/book-copy.schema';
 import { DigitalLoan, DigitalLoanSchema } from './schemas/digital-loan.schema';
-import { ClosureCalendar, ClosureCalendarSchema } from './schemas/closure-calendar.schema';
 
 // Existing services
-import {
-  AutoRenewalRun,
-  AutoRenewalRunSchema,
-} from './schemas/auto-renewal-run.schema';
-import {
-  AuditLog,
-  AuditLogSchema,
-} from './schemas/audit-log.schema';
-  PatronNote,
-  PatronNoteSchema,
-} from './schemas/patron-note.schema';
-import {
-  ContentReport,
-  ContentReportSchema,
-} from './schemas/content-report.schema';
-import {
-  BookReview,
-  BookReviewSchema,
-} from './schemas/book-review.schema';
-import {
-  NotificationEvent,
-  NotificationEventSchema,
-} from './schemas/notification-event.schema';
-import {
-  BorrowerPreference,
-  BorrowerPreferenceSchema,
-} from './schemas/borrower-preference.schema';
-  ReminderPreference,
-  ReminderPreferenceSchema,
-} from './schemas/reminder-preference.schema';
-import {
-  ReminderLog,
-  ReminderLogSchema,
-} from './schemas/reminder-log.schema';
 import { BooksService } from './books.service';
 import { LibraryPolicyService } from './library-policy.service';
 import { HoldsService } from './holds.service';
@@ -108,6 +73,24 @@ import { SavedListService } from './services/saved-list.service';
 import { PatronController } from './controllers/patron.controller';
 import { SavedListController } from './controllers/saved-list.controller';
 
+// Existing controllers
+import { BooksController } from './books.controller';
+import { LibraryPolicyController } from './library-policy.controller';
+import { HoldsController } from './holds.controller';
+import { LoansController } from './loans.controller';
+
+// New services (demilade18)
+import { BarcodeService } from './services/barcode.service';
+import { PhysicalCheckoutService } from './services/physical-checkout.service';
+import { PhysicalReturnService } from './services/physical-return.service';
+import { DigitalCheckoutService } from './services/digital-checkout.service';
+import { DigitalReturnService } from './services/digital-return.service';
+
+// New controllers (demilade18)
+import { BarcodeController } from './controllers/barcode.controller';
+import { PhysicalCirculationController } from './controllers/physical-circulation.controller';
+import { DigitalCirculationController } from './controllers/digital-circulation.controller';
+
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -118,15 +101,6 @@ import { SavedListController } from './controllers/saved-list.controller';
       { name: AutoRenewalRun.name, schema: AutoRenewalRunSchema },
       { name: BookCopy.name, schema: BookCopySchema },
       { name: DigitalLoan.name, schema: DigitalLoanSchema },
-      { name: ClosureCalendar.name, schema: ClosureCalendarSchema },
-      { name: AuditLog.name, schema: AuditLogSchema },
-      { name: PatronNote.name, schema: PatronNoteSchema },
-      { name: ContentReport.name, schema: ContentReportSchema },
-      { name: BookReview.name, schema: BookReviewSchema },
-      { name: NotificationEvent.name, schema: NotificationEventSchema },
-      { name: BorrowerPreference.name, schema: BorrowerPreferenceSchema },
-      { name: ReminderPreference.name, schema: ReminderPreferenceSchema },
-      { name: ReminderLog.name, schema: ReminderLogSchema },
     ]),
     PaginationModule,
     NotificationModule,
@@ -136,18 +110,9 @@ import { SavedListController } from './controllers/saved-list.controller';
     LibraryPolicyController,
     HoldsController,
     LoansController,
-    ClosureCalendarController,
-    BorrowerController,
-    ELibraryAuditController,
-    PatronNoteController,
-    ContentReportController,
-    BookReviewController,
-    NotificationEventController,
-    BorrowerPreferenceController,
-    ReminderController,
-    CirculationMetricsController,
-    CollectionReportController,
-    ReadingListReportController,
+    BarcodeController,
+    PhysicalCirculationController,
+    DigitalCirculationController,
   ],
   providers: [
     BooksService,
@@ -156,20 +121,12 @@ import { SavedListController } from './controllers/saved-list.controller';
     LoansService,
     AutoRenewalService,
     LibraryTransactionRunner,
-    ClosureCalendarService,
-    BorrowerLoansService,
-    ELibraryAuditService,
-    LibraryOwnerGuard,
-    LibraryRateLimitGuard,
-    PatronNoteService,
-    ContentReportService,
-    BookReviewService,
-    NotificationEventService,
-    BorrowerPreferenceService,
-    ReminderSchedulerService,
-    CirculationMetricsService,
-    CollectionReportService,
-    ReadingListReportService,
+    BarcodeService,
+    PhysicalCheckoutService,
+    PhysicalReturnService,
+    DigitalCheckoutService,
+    DigitalReturnService,
   ],
+  exports: [BooksService, LibraryPolicyService, HoldsService, LoansService, BarcodeService],
 })
 export class ELibraryModule {}
