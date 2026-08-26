@@ -33,6 +33,13 @@ import {
   BorrowerPreference,
   BorrowerPreferenceSchema,
 } from './schemas/borrower-preference.schema';
+  ReminderPreference,
+  ReminderPreferenceSchema,
+} from './schemas/reminder-preference.schema';
+import {
+  ReminderLog,
+  ReminderLogSchema,
+} from './schemas/reminder-log.schema';
 import { BooksService } from './books.service';
 import { BooksController } from './books.controller';
 import { LibraryPolicyService } from './library-policy.service';
@@ -53,6 +60,14 @@ import { NotificationEventService } from './services/notification-event.service'
 import { NotificationEventController } from './controllers/notification-event.controller';
 import { BorrowerPreferenceService } from './services/borrower-preference.service';
 import { BorrowerPreferenceController } from './controllers/borrower-preference.controller';
+import { ReminderSchedulerService } from './services/reminder-scheduler.service';
+import { ReminderController } from './controllers/reminder.controller';
+import { CirculationMetricsService } from './services/circulation-metrics.service';
+import { CirculationMetricsController } from './controllers/circulation-metrics.controller';
+import { CollectionReportService } from './services/collection-report.service';
+import { CollectionReportController } from './controllers/collection-report.controller';
+import { ReadingListReportService } from './services/reading-list-report.service';
+import { ReadingListReportController } from './controllers/reading-list-report.controller';
 
 @Module({
   imports: [
@@ -67,6 +82,8 @@ import { BorrowerPreferenceController } from './controllers/borrower-preference.
       { name: BookReview.name, schema: BookReviewSchema },
       { name: NotificationEvent.name, schema: NotificationEventSchema },
       { name: BorrowerPreference.name, schema: BorrowerPreferenceSchema },
+      { name: ReminderPreference.name, schema: ReminderPreferenceSchema },
+      { name: ReminderLog.name, schema: ReminderLogSchema },
     ]),
     PaginationModule,
     NotificationModule,
@@ -81,6 +98,10 @@ import { BorrowerPreferenceController } from './controllers/borrower-preference.
     BookReviewController,
     NotificationEventController,
     BorrowerPreferenceController,
+    ReminderController,
+    CirculationMetricsController,
+    CollectionReportController,
+    ReadingListReportController,
   ],
   providers: [
     BooksService,
@@ -94,6 +115,10 @@ import { BorrowerPreferenceController } from './controllers/borrower-preference.
     BookReviewService,
     NotificationEventService,
     BorrowerPreferenceService,
+    ReminderSchedulerService,
+    CirculationMetricsService,
+    CollectionReportService,
+    ReadingListReportService,
   ],
   exports: [BooksService, LibraryPolicyService, HoldsService, LoansService],
 })
