@@ -93,6 +93,21 @@ import { BorrowerLoansService } from './services/borrower-loans.service';
 import { ClosureCalendarController } from './controllers/closure-calendar.controller';
 import { BorrowerController } from './controllers/borrower.controller';
 
+// Existing controllers
+import { BooksController } from './books.controller';
+import { LibraryPolicyController } from './library-policy.controller';
+import { HoldsController } from './holds.controller';
+import { LoansController } from './loans.controller';
+
+// New services (NteinPrecious)
+import { PatronProfileService } from './services/patron-profile.service';
+import { BorrowingPolicyService } from './services/borrowing-policy.service';
+import { SavedListService } from './services/saved-list.service';
+
+// New controllers (NteinPrecious)
+import { PatronController } from './controllers/patron.controller';
+import { SavedListController } from './controllers/saved-list.controller';
+
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -156,6 +171,5 @@ import { BorrowerController } from './controllers/borrower.controller';
     CollectionReportService,
     ReadingListReportService,
   ],
-  exports: [BooksService, LibraryPolicyService, HoldsService, LoansService],
 })
 export class ELibraryModule {}
