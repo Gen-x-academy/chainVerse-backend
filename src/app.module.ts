@@ -88,9 +88,6 @@ import { PrivacyPolicyManagementModule } from './privacy-policy-management/priva
 import { VerificationModule } from './verification/verification.module';
 import { ELibraryModule } from './e-library/e-library.module';
 
-// E-Library modules
-import { ELibraryModule } from './e-library/e-library.module';
-
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -100,10 +97,6 @@ import { ELibraryModule } from './e-library/e-library.module';
     }),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60,
-        limit: 10,
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => {
@@ -170,8 +163,6 @@ import { ELibraryModule } from './e-library/e-library.module';
     StudentSavedCoursesModule,
     StudentCartModule,
     StudentEnrollmentModule,
-    // Analytics
-    CourseAnalyticsModule,
     // E-Library
     ELibraryModule,
     StudentAccountSettingsModule,
@@ -200,13 +191,9 @@ import { ELibraryModule } from './e-library/e-library.module';
     PrivateTutoringBookingsModule,
     RemovalRequestModule,
     ReportAbuseModule,
-    FinancialAidModule,
     ReportsModule,
-    ReportsModule,
-    StellarModule,
     IdempotencyModule,
     VerificationModule,
-    ELibraryModule,
   ],
   controllers: [AppController],
   providers: [
