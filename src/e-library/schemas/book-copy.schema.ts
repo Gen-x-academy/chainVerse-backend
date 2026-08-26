@@ -3,14 +3,6 @@ import { HydratedDocument, Types } from 'mongoose';
 
 export type BookCopyDocument = HydratedDocument<BookCopy>;
 
-export enum CopyStatus {
-  AVAILABLE = 'available',
-  CHECKED_OUT = 'checked_out',
-  RESERVED = 'reserved',
-  IN_REPAIR = 'in_repair',
-  WITHDRAWN = 'withdrawn',
-}
-
 export enum CopyCondition {
   NEW = 'new',
   GOOD = 'good',
@@ -19,74 +11,84 @@ export enum CopyCondition {
   DAMAGED = 'damaged',
 }
 
-/** A single entry in the condition audit trail. */
-class ConditionHistoryEntry {
-  @Prop({ required: true, type: String, enum: CopyCondition })
+export enum CopyPhysicalStatus {
+  AVAILABLE = 'available',
+  CHECKED_OUT = 'checked_out',
+  ON_HOLD = 'on_hold',
+  IN_REPAIR = 'in_repair',
+  LOST = 'lost',
+  WITHDRAWN = 'withdrawn',
+}
+
+@Schema({ _id: false })
+export class ConditionHistoryEntry {
+  @Prop({ required: true, enum: CopyCondition })
   condition: CopyCondition;
 
   @Prop({ required: true })
-  changedAt: Date;
+  recordedAt: Date;
 
-  /** ID of the staff member who recorded the change. */
   @Prop({ required: true })
-  changedBy: string;
+  recordedBy: string;
 
-  @Prop()
-  notes?: string;
+  @Prop({ trim: true })
+  note?: string;
 }
 
-/**
- * BookCopy - represents one lendable physical copy of a bibliographic Book.
- *
- * Each copy has its own barcode, branch/location, acquisition metadata,
- * circulation status, and a full condition-change history.
- *
- * For issue #979: model physical copies with barcode and condition history.
- */
-@Schema({ timestamps: true, collection: 'elibrary_book_copies' })
+export const ConditionHistoryEntrySchema =
+  SchemaFactory.createForClass(ConditionHistoryEntry);
+
+@Schema({ timestamps: true, collection: 'library_book_copies' })
 export class BookCopy {
-  /** Reference to the parent Book document. */
   @Prop({ required: true, type: Types.ObjectId, ref: 'Book', index: true })
   bookId: Types.ObjectId;
 
-  /** Human-scannable barcode - unique across all copies. */
-  @Prop({ required: true, unique: true, index: true, trim: true })
+  @Prop({ required: true, unique: true, trim: true, sparse: true })
   barcode: string;
 
-  /** Physical branch or shelf location. */
-  @Prop({ required: true, trim: true })
-  branch: string;
+  @Prop({ required: true, enum: CopyPhysicalStatus, default: CopyPhysicalStatus.AVAILABLE, index: true })
+  status: CopyPhysicalStatus;
 
-  @Prop({ trim: true })
-  shelfLocation?: string;
-
-  @Prop()
-  acquisitionDate?: Date;
-
-  @Prop()
-  acquisitionCost?: number;
-
-  @Prop({
-    type: String,
-    enum: CopyStatus,
-    default: CopyStatus.AVAILABLE,
-    index: true,
-  })
-  status: CopyStatus;
-
-  @Prop({
-    type: String,
-    enum: CopyCondition,
-    default: CopyCondition.GOOD,
-  })
+  @Prop({ required: true, enum: CopyCondition, default: CopyCondition.GOOD })
   condition: CopyCondition;
 
-  /**
-   * Append-only log of condition changes. New entries are pushed; existing
-   * entries must never be removed or modified.
-   */
-  @Prop({ type: [ConditionHistoryEntry], default: [] })
+  @Prop({ type: [ConditionHistoryEntrySchema], default: [] })
   conditionHistory: ConditionHistoryEntry[];
+
+  @Prop({ trim: true })
+  branch?: string;
+
+  @Prop({ trim: true })
+  shelf?: string;
+
+  @Prop({ trim: true })
+  room?: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'LibraryLocation' })
+  locationId?: Types.ObjectId;
+
+  @Prop()
+  acquiredAt?: Date;
+
+  @Prop({ trim: true })
+  acquisitionSource?: string;
+
+  @Prop({ trim: true })
+  donorName?: string;
+
+  @Prop()
+  lastLoanAt?: Date;
+
+  @Prop()
+  retiredAt?: Date;
+
+  @Prop({ trim: true })
+  retiredReason?: string;
+
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export const BookCopySchema = SchemaFactory.createForClass(BookCopy);
+BookCopySchema.index({ bookId: 1, status: 1 });
+BookCopySchema.index({ barcode: 1 }, { unique: true });
