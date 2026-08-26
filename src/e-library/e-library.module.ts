@@ -14,6 +14,9 @@ import {
   AutoRenewalRunSchema,
 } from './schemas/auto-renewal-run.schema';
 import {
+  AuditLog,
+  AuditLogSchema,
+} from './schemas/audit-log.schema';
   PatronNote,
   PatronNoteSchema,
 } from './schemas/patron-note.schema';
@@ -50,6 +53,10 @@ import { LoansService } from './loans.service';
 import { LoansController } from './loans.controller';
 import { AutoRenewalService } from './auto-renewal.service';
 import { LibraryTransactionRunner } from './mongo-transaction-runner';
+import { ELibraryAuditService } from './services/elibrary-audit.service';
+import { ELibraryAuditController } from './controllers/elibrary-audit.controller';
+import { LibraryOwnerGuard } from './guards/library-owner.guard';
+import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
 import { PatronNoteService } from './services/patron-note.service';
 import { PatronNoteController } from './controllers/patron-note.controller';
 import { ContentReportService } from './services/content-report.service';
@@ -77,6 +84,7 @@ import { ReadingListReportController } from './controllers/reading-list-report.c
       { name: Hold.name, schema: HoldSchema },
       { name: Loan.name, schema: LoanSchema },
       { name: AutoRenewalRun.name, schema: AutoRenewalRunSchema },
+      { name: AuditLog.name, schema: AuditLogSchema },
       { name: PatronNote.name, schema: PatronNoteSchema },
       { name: ContentReport.name, schema: ContentReportSchema },
       { name: BookReview.name, schema: BookReviewSchema },
@@ -93,6 +101,7 @@ import { ReadingListReportController } from './controllers/reading-list-report.c
     LibraryPolicyController,
     HoldsController,
     LoansController,
+    ELibraryAuditController,
     PatronNoteController,
     ContentReportController,
     BookReviewController,
@@ -110,6 +119,9 @@ import { ReadingListReportController } from './controllers/reading-list-report.c
     LoansService,
     AutoRenewalService,
     LibraryTransactionRunner,
+    ELibraryAuditService,
+    LibraryOwnerGuard,
+    LibraryRateLimitGuard,
     PatronNoteService,
     ContentReportService,
     BookReviewService,
