@@ -79,6 +79,15 @@ export class BookCopy {
   @Prop()
   lastLoanAt?: Date;
 
+  @Prop({ min: 0 })
+  repairCost?: number;
+
+  @Prop()
+  repairRequestedAt?: Date;
+
+  @Prop()
+  repairCompletedAt?: Date;
+
   @Prop()
   retiredAt?: Date;
 

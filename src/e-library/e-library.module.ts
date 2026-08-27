@@ -84,6 +84,10 @@ import { LibraryHealthService } from './services/library-health.service';
 import { ReconciliationService } from './services/reconciliation.service';
 import { BackupService } from './services/backup.service';
 
+// ── New: Issue #997 / #998 ───────────────────────────────────────────────────
+import { CoverImageService } from './services/cover-image.service';
+import { InventoryService } from './services/inventory.service';
+
 // ── New: Interoperability service (Issue #1073) ─────────────────────────────
 import { CatalogMappingService } from './services/catalog-mapping.service';
 
@@ -119,6 +123,11 @@ import { LibraryHealthController } from './controllers/library-health.controller
 
 // ── New: Interoperability controller (Issue #1073) ──────────────────────────
 import { CatalogMappingController } from './controllers/catalog-mapping.controller';
+
+// ── New: Issue #997 / #998 / #1000 controllers ──────────────────────────────
+import { PublicCatalogController } from './controllers/public-catalog.controller';
+import { CatalogAdminController } from './controllers/catalog-admin.controller';
+import { InventoryController } from './controllers/inventory.controller';
 
 // ── Guards ───────────────────────────────────────────────────────────────────
 import { LibraryOwnerGuard } from './guards/library-owner.guard';
@@ -192,6 +201,10 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     LibraryHealthController,
     // Issue #1073
     CatalogMappingController,
+    // Issue #997 / #998 / #1000
+    PublicCatalogController,
+    CatalogAdminController,
+    InventoryController,
   ],
   providers: [
     BooksService,
@@ -239,6 +252,9 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     BackupService,
     // Issue #1073
     CatalogMappingService,
+    // Issue #997 / #998
+    CoverImageService,
+    InventoryService,
   ],
   exports: [
     BooksService,
