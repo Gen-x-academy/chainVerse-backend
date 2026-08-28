@@ -32,6 +32,17 @@ import { NotificationEvent, NotificationEventSchema } from './schemas/notificati
 import { PatronNote, PatronNoteSchema } from './schemas/patron-note.schema';
 import { SavedList, SavedListSchema } from './schemas/saved-list.schema';
 
+// ── New schemas: Issue #1037 / #1038 / #1039 ─────────────────────────────────
+import {
+  LibraryChargePayment,
+  LibraryChargePaymentSchema,
+} from './schemas/library-charge-payment.schema';
+import { LostItem, LostItemSchema } from './schemas/lost-item.schema';
+import {
+  BorrowingSuspension,
+  BorrowingSuspensionSchema,
+} from './schemas/borrowing-suspension.schema';
+
 // ── Root services ────────────────────────────────────────────────────────────
 import { BooksService } from './books.service';
 import { LoanService } from './services/loan.service';
@@ -91,6 +102,11 @@ import { InventoryService } from './services/inventory.service';
 // ── New: Interoperability service (Issue #1073) ─────────────────────────────
 import { CatalogMappingService } from './services/catalog-mapping.service';
 
+// ── New: Issue #1037 / #1038 / #1039 services ────────────────────────────────
+import { LibraryChargePaymentService } from './services/library-charge-payment.service';
+import { LostItemService } from './services/lost-item.service';
+import { BorrowingSuspensionService } from './services/borrowing-suspension.service';
+
 // ── Sub-directory controllers ────────────────────────────────────────────────
 import { ELibraryAuditController } from './controllers/elibrary-audit.controller';
 import { PatronNoteController } from './controllers/patron-note.controller';
@@ -129,6 +145,11 @@ import { PublicCatalogController } from './controllers/public-catalog.controller
 import { CatalogAdminController } from './controllers/catalog-admin.controller';
 import { InventoryController } from './controllers/inventory.controller';
 
+// ── New: Issue #1037 / #1038 / #1039 controllers ─────────────────────────────
+import { LibraryChargePaymentController } from './controllers/library-charge-payment.controller';
+import { LostItemController } from './controllers/lost-item.controller';
+import { BorrowingSuspensionController } from './controllers/borrowing-suspension.controller';
+
 // ── Guards ───────────────────────────────────────────────────────────────────
 import { LibraryOwnerGuard } from './guards/library-owner.guard';
 import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
@@ -163,6 +184,12 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
       { name: NotificationEvent.name, schema: NotificationEventSchema },
       { name: PatronNote.name, schema: PatronNoteSchema },
       { name: SavedList.name, schema: SavedListSchema },
+      // Issue #1037 — Stellar charge payments
+      { name: LibraryChargePayment.name, schema: LibraryChargePaymentSchema },
+      // Issue #1038 — Lost items
+      { name: LostItem.name, schema: LostItemSchema },
+      // Issue #1039 — Borrowing suspensions
+      { name: BorrowingSuspension.name, schema: BorrowingSuspensionSchema },
     ]),
     PaginationModule,
     NotificationModule,
@@ -205,6 +232,12 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     PublicCatalogController,
     CatalogAdminController,
     InventoryController,
+    // Issue #1037 — Stellar charge payments
+    LibraryChargePaymentController,
+    // Issue #1038 — Lost items
+    LostItemController,
+    // Issue #1039 — Borrowing suspensions
+    BorrowingSuspensionController,
   ],
   providers: [
     BooksService,
@@ -255,6 +288,12 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     // Issue #997 / #998
     CoverImageService,
     InventoryService,
+    // Issue #1037 — Stellar charge payments
+    LibraryChargePaymentService,
+    // Issue #1038 — Lost items
+    LostItemService,
+    // Issue #1039 — Borrowing suspensions
+    BorrowingSuspensionService,
   ],
   exports: [
     BooksService,
@@ -264,6 +303,9 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     BarcodeService,
     PatronProfileService,
     BorrowingPolicyService,
+    // Issue #1039: exported so other modules can trigger reconciliation after
+    // returns/payments.
+    BorrowingSuspensionService,
   ],
 })
 export class ELibraryModule {}
