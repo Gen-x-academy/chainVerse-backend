@@ -134,3 +134,174 @@ same key replays the original response instead of double-posting.
 All endpoints are documented under the `E-Library *` tags in the Swagger UI
 (`/api`, non-production only), each requiring bearer auth
 (`@ApiBearerAuth('access-token')`).
+
+---
+
+## Stellar Charge Payments (#1037)
+
+Lets patrons settle eligible library charges using the existing Stellar
+payment verification infrastructure (`StellarService.verifyPayment`).
+
+### Flow
+
+1. The patron constructs a Stellar transaction on their own wallet and
+   submits the transaction hash alongside the charge ID via
+   `POST /e-library/charges/pay`.
+2. The service resolves the charge `LedgerEntry` and validates:
+   - The entry is a chargeable type (`OVERDUE_FINE`, `LOST_ITEM_FEE`,
+     `REPLACEMENT_COST_FEE`, `DAMAGE_FEE`).
+   - The payment currency matches the charge currency.
+   - The payment amount does not exceed the charge amount.
+   - The transaction hash has not already been applied to any charge
+     (`BIZ_PAYMENT_ALREADY_APPLIED`).
+3. The Stellar transaction is verified on-chain via `StellarService`.
+4. On successful verification, a `PAYMENT` `LedgerEntry` (negative amount)
+   is posted referencing the original charge.
+5. A `LibraryChargePayment` document is persisted regardless of verification
+   outcome, providing a full audit trail.
+
+### Idempotency / Replay protection
+
+A `LibraryChargePayment` document has a compound unique index on
+`(chargeEntryId, transactionHash)`. Submitting the same hash for the same
+charge twice returns the cached result without re-verifying or double-posting.
+Submitting the same hash for a *different* charge raises
+`BIZ_PAYMENT_ALREADY_APPLIED` (409 Conflict).
+
+### Endpoints
+
+| Method | Path | Roles | Description |
+|--------|------|-------|-------------|
+| POST | `/e-library/charges/pay` | STUDENT, TUTOR, MODERATOR, ADMIN | Settle a charge. Requires `X-Idempotency-Key` header. |
+| GET | `/e-library/charges/payments/:patronId` | All auth | List payment records for a patron. Students/tutors see only their own. |
+| GET | `/e-library/charges/payment/:id` | MODERATOR, ADMIN | Get a single payment record. |
+
+### Schema
+
+`LibraryChargePayment` (`src/e-library/schemas/library-charge-payment.schema.ts`)
+fields: `patronId`, `chargeEntryId`, `asset`, `amountMinorUnits`, `currency`,
+`destination`, `memo`, `transactionHash`, `verified`, `ledgerEntryId`,
+`submittedBy`.
+
+### Operational note
+
+A payment that Stellar rejects (`verified: false`) is persisted without
+posting a ledger entry. Staff can identify failed payments by querying
+`GET /e-library/charges/payments/:patronId` and filtering on `verified: false`.
+
+---
+
+## Lost-Item Declaration & Replacement-Cost Workflow (#1038)
+
+Allows staff or policy to mark severely overdue copies lost and assess
+replacement and processing costs.
+
+### Declaration flow
+
+1. Staff call `POST /e-library/lost-items` with the loan ID and fees.
+2. The service validates:
+   - The loan exists and is not already RETURNED.
+   - No existing `LostItem` record exists for this loan.
+3. Side effects on declaration:
+   - `Loan.copyStatus` → `LOST`.
+   - `BookCopy.status` → `LOST`.
+   - Any active hold on that copy is cancelled.
+   - `LOST_ITEM_FEE` (processing, **non-refundable**) posted to ledger.
+   - `REPLACEMENT_COST_FEE` (item price, **refundable on return**) posted.
+   - A `LostItem` document is created as audit trail.
+
+### Late-return flow
+
+1. Staff call `POST /e-library/lost-items/:id/return`.
+2. The service validates the record is in `DECLARED` status.
+3. Side effects:
+   - `REPLACEMENT_COST_REVERSAL` compensating ledger entry is posted
+     (negative amount, references the original `REPLACEMENT_COST_FEE`
+     entry via `referenceEntryId`).
+   - `BookCopy.status` → `AVAILABLE`.
+   - `LostItem.status` → `RETURNED`.
+4. The `LOST_ITEM_FEE` is **always retained** per policy.
+
+### Endpoints
+
+| Method | Path | Roles | Description |
+|--------|------|-------|-------------|
+| POST | `/e-library/lost-items` | MODERATOR, LIBRARIAN, ADMIN | Declare a copy lost. |
+| POST | `/e-library/lost-items/:id/return` | MODERATOR, LIBRARIAN, ADMIN | Process late return. |
+| GET | `/e-library/lost-items/:id` | MODERATOR, LIBRARIAN, ADMIN | Get record by ID. |
+| GET | `/e-library/lost-items/patron/:patronId` | All auth | List for patron. Students/tutors see own records only. |
+
+### Schema
+
+`LostItem` (`src/e-library/schemas/lost-item.schema.ts`): `patronId`,
+`copyId`, `loanId` (unique), `status`, `processingFeeMinorUnits`,
+`replacementCostMinorUnits`, `currency`, `processingFeeEntryId`,
+`replacementCostEntryId`, `reversalEntryId`, `declaredBy`,
+`declarationNote`, `returnedAt`, `returnProcessedBy`.
+
+### LedgerEntry types added
+
+| Type | Sign | Description |
+|------|------|-------------|
+| `REPLACEMENT_COST_FEE` | + | Replacement cost charge |
+| `REPLACEMENT_COST_REVERSAL` | - | Compensating reversal on late return |
+
+---
+
+## Borrowing Suspension Thresholds (#1039)
+
+Blocks new circulation (checkout/holds) when any of three policy-derived
+thresholds is crossed. Returns and account access are always permitted.
+
+### Thresholds
+
+| Dimension | Variable | Default | Description |
+|-----------|----------|---------|-------------|
+| Overdue count | `E_LIBRARY_SUSPENSION_OVERDUE_COUNT` | `3` | Number of concurrent OVERDUE loans |
+| Overdue age (days) | `E_LIBRARY_SUSPENSION_OVERDUE_AGE_DAYS` | `30` | Age of the oldest overdue item |
+| Unpaid balance | `E_LIBRARY_SUSPENSION_UNPAID_BALANCE` | `5000` | Outstanding balance in `E_LIBRARY_DEFAULT_CURRENCY` minor units |
+
+### Suspension lifecycle
+
+1. **Threshold breach** — `BorrowingSuspensionService.reconcile(patronId)`
+   is called (or the scheduler calls it). If any threshold is exceeded a
+   `BorrowingSuspension` document is created and `PatronProfile.status` →
+   `SUSPENDED`.
+2. **Auto-lift** — After a return or payment, `reconcile()` is called again.
+   If all thresholds are back below their limits, the suspension record
+   transitions to `LIFTED_AUTO` and `PatronProfile.status` → `ACTIVE`.
+3. **Staff exception** — `POST /e-library/suspensions/:id/lift` lifts the
+   suspension as an authorized override. Maker-checker rule: the staff
+   member who created the suspension cannot also lift it.
+
+### Remediation
+
+Every suspension record carries a `message` field that explains:
+- Which threshold was exceeded.
+- What the measured value and threshold are.
+- What the patron must do to restore access.
+
+### Endpoints
+
+| Method | Path | Roles | Description |
+|--------|------|-------|-------------|
+| GET | `/e-library/suspensions/patron/:patronId/check` | MOD, LIB, ADMIN | Read-only threshold check (no state change). |
+| POST | `/e-library/suspensions/patron/:patronId/reconcile` | MOD, LIB, ADMIN | Trigger reconciliation — apply or lift. |
+| POST | `/e-library/suspensions` | MOD, LIB, ADMIN | Manual (staff-initiated) suspension. |
+| POST | `/e-library/suspensions/:id/lift` | MOD, LIB, ADMIN | Lift as exception (maker-checker enforced). |
+| GET | `/e-library/suspensions/patron/:patronId` | All auth | List history. Students/tutors see own records. |
+| GET | `/e-library/suspensions/patron/:patronId/active` | All auth | Get the currently active suspension (null if none). |
+
+### Schema
+
+`BorrowingSuspension` (`src/e-library/schemas/borrowing-suspension.schema.ts`):
+`patronId`, `status`, `reason`, `message`, `thresholdSnapshot`, `autoLift`,
+`suspendedUntil`, `createdBy`, `liftedBy`, `liftNote`, `liftedAt`.
+
+### Environment variables added
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `E_LIBRARY_SUSPENSION_OVERDUE_COUNT` | `3` | Overdue count threshold |
+| `E_LIBRARY_SUSPENSION_OVERDUE_AGE_DAYS` | `30` | Overdue age threshold (days) |
+| `E_LIBRARY_SUSPENSION_UNPAID_BALANCE` | `5000` | Unpaid balance threshold (minor units) |

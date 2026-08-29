@@ -24,3 +24,24 @@ export const OVERDUE_JOB_MAX_BATCHES = parseInt(
 // override this per deployment; charges/payments elsewhere in the module
 // always take an explicit currency from the caller.
 export const DEFAULT_CURRENCY = process.env.E_LIBRARY_DEFAULT_CURRENCY ?? 'USD';
+
+// ── Borrowing suspension thresholds (Issue #1039) ────────────────────────────
+
+// Number of concurrently OVERDUE loans that triggers automatic suspension.
+export const SUSPENSION_OVERDUE_COUNT_THRESHOLD = parseInt(
+  process.env.E_LIBRARY_SUSPENSION_OVERDUE_COUNT ?? '3',
+  10,
+);
+
+// Oldest overdue loan age in days that triggers automatic suspension.
+export const SUSPENSION_OVERDUE_AGE_DAYS_THRESHOLD = parseInt(
+  process.env.E_LIBRARY_SUSPENSION_OVERDUE_AGE_DAYS ?? '30',
+  10,
+);
+
+// Outstanding unpaid balance in minor currency units that triggers automatic
+// suspension. Evaluated in E_LIBRARY_DEFAULT_CURRENCY.
+export const SUSPENSION_UNPAID_BALANCE_THRESHOLD = parseInt(
+  process.env.E_LIBRARY_SUSPENSION_UNPAID_BALANCE ?? '5000',
+  10,
+);
