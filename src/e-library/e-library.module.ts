@@ -114,6 +114,11 @@ import { LibraryChargePaymentService } from './services/library-charge-payment.s
 import { LostItemService } from './services/lost-item.service';
 import { BorrowingSuspensionService } from './services/borrowing-suspension.service';
 
+// ── New: Discovery services (Issues #1001-#1004) ──────────────────────────────
+import { CatalogSearchService } from './services/catalog-search.service';
+import { FacetedCatalogService } from './services/faceted-catalog.service';
+import { AutocompleteService } from './services/autocomplete.service';
+import { NewArrivalsService } from './services/new-arrivals.service';
 // ── New: Issue #992 / #991 / #990 / #989 services ─────────────────────────────
 import { AcquisitionOrderService } from './services/acquisition-order.service';
 import { CatalogExportService } from './services/catalog-export.service';
@@ -163,6 +168,11 @@ import { LibraryChargePaymentController } from './controllers/library-charge-pay
 import { LostItemController } from './controllers/lost-item.controller';
 import { BorrowingSuspensionController } from './controllers/borrowing-suspension.controller';
 
+// ── New: Discovery controllers (Issues #1001-#1004) ───────────────────────────
+import { CatalogSearchController } from './controllers/catalog-search.controller';
+import { FacetedCatalogController } from './controllers/faceted-catalog.controller';
+import { AutocompleteController } from './controllers/autocomplete.controller';
+import { NewArrivalsController } from './controllers/new-arrivals.controller';
 // ── New: Issue #992 / #991 / #990 / #989 controllers ─────────────────────────
 import { AcquisitionOrderController } from './controllers/acquisition-order.controller';
 import { CatalogExportController } from './controllers/catalog-export.controller';
@@ -261,6 +271,11 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     LostItemController,
     // Issue #1039 — Borrowing suspensions
     BorrowingSuspensionController,
+    // Issue #1001 / #1002 / #1003 / #1004 — Discovery
+    CatalogSearchController,
+    FacetedCatalogController,
+    AutocompleteController,
+    NewArrivalsController,
     // Issue #992 — Acquisition orders
     AcquisitionOrderController,
     // Issue #991 — Catalog export
@@ -325,6 +340,11 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     LostItemService,
     // Issue #1039 — Borrowing suspensions
     BorrowingSuspensionService,
+    // Issue #1001 / #1002 / #1003 / #1004 — Discovery
+    CatalogSearchService,
+    FacetedCatalogService,
+    AutocompleteService,
+    NewArrivalsService,
     // Issue #992 — Acquisition orders
     AcquisitionOrderService,
     // Issue #991 — Catalog export
