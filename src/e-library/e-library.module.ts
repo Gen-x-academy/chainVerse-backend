@@ -43,6 +43,13 @@ import {
   BorrowingSuspensionSchema,
 } from './schemas/borrowing-suspension.schema';
 
+// ── New schemas: Issue #992 / #990 ────────────────────────────────────────────
+import {
+  AcquisitionOrder,
+  AcquisitionOrderSchema,
+} from './schemas/acquisition-order.schema';
+import { ImportJob, ImportJobSchema } from './schemas/import-job.schema';
+
 // ── Root services ────────────────────────────────────────────────────────────
 import { BooksService } from './books.service';
 import { LoanService } from './services/loan.service';
@@ -112,6 +119,11 @@ import { CatalogSearchService } from './services/catalog-search.service';
 import { FacetedCatalogService } from './services/faceted-catalog.service';
 import { AutocompleteService } from './services/autocomplete.service';
 import { NewArrivalsService } from './services/new-arrivals.service';
+// ── New: Issue #992 / #991 / #990 / #989 services ─────────────────────────────
+import { AcquisitionOrderService } from './services/acquisition-order.service';
+import { CatalogExportService } from './services/catalog-export.service';
+import { CatalogImportService } from './services/catalog-import.service';
+import { DuplicateDetectionService } from './services/duplicate-detection.service';
 
 // ── Sub-directory controllers ────────────────────────────────────────────────
 import { ELibraryAuditController } from './controllers/elibrary-audit.controller';
@@ -161,6 +173,11 @@ import { CatalogSearchController } from './controllers/catalog-search.controller
 import { FacetedCatalogController } from './controllers/faceted-catalog.controller';
 import { AutocompleteController } from './controllers/autocomplete.controller';
 import { NewArrivalsController } from './controllers/new-arrivals.controller';
+// ── New: Issue #992 / #991 / #990 / #989 controllers ─────────────────────────
+import { AcquisitionOrderController } from './controllers/acquisition-order.controller';
+import { CatalogExportController } from './controllers/catalog-export.controller';
+import { CatalogImportController } from './controllers/catalog-import.controller';
+import { DuplicateDetectionController } from './controllers/duplicate-detection.controller';
 
 // ── Guards ───────────────────────────────────────────────────────────────────
 import { LibraryOwnerGuard } from './guards/library-owner.guard';
@@ -202,6 +219,10 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
       { name: LostItem.name, schema: LostItemSchema },
       // Issue #1039 — Borrowing suspensions
       { name: BorrowingSuspension.name, schema: BorrowingSuspensionSchema },
+      // Issue #992 — Acquisition orders
+      { name: AcquisitionOrder.name, schema: AcquisitionOrderSchema },
+      // Issue #990 — Import jobs
+      { name: ImportJob.name, schema: ImportJobSchema },
     ]),
     PaginationModule,
     NotificationModule,
@@ -255,6 +276,14 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     FacetedCatalogController,
     AutocompleteController,
     NewArrivalsController,
+    // Issue #992 — Acquisition orders
+    AcquisitionOrderController,
+    // Issue #991 — Catalog export
+    CatalogExportController,
+    // Issue #990 — Catalog import
+    CatalogImportController,
+    // Issue #989 — Duplicate detection / merge
+    DuplicateDetectionController,
   ],
   providers: [
     BooksService,
@@ -316,6 +345,14 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     FacetedCatalogService,
     AutocompleteService,
     NewArrivalsService,
+    // Issue #992 — Acquisition orders
+    AcquisitionOrderService,
+    // Issue #991 — Catalog export
+    CatalogExportService,
+    // Issue #990 — Catalog import
+    CatalogImportService,
+    // Issue #989 — Duplicate detection / merge
+    DuplicateDetectionService,
   ],
   exports: [
     BooksService,
