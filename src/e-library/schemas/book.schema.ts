@@ -58,6 +58,21 @@ export class Book {
   @Prop({ required: true, trim: true })
   author: string;
 
+  @Prop({ trim: true, default: '' })
+  description: string;
+
+  @Prop({ trim: true, default: '', index: true })
+  isbn: string;
+
+  @Prop({ trim: true, default: '' })
+  tags: string;
+
+  @Prop({ trim: true, default: '' })
+  publisher: string;
+
+  @Prop({ trim: true, default: '' })
+  subjects: string;
+
   @Prop({ required: true, index: true })
   workKey: string;
 
@@ -78,6 +93,12 @@ export class Book {
    * stable content-addressable URL. Replacing it overwrites the buffer and
    * clears the previous stable URL so stale assets are cleaned up.
    */
+  @Prop({ trim: true, default: '' })
+  topic: string;
+
+  @Prop({ trim: true, default: '' })
+  language: string;
+
   @Prop({ trim: true, default: '' })
   coverImageUrl: string;
 
@@ -108,3 +129,7 @@ export class Book {
 
 export const BookSchema = SchemaFactory.createForClass(Book);
 BookSchema.index({ workKey: 1 });
+BookSchema.index(
+  { title: 'text', author: 'text', description: 'text' },
+  { weights: { title: 10, author: 5, description: 2 }, name: 'book_text_search' },
+);
