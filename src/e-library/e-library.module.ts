@@ -31,6 +31,7 @@ import { ContentReport, ContentReportSchema } from './schemas/content-report.sch
 import { NotificationEvent, NotificationEventSchema } from './schemas/notification-event.schema';
 import { PatronNote, PatronNoteSchema } from './schemas/patron-note.schema';
 import { SavedList, SavedListSchema } from './schemas/saved-list.schema';
+import { Series, SeriesSchema } from './schemas/series.schema';
 
 // ── New schemas: Issue #1037 / #1038 / #1039 ─────────────────────────────────
 import {
@@ -114,6 +115,11 @@ import { LibraryChargePaymentService } from './services/library-charge-payment.s
 import { LostItemService } from './services/lost-item.service';
 import { BorrowingSuspensionService } from './services/borrowing-suspension.service';
 
+// ── New: Discovery services (Issue #1005 / #1006 / #1007 / #1008) ────────────
+import { PopularityRankingService } from './services/popularity-ranking.service';
+import { RecommendationService } from './services/recommendation.service';
+import { RelatedBooksService } from './services/related-books.service';
+import { SeriesService } from './services/series.service';
 // ── New: Discovery services (Issues #1001-#1004) ──────────────────────────────
 import { CatalogSearchService } from './services/catalog-search.service';
 import { FacetedCatalogService } from './services/faceted-catalog.service';
@@ -151,6 +157,12 @@ import { FinesController } from './controllers/fines.controller';
 import { LedgerController } from './controllers/ledger.controller';
 import { WaiverController } from './controllers/waiver.controller';
 import { ChargePolicyController } from './controllers/charge-policy.controller';
+
+// ── New: Discovery controllers (Issue #1005 / #1006 / #1007 / #1008) ─────────
+import { PopularityRankingController } from './controllers/popularity-ranking.controller';
+import { RecommendationController } from './controllers/recommendation.controller';
+import { RelatedBooksController } from './controllers/related-books.controller';
+import { SeriesController } from './controllers/series.controller';
 
 // ── New: Operations controller (Issue #1074) ────────────────────────────────
 import { LibraryHealthController } from './controllers/library-health.controller';
@@ -213,6 +225,7 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
       { name: NotificationEvent.name, schema: NotificationEventSchema },
       { name: PatronNote.name, schema: PatronNoteSchema },
       { name: SavedList.name, schema: SavedListSchema },
+      { name: Series.name, schema: SeriesSchema },
       // Issue #1037 — Stellar charge payments
       { name: LibraryChargePayment.name, schema: LibraryChargePaymentSchema },
       // Issue #1038 — Lost items
@@ -271,6 +284,11 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     LostItemController,
     // Issue #1039 — Borrowing suspensions
     BorrowingSuspensionController,
+    // Issue #1005 / #1006 / #1007 / #1008
+    PopularityRankingController,
+    RecommendationController,
+    RelatedBooksController,
+    SeriesController,
     // Issue #1001 / #1002 / #1003 / #1004 — Discovery
     CatalogSearchController,
     FacetedCatalogController,
@@ -340,6 +358,11 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     LostItemService,
     // Issue #1039 — Borrowing suspensions
     BorrowingSuspensionService,
+    // Issue #1005 / #1006 / #1007 / #1008
+    PopularityRankingService,
+    RecommendationService,
+    RelatedBooksService,
+    SeriesService,
     // Issue #1001 / #1002 / #1003 / #1004 — Discovery
     CatalogSearchService,
     FacetedCatalogService,
