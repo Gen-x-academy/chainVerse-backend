@@ -14,10 +14,10 @@ export class BorrowerPreference {
   @Prop({ default: true })
   inAppReminders: boolean;
 
-  @Prop({ default: null })
+  @Prop({ default: null, type: String })
   quietHoursStart: string | null;
 
-  @Prop({ default: null })
+  @Prop({ default: null, type: String })
   quietHoursEnd: string | null;
 
   @Prop({ default: 'en' })
@@ -28,6 +28,9 @@ export class BorrowerPreference {
 
   @Prop({ default: false })
   optOutMandatoryNotices: boolean;
+
+  @Prop({ default: false })
+  optOutRecommendations: boolean;
 
   createdAt?: Date;
   updatedAt?: Date;

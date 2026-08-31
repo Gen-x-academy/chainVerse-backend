@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 
 export type BookDocument = HydratedDocument<Book>;
 
@@ -86,6 +86,21 @@ export class Book {
 
   @Prop({ trim: true, default: '' })
   coverImageMime?: string;
+
+  @Prop({ trim: true, default: '' })
+  topic: string;
+
+  @Prop({ trim: true, default: '' })
+  language: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'Series', index: true })
+  seriesId?: Types.ObjectId;
+
+  @Prop({ min: 0 })
+  volumeNumber?: number;
+
+  @Prop({ trim: true, default: '' })
+  volumeLabel?: string;
 
   createdAt?: Date;
   updatedAt?: Date;
