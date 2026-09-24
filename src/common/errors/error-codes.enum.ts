@@ -161,6 +161,14 @@ export enum ErrorCode {
   /** expiresAt must be a future date. */
   BIZ_ATTESTATION_INVALID_EXPIRY = 'BIZ_ATTESTATION_INVALID_EXPIRY',
 
+  // ── E-Library reserve collection (#1052) ─────────────────────────────────
+  BIZ_RESERVE_CONFLICT = 'BIZ_RESERVE_CONFLICT',
+  BIZ_RESERVE_NOT_CANCELLABLE = 'BIZ_RESERVE_NOT_CANCELLABLE',
+  // ── Scholarships application forms (#1131) ────────────────────────────────
+  BIZ_FORM_NOT_DRAFT = 'BIZ_FORM_NOT_DRAFT',
+  BIZ_FORM_NOT_PUBLISHED = 'BIZ_FORM_NOT_PUBLISHED',
+  BIZ_FORM_VERSION_MISMATCH = 'BIZ_FORM_VERSION_MISMATCH',
+
   // ── System ────────────────────────────────────────────────────────────────
   SYS_INTERNAL_ERROR = 'SYS_INTERNAL_ERROR',
   SYS_SERVICE_UNAVAILABLE = 'SYS_SERVICE_UNAVAILABLE',

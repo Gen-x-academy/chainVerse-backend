@@ -51,6 +51,12 @@ import {
 } from './schemas/acquisition-order.schema';
 import { ImportJob, ImportJobSchema } from './schemas/import-job.schema';
 
+// ── New schema: Issue #1052 — Course reserves ─────────────────────────────────
+import {
+  CourseReserve,
+  CourseReserveSchema,
+} from './schemas/course-reserve.schema';
+
 // ── Root services ────────────────────────────────────────────────────────────
 import { BooksService } from './books.service';
 import { LoanService } from './services/loan.service';
@@ -131,6 +137,9 @@ import { CatalogExportService } from './services/catalog-export.service';
 import { CatalogImportService } from './services/catalog-import.service';
 import { DuplicateDetectionService } from './services/duplicate-detection.service';
 
+// ── New: Issue #1052 — Course reserves ────────────────────────────────────────
+import { CourseReserveService } from './services/course-reserve.service';
+
 // ── Sub-directory controllers ────────────────────────────────────────────────
 import { ELibraryAuditController } from './controllers/elibrary-audit.controller';
 import { PatronNoteController } from './controllers/patron-note.controller';
@@ -191,6 +200,9 @@ import { CatalogExportController } from './controllers/catalog-export.controller
 import { CatalogImportController } from './controllers/catalog-import.controller';
 import { DuplicateDetectionController } from './controllers/duplicate-detection.controller';
 
+// ── New: Issue #1052 — Course reserves ────────────────────────────────────────
+import { CourseReserveController } from './controllers/course-reserve.controller';
+
 // ── Guards ───────────────────────────────────────────────────────────────────
 import { LibraryOwnerGuard } from './guards/library-owner.guard';
 import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
@@ -236,6 +248,8 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
       { name: AcquisitionOrder.name, schema: AcquisitionOrderSchema },
       // Issue #990 — Import jobs
       { name: ImportJob.name, schema: ImportJobSchema },
+      // Issue #1052 — Course reserves
+      { name: CourseReserve.name, schema: CourseReserveSchema },
     ]),
     PaginationModule,
     NotificationModule,
@@ -302,6 +316,8 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     CatalogImportController,
     // Issue #989 — Duplicate detection / merge
     DuplicateDetectionController,
+    // Issue #1052 — Course reserves
+    CourseReserveController,
   ],
   providers: [
     BooksService,
@@ -376,6 +392,8 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     CatalogImportService,
     // Issue #989 — Duplicate detection / merge
     DuplicateDetectionService,
+    // Issue #1052 — Course reserves
+    CourseReserveService,
   ],
   exports: [
     BooksService,
