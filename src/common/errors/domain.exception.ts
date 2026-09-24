@@ -10,11 +10,7 @@ import { ErrorCode } from './error-codes.enum';
 export class DomainException extends HttpException {
   readonly errorCode: ErrorCode;
 
-  constructor(
-    message: string,
-    statusCode: HttpStatus,
-    errorCode: ErrorCode,
-  ) {
+  constructor(message: string, statusCode: HttpStatus, errorCode: ErrorCode) {
     super({ message, errorCode }, statusCode);
     this.errorCode = errorCode;
   }
@@ -35,7 +31,10 @@ export class ForbiddenDomainException extends DomainException {
 }
 
 export class ValidationDomainException extends DomainException {
-  constructor(message: string, errorCode: ErrorCode = ErrorCode.VAL_INVALID_INPUT) {
+  constructor(
+    message: string,
+    errorCode: ErrorCode = ErrorCode.VAL_INVALID_INPUT,
+  ) {
     super(message, HttpStatus.BAD_REQUEST, errorCode);
   }
 }
@@ -47,7 +46,10 @@ export class ResourceNotFoundException extends DomainException {
 }
 
 export class ResourceConflictException extends DomainException {
-  constructor(message: string, errorCode: ErrorCode = ErrorCode.RES_ALREADY_EXISTS) {
+  constructor(
+    message: string,
+    errorCode: ErrorCode = ErrorCode.RES_ALREADY_EXISTS,
+  ) {
     super(message, HttpStatus.CONFLICT, errorCode);
   }
 }

@@ -7,13 +7,18 @@ import {
   Notification,
   NotificationDocument,
 } from './schemas/notification.schema';
+import { PaginationService } from '../common/pagination/pagination.service';
+import { FindNotificationsDto } from './dto/find-notifications.dto';
 
-export interface PaginatedResult<T> {
-  data: T[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
+/** Events that must always be delivered regardless of user opt-outs. */
+const MANDATORY_EVENTS = new Set(['welcome', 'password_reset', 'security']);
+
+/**
+ * Minimal shape of user account-settings documents used for preference checks.
+ * Both student and tutor settings share this surface.
+ */
+interface UserPreferences {
+  emailNotifications?: boolean;
 }
 
 @Injectable()
@@ -21,40 +26,56 @@ export class NotificationService {
   constructor(
     @InjectModel(Notification.name)
     private readonly notificationModel: Model<NotificationDocument>,
+    private readonly paginationService: PaginationService,
   ) {}
 
-  async create(payload: CreateNotificationDto): Promise<Notification> {
+  /**
+   * Resolve whether a notification should be dispatched for the given user.
+   *
+   * - Mandatory event types (security, password_reset, welcome) are always
+   *   delivered and bypass opt-out settings.
+   * - For all other types the caller MAY pass the user's stored preferences;
+   *   when `prefs.emailNotifications` is explicitly `false` the notification
+   *   is silently skipped.
+   * - When no preferences are provided the notification is created (safe
+   *   default: opt-in).
+   */
+  private shouldSend(type: string | undefined, prefs?: UserPreferences): boolean {
+    if (type && MANDATORY_EVENTS.has(type)) return true;
+    if (prefs && prefs.emailNotifications === false) return false;
+    return true;
+  }
+
+  /**
+   * Create a notification after enforcing the recipient's channel preferences.
+   *
+   * Pass the user's `prefs` from their account-settings document so that
+   * opt-outs are respected before any record is persisted.
+   */
+  async create(
+    payload: CreateNotificationDto,
+    prefs?: UserPreferences,
+  ): Promise<Notification | null> {
+    if (!this.shouldSend(payload.type, prefs)) {
+      return null;
+    }
     const notification = new this.notificationModel(payload);
     return notification.save();
   }
 
-  async findAll(
-    page = 1,
-    limit = 10,
-  ): Promise<PaginatedResult<Notification>> {
-    const skip = (page - 1) * limit;
-    const [data, total] = await Promise.all([
-      this.notificationModel.find().skip(skip).limit(limit).exec(),
-      this.notificationModel.countDocuments().exec(),
-    ]);
-    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
+  async findAll(paginationDto: FindNotificationsDto) {
+    return this.paginationService.paginate(
+      this.notificationModel,
+      paginationDto,
+    );
   }
 
-  async findByUserId(
-    userId: string,
-    page = 1,
-    limit = 10,
-  ): Promise<PaginatedResult<Notification>> {
-    const skip = (page - 1) * limit;
-    const [data, total] = await Promise.all([
-      this.notificationModel
-        .find({ userId })
-        .skip(skip)
-        .limit(limit)
-        .exec(),
-      this.notificationModel.countDocuments({ userId }).exec(),
-    ]);
-    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
+  async findByUserId(userId: string, paginationDto: FindNotificationsDto) {
+    return this.paginationService.paginate(
+      this.notificationModel,
+      paginationDto,
+      { userId },
+    );
   }
 
   async findOne(id: string): Promise<NotificationDocument> {

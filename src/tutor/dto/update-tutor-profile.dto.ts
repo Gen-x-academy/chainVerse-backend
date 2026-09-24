@@ -1,8 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsOptional, IsUrl, IsArray, Min, IsNumber } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsUrl,
+  IsArray,
+  Min,
+  IsNumber,
+} from 'class-validator';
 
 export class UpdateTutorProfileDto {
-  @ApiProperty({ example: 'Experienced software engineer with 10+ years in blockchain.', required: false })
+  @ApiProperty({
+    example: 'Experienced software engineer with 10+ years in blockchain.',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   bio?: string;
@@ -12,13 +22,19 @@ export class UpdateTutorProfileDto {
   @IsOptional()
   profileImageUrl?: string;
 
-  @ApiProperty({ example: ['Blockchain', 'Smart Contracts', 'Web3'], required: false })
+  @ApiProperty({
+    example: ['Blockchain', 'Smart Contracts', 'Web3'],
+    required: false,
+  })
   @IsArray()
   @IsString({ each: true })
   @IsOptional()
   specializations?: string[];
 
-  @ApiProperty({ example: 'PhD in Computer Science, Certified Ethereum Developer', required: false })
+  @ApiProperty({
+    example: 'PhD in Computer Science, Certified Ethereum Developer',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   qualifications?: string;

@@ -3,11 +3,16 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { PointsController } from './points.controller';
 import { PointsService } from './points.service';
 import { PointsRecord, PointsRecordSchema } from './schemas/points.schema';
+import {
+  PointLedgerEntry,
+  PointLedgerEntrySchema,
+} from './schemas/point-ledger-entry.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: PointsRecord.name, schema: PointsRecordSchema },
+      { name: PointLedgerEntry.name, schema: PointLedgerEntrySchema },
     ]),
   ],
   controllers: [PointsController],

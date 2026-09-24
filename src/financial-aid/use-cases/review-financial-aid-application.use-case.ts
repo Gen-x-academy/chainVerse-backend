@@ -19,7 +19,10 @@ export class ReviewFinancialAidApplicationUseCase {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async execute(id: string, dto: UpdateFinancialAidDto): Promise<FinancialAidApplication> {
+  async execute(
+    id: string,
+    dto: UpdateFinancialAidDto,
+  ): Promise<FinancialAidApplication> {
     const application = await this.repository.findById(id);
     if (!application) {
       throw new NotFoundException('Financial aid application not found');

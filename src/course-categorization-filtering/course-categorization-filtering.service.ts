@@ -1,13 +1,15 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+import type { Cache } from 'cache-manager';
 import { CreateCourseCategorizationFilteringDto } from './dto/create-course-categorization-filtering.dto';
 import { UpdateCourseCategorizationFilteringDto } from './dto/update-course-categorization-filtering.dto';
 import { SearchCourseDto } from './dto/search-course.dto';
 
 export const COURSE_DISCOVERY_CACHE_KEY = '/courses/categorization-filtering';
 
-export type CourseItem = { id: string } & CreateCourseCategorizationFilteringDto;
+export type CourseItem = {
+  id: string;
+} & CreateCourseCategorizationFilteringDto;
 
 @Injectable()
 export class CourseCategorizationFilteringService {
@@ -64,7 +66,7 @@ export class CourseCategorizationFilteringService {
         }
 
         // --- filter matching ---
-        const meta = (item.metadata ?? {}) as Record<string, unknown>;
+        const meta = item.metadata ?? {};
 
         if (dto.category) {
           const cat = String(meta['category'] ?? '').toLowerCase();

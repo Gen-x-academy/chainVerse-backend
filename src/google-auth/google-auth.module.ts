@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { GoogleAuthController } from './google-auth.controller';
 import { GoogleAuthService } from './google-auth.service';
 import { GoogleUser, GoogleUserSchema } from './schemas/google-user.schema';
+import { GoogleStrategy } from './google.strategy';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { GoogleUser, GoogleUserSchema } from './schemas/google-user.schema';
     ]),
   ],
   controllers: [GoogleAuthController],
-  providers: [GoogleAuthService],
+  providers: [GoogleAuthService, GoogleStrategy],
+  exports: [GoogleAuthService],
 })
 export class GoogleAuthModule {}

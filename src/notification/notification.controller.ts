@@ -1,4 +1,5 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 import {
   Body,
   Controller,
@@ -18,6 +19,8 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
+import { FindNotificationsDto } from './dto/find-notifications.dto';
+import { Deprecated } from '../common/deprecation/deprecation.decorator';
 
 @ApiBearerAuth('access-token')
 @Controller('notifications')
@@ -33,45 +36,43 @@ export class NotificationController {
   }
 
   @Get()
-  @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN, Role.MODERATOR)
-  findAll(@Query('page') page?: string, @Query('limit') limit?: string) {
-    return this.service.findAll(
-      page ? parseInt(page, 10) : 1,
-      limit ? parseInt(limit, 10) : 10,
-    );
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Deprecated({ successorUrl: '/api/v2/notifications' })
+  findAll(@Query() paginationDto: FindNotificationsDto) {
+    return this.service.findAll(paginationDto);
   }
 
   @Get('me')
   findMyNotifications(
     @Req() req: { user: { id: string } },
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
+    @Query() paginationDto: FindNotificationsDto,
   ) {
-    return this.service.findByUserId(
-      req.user.id,
-      page ? parseInt(page, 10) : 1,
-      limit ? parseInt(limit, 10) : 10,
-    );
+    return this.service.findByUserId(req.user.id, paginationDto);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() payload: UpdateNotificationDto) {
+  update(
+    @Param('id', new ParseObjectIdPipe()) id: string,
+    @Body() payload: UpdateNotificationDto,
+  ) {
     return this.service.update(id, payload);
   }
 
   @Patch(':id/read')
-  markAsRead(@Param('id') id: string) {
+  markAsRead(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.markAsRead(id);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.remove(id);
   }
 }

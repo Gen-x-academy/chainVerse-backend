@@ -3,6 +3,8 @@ node_modules/
 
 # Environment variables
 .env
+.env.*
+!.env.example
 
 # Logs
 logs
@@ -15,10 +17,29 @@ Thumbs.db
 
 # Build output (if compiling TypeScript)
 dist/
+dist-test/
 build/
+*.tsbuildinfo
+
+# Coverage reports
+coverage/
+*.lcov
+
+# Cache directories
+.cache/
+.parcel-cache/
+.nest-cli.json
 
 # IDE/editor settings
 .vscode/
 .idea/
-.env
-.env*
+
+# Submission artifacts
+*.submission*.json
+
+# Local scratch files
+*.scratch.ts
+
+# Upload storage root (quarantine / clean / infected)
+var/
+uploads/

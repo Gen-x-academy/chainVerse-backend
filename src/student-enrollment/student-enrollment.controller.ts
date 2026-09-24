@@ -2,17 +2,22 @@ import {
   Controller,
   Post,
   Get,
+  Patch,
   Param,
   Req,
+  Body,
   UseGuards,
   BadRequestException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
+import { EnrollmentGuard } from '../common/guards/enrollment.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 import { StudentEnrollmentService } from './student-enrollment.service';
+import { UpdateProgressDto } from './dto/update-progress.dto';
 
 @ApiTags('Student Enrollment')
 @ApiBearerAuth('access-token')
@@ -26,7 +31,7 @@ export class StudentEnrollmentController {
   @Post('free/:courseId')
   enrollFree(
     @Req() req: { user: { id: string } },
-    @Param('courseId') courseId: string,
+    @Param('courseId', new ParseObjectIdPipe()) courseId: string,
   ) {
     return this.service.enrollFree(req.user.id, courseId);
   }
@@ -45,10 +50,41 @@ export class StudentEnrollmentController {
 
   @ApiOperation({ summary: 'Check if student is enrolled in a course' })
   @Get('is-enrolled/:courseId')
-  isEnrolled(
+  async isEnrolled(
     @Req() req: { user: { id: string } },
-    @Param('courseId') courseId: string,
+    @Param('courseId', new ParseObjectIdPipe()) courseId: string,
   ) {
-    return this.service.isEnrolled(req.user.id, courseId);
+    const enrolled = await this.service.isEnrolled(req.user.id, courseId);
+    return { enrolled, courseId, studentId: req.user.id };
+  }
+
+  @ApiOperation({
+    summary: 'Access course content — requires active enrollment',
+  })
+  @Get('content/:courseId')
+  @UseGuards(EnrollmentGuard)
+  getCourseContent(
+    @Req() req: { user: { id: string } },
+    @Param('courseId', new ParseObjectIdPipe()) courseId: string,
+  ) {
+    return this.service.getMyCourses(req.user.id).then((courses) => {
+      const entry = courses.find((c) => c.enrollment.courseId === courseId);
+      return entry ?? { courseId, message: 'Content access granted' };
+    });
+  }
+
+  @ApiOperation({ summary: 'Update lesson progress for an enrolled course' })
+  @Patch(':courseId/progress')
+  updateProgress(
+    @Req() req: { user: { id: string } },
+    @Param('courseId', new ParseObjectIdPipe()) courseId: string,
+    @Body() dto: UpdateProgressDto,
+  ) {
+    return this.service.updateProgress(
+      req.user.id,
+      courseId,
+      dto.lessonIndex,
+      dto.completed,
+    );
   }
 }

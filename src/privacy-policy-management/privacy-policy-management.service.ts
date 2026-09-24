@@ -1,6 +1,6 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+import type { Cache } from 'cache-manager';
 import { CreatePrivacyPolicyManagementDto } from './dto/create-privacy-policy-management.dto';
 import { UpdatePrivacyPolicyManagementDto } from './dto/update-privacy-policy-management.dto';
 

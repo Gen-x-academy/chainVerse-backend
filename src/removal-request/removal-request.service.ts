@@ -45,15 +45,14 @@ export class RemovalRequestService {
   ): Promise<RemovalRequest> {
     const request = await this.findOne(id);
     if (payload.status !== undefined) request.status = payload.status;
-    if (payload.adminNotes !== undefined) request.adminNotes = payload.adminNotes;
+    if (payload.adminNotes !== undefined)
+      request.adminNotes = payload.adminNotes;
     if (payload.metadata !== undefined) request.metadata = payload.metadata;
     return request.save();
   }
 
   async remove(id: string): Promise<{ id: string; deleted: boolean }> {
-    const result = await this.removalRequestModel
-      .findByIdAndDelete(id)
-      .exec();
+    const result = await this.removalRequestModel.findByIdAndDelete(id).exec();
     if (!result) {
       throw new NotFoundException('Removal request not found');
     }

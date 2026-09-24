@@ -1,6 +1,6 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+import type { Cache } from 'cache-manager';
 import { CreateCoursePerformanceLeaderboardDto } from './dto/create-course-performance-leaderboard.dto';
 import { UpdateCoursePerformanceLeaderboardDto } from './dto/update-course-performance-leaderboard.dto';
 
