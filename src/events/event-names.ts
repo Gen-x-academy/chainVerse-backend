@@ -28,6 +28,11 @@ export const DomainEvents = {
   /** Fired when a new disbursement intent is created (never on a replay). */
   SCHOLARSHIP_DISBURSEMENT_INTENT_CREATED:
     'scholarship.disbursement-intent-created',
+  /** Fired after a library item is checked out and a receipt is created. */
+  LIBRARY_CHECKOUT_RECEIPT_CREATED: 'library.checkout.receipt_created',
+
+  /** Fired after a library item is returned and a receipt is created. */
+  LIBRARY_RETURN_RECEIPT_CREATED: 'library.return.receipt_created',
 } as const;
 
 export type DomainEventName = (typeof DomainEvents)[keyof typeof DomainEvents];

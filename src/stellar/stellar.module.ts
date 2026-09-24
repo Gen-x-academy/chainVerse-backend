@@ -8,6 +8,10 @@ import {
   CertificateTx,
   CertificateTxSchema,
 } from './schemas/certificate-tx.schema';
+import {
+  VerifiedPayment,
+  VerifiedPaymentSchema,
+} from './schemas/verified-payment.schema';
 
 @Global()
 @Module({
@@ -15,6 +19,7 @@ import {
     ScheduleModule.forRoot(),
     MongooseModule.forFeature([
       { name: CertificateTx.name, schema: CertificateTxSchema },
+      { name: VerifiedPayment.name, schema: VerifiedPaymentSchema },
     ]),
   ],
   controllers: [StellarController],
