@@ -34,6 +34,20 @@ export enum AuditAction {
   ORGANIZATION_MEMBER_ROLE_CHANGED = 'organization_member.role_changed',
   ORGANIZATION_MEMBER_REMOVED = 'organization_member.removed',
 
+  // Scholarship disbursements (src/scholarship-disbursement)
+  SCHOLARSHIP_ASSET_PROPOSED = 'scholarship_asset.proposed',
+  SCHOLARSHIP_ASSET_APPROVED = 'scholarship_asset.approved',
+  SCHOLARSHIP_ASSET_DISABLED = 'scholarship_asset.disabled',
+  PAYOUT_WALLET_VERIFIED = 'payout_wallet.verified',
+  PAYOUT_WALLET_CHANGED = 'payout_wallet.changed',
+  SCHOLARSHIP_PAYMENT_SCHEDULED = 'scholarship_payment.scheduled',
+  SCHOLARSHIP_PAYMENT_CANCELLED = 'scholarship_payment.cancelled',
+  SCHOLARSHIP_PAYMENT_HOLD_RELEASED = 'scholarship_payment.hold_released',
+  SCHOLARSHIP_PAYMENT_RETRIED = 'scholarship_payment.retried',
+  SCHOLARSHIP_PAYMENT_FINALIZED = 'scholarship_payment.finalized',
+  SCHOLARSHIP_PAYMENT_REVERSED = 'scholarship_payment.reversed',
+  SCHOLARSHIP_DISBURSEMENT_RUN = 'scholarship_disbursement.run',
+
   // Upload lifecycle (src/worker)
   FILE_UPLOAD_QUARANTINED = 'file_upload.quarantined',
   FILE_UPLOAD_SCANNED = 'file_upload.scanned',

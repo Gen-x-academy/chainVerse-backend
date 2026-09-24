@@ -58,6 +58,28 @@ export interface AppConfig {
       timeoutMs: number;
     };
   };
+  /** Scholarship disbursement execution and verification settings. */
+  scholarships: {
+    /** Stellar network name; must match the network of every configured asset. */
+    network: string;
+    /** Treasury signing key. Unset means the executor refuses to run. */
+    treasurySecret: string | undefined;
+    /** Shared secret for automation endpoints. Unset disables them. */
+    automationToken: string | undefined;
+    cronEnabled: boolean;
+    /** Ledgers that must close on top of a payment's ledger before it finalizes. */
+    requiredConfirmations: number;
+    batchSize: number;
+    /** Transaction `maxTime` offset; bounds how long a submission can stay open. */
+    submissionTimeoutSeconds: number;
+    /** Extra wait past `maxTime` before an unseen transaction is expired. */
+    expiryGraceSeconds: number;
+    baseFeeStroops: number;
+    /** How long an executor claim on a payment is honoured before recovery. */
+    leaseSeconds: number;
+    walletChallengeTtlSeconds: number;
+    walletChallengeMaxAttempts: number;
+  };
 }
 
 export default (): AppConfig => ({
@@ -148,5 +170,37 @@ export default (): AppConfig => ({
       port: parseInt(process.env.MALWARE_SCAN_PORT ?? '3310', 10),
       timeoutMs: parseInt(process.env.MALWARE_SCAN_TIMEOUT_MS ?? '30000', 10),
     },
+  },
+  scholarships: {
+    network: (process.env.STELLAR_NETWORK ?? 'testnet').toLowerCase(),
+    treasurySecret: process.env.SCHOLARSHIP_TREASURY_SECRET,
+    automationToken: process.env.SCHOLARSHIP_AUTOMATION_TOKEN,
+    cronEnabled: process.env.SCHOLARSHIP_DISBURSEMENT_CRON_ENABLED === 'true',
+    requiredConfirmations: parseInt(
+      process.env.SCHOLARSHIP_REQUIRED_CONFIRMATIONS ?? '1',
+      10,
+    ),
+    batchSize: parseInt(process.env.SCHOLARSHIP_BATCH_SIZE ?? '25', 10),
+    submissionTimeoutSeconds: parseInt(
+      process.env.SCHOLARSHIP_SUBMISSION_TIMEOUT_SECONDS ?? '180',
+      10,
+    ),
+    expiryGraceSeconds: parseInt(
+      process.env.SCHOLARSHIP_EXPIRY_GRACE_SECONDS ?? '60',
+      10,
+    ),
+    baseFeeStroops: parseInt(
+      process.env.SCHOLARSHIP_BASE_FEE_STROOPS ?? '100',
+      10,
+    ),
+    leaseSeconds: parseInt(process.env.SCHOLARSHIP_LEASE_SECONDS ?? '300', 10),
+    walletChallengeTtlSeconds: parseInt(
+      process.env.SCHOLARSHIP_WALLET_CHALLENGE_TTL_SECONDS ?? '600',
+      10,
+    ),
+    walletChallengeMaxAttempts: parseInt(
+      process.env.SCHOLARSHIP_WALLET_CHALLENGE_MAX_ATTEMPTS ?? '5',
+      10,
+    ),
   },
 });
