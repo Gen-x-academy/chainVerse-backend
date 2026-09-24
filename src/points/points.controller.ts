@@ -37,9 +37,29 @@ export class PointsController {
     return this.service.getUserPoints(req.user.id);
   }
 
+  @Get('balance/me')
+  getMyBalance(@Req() req: { user: { id: string } }) {
+    return this.service.getUserBalance(req.user.id);
+  }
+
+  @Get('ledger/me')
+  getMyLedger(@Req() req: { user: { id: string } }) {
+    return this.service.getUserLedgerEntries(req.user.id);
+  }
+
   @Get('user/:userId')
   getUserPoints(@Param('userId', new ParseObjectIdPipe()) userId: string) {
     return this.service.getUserPoints(userId);
+  }
+
+  @Get('user/:userId/balance')
+  getUserBalance(@Param('userId', new ParseObjectIdPipe()) userId: string) {
+    return this.service.getUserBalance(userId);
+  }
+
+  @Get('user/:userId/ledger')
+  getUserLedger(@Param('userId', new ParseObjectIdPipe()) userId: string) {
+    return this.service.getUserLedgerEntries(userId);
   }
 
   @Get(':id')

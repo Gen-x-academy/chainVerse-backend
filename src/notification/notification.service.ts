@@ -10,6 +10,17 @@ import {
 import { PaginationService } from '../common/pagination/pagination.service';
 import { FindNotificationsDto } from './dto/find-notifications.dto';
 
+/** Events that must always be delivered regardless of user opt-outs. */
+const MANDATORY_EVENTS = new Set(['welcome', 'password_reset', 'security']);
+
+/**
+ * Minimal shape of user account-settings documents used for preference checks.
+ * Both student and tutor settings share this surface.
+ */
+interface UserPreferences {
+  emailNotifications?: boolean;
+}
+
 @Injectable()
 export class NotificationService {
   constructor(
@@ -18,7 +29,36 @@ export class NotificationService {
     private readonly paginationService: PaginationService,
   ) {}
 
-  async create(payload: CreateNotificationDto): Promise<Notification> {
+  /**
+   * Resolve whether a notification should be dispatched for the given user.
+   *
+   * - Mandatory event types (security, password_reset, welcome) are always
+   *   delivered and bypass opt-out settings.
+   * - For all other types the caller MAY pass the user's stored preferences;
+   *   when `prefs.emailNotifications` is explicitly `false` the notification
+   *   is silently skipped.
+   * - When no preferences are provided the notification is created (safe
+   *   default: opt-in).
+   */
+  private shouldSend(type: string | undefined, prefs?: UserPreferences): boolean {
+    if (type && MANDATORY_EVENTS.has(type)) return true;
+    if (prefs && prefs.emailNotifications === false) return false;
+    return true;
+  }
+
+  /**
+   * Create a notification after enforcing the recipient's channel preferences.
+   *
+   * Pass the user's `prefs` from their account-settings document so that
+   * opt-outs are respected before any record is persisted.
+   */
+  async create(
+    payload: CreateNotificationDto,
+    prefs?: UserPreferences,
+  ): Promise<Notification | null> {
+    if (!this.shouldSend(payload.type, prefs)) {
+      return null;
+    }
     const notification = new this.notificationModel(payload);
     return notification.save();
   }

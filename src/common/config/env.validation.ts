@@ -138,6 +138,15 @@ export const envValidationSchema = Joi.object({
     .min(1)
     .max(10)
     .default(5),
+  // ─── Webhook security ─────────────────────────────────────────────────────
+  // Shared secret for verifying incoming webhook HMAC-SHA256 signatures.
+  WEBHOOK_SECRET: Joi.string().min(16).optional(),
+
+  // Maximum age of a webhook timestamp before it is rejected (default 5 min).
+  WEBHOOK_TIMESTAMP_TOLERANCE_MS: Joi.number()
+    .integer()
+    .positive()
+    .default(300000),
 });
 
 /**

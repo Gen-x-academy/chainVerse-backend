@@ -1,62 +1,18 @@
-import { ApiBearerAuth } from '@nestjs/swagger';
-import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
-import { CertificateSocialSharingService } from './certificate-social-sharing.service';
-import { CreateCertificateSocialSharingDto } from './dto/create-certificate-social-sharing.dto';
-import { UpdateCertificateSocialSharingDto } from './dto/update-certificate-social-sharing.dto';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
-import { Role } from '../common/enums/role.enum';
-import { Roles } from '../common/decorators/roles.decorator';
-import { Public } from '../common/decorators/public.decorator';
+import { CertificateSocialSharingService } from './certificate-social-sharing.service';
 
+@ApiTags('certificate-social-sharing')
 @ApiBearerAuth('access-token')
+@UseGuards(JwtAuthGuard)
 @Controller('certificates/social-sharing')
 export class CertificateSocialSharingController {
   constructor(private readonly service: CertificateSocialSharingService) {}
 
-  @Public()
-  @Get()
-  findAll() {
-    return this.service.findAll();
-  }
-
-  @Public()
-  @Get(':id')
-  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
-    return this.service.findOne(id);
-  }
-
-  @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
-  create(@Body() payload: CreateCertificateSocialSharingDto) {
-    return this.service.create(payload);
-  }
-
-  @Patch(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
-  update(
-    @Param('id', new ParseObjectIdPipe()) id: string,
-    @Body() payload: UpdateCertificateSocialSharingDto,
-  ) {
-    return this.service.update(id, payload);
-  }
-
-  @Delete(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.MODERATOR)
-  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
-    return this.service.remove(id);
+  @Get(':certificateId/share-link')
+  @ApiOperation({ summary: 'Generate LinkedIn and Open Graph share links for a certificate' })
+  generateShareLink(@Param('certificateId') certificateId: string) {
+    return this.service.generateShareLink(certificateId);
   }
 }

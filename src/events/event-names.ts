@@ -24,6 +24,11 @@ export const DomainEvents = {
 
   /** Fired once when a scholarship payment reaches its terminal on-chain outcome. */
   SCHOLARSHIP_PAYMENT_SETTLED: 'scholarship.payment-settled',
+  /** Fired after a library item is checked out and a receipt is created. */
+  LIBRARY_CHECKOUT_RECEIPT_CREATED: 'library.checkout.receipt_created',
+
+  /** Fired after a library item is returned and a receipt is created. */
+  LIBRARY_RETURN_RECEIPT_CREATED: 'library.return.receipt_created',
 } as const;
 
 export type DomainEventName = (typeof DomainEvents)[keyof typeof DomainEvents];

@@ -7,6 +7,10 @@ import { StudentRegisteredPayload } from '../payloads/student-registered.payload
 import { StudentEnrolledPayload } from '../payloads/student-enrolled.payload';
 import { FinancialAidApprovedPayload } from '../payloads/financial-aid-approved.payload';
 import { CertificateIssuedPayload } from '../payloads/certificate-issued.payload';
+import {
+  LibraryCheckoutReceiptCreatedPayload,
+  LibraryReturnReceiptCreatedPayload,
+} from '../payloads/library-receipt-created.payload';
 
 @Injectable()
 export class NotificationListener {
@@ -67,6 +71,28 @@ export class NotificationListener {
       message: `Congratulations! Your certificate for "${payload.courseTitle}" has been issued.`,
       type: 'certificate',
       metadata: { certificateId: payload.certificateId },
+    });
+  }
+
+  @OnEvent(DomainEvents.LIBRARY_CHECKOUT_RECEIPT_CREATED)
+  onLibraryCheckoutReceiptCreated(payload: LibraryCheckoutReceiptCreatedPayload): void {
+    this.notificationService.create({
+      userId: payload.patronId,
+      title: 'Checkout Confirmed',
+      message: `You checked out "${payload.itemTitle}". Due back ${payload.dueAt.toDateString()}.`,
+      type: 'library_checkout',
+      metadata: { transactionId: payload.transactionId },
+    });
+  }
+
+  @OnEvent(DomainEvents.LIBRARY_RETURN_RECEIPT_CREATED)
+  onLibraryReturnReceiptCreated(payload: LibraryReturnReceiptCreatedPayload): void {
+    this.notificationService.create({
+      userId: payload.patronId,
+      title: 'Return Confirmed',
+      message: `Thanks for returning "${payload.itemTitle}".`,
+      type: 'library_return',
+      metadata: { transactionId: payload.transactionId },
     });
   }
 }

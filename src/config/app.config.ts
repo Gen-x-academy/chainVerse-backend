@@ -79,6 +79,12 @@ export interface AppConfig {
     leaseSeconds: number;
     walletChallengeTtlSeconds: number;
     walletChallengeMaxAttempts: number;
+  /** Webhook signature verification and replay protection settings. */
+  webhook: {
+    /** Shared secret for HMAC-SHA256 signature verification. */
+    secret: string | undefined;
+    /** Maximum age of a webhook timestamp before it is rejected (ms). */
+    timestampToleranceMs: number;
   };
 }
 
@@ -200,6 +206,10 @@ export default (): AppConfig => ({
     ),
     walletChallengeMaxAttempts: parseInt(
       process.env.SCHOLARSHIP_WALLET_CHALLENGE_MAX_ATTEMPTS ?? '5',
+  webhook: {
+    secret: process.env.WEBHOOK_SECRET,
+    timestampToleranceMs: parseInt(
+      process.env.WEBHOOK_TIMESTAMP_TOLERANCE_MS ?? '300000',
       10,
     ),
   },
