@@ -32,6 +32,7 @@ import { NotificationEvent, NotificationEventSchema } from './schemas/notificati
 import { PatronNote, PatronNoteSchema } from './schemas/patron-note.schema';
 import { SavedList, SavedListSchema } from './schemas/saved-list.schema';
 import { Series, SeriesSchema } from './schemas/series.schema';
+import { OfflineGrant, OfflineGrantSchema } from './schemas/offline-grant.schema';
 
 // ── New schemas: Issue #1037 / #1038 / #1039 ─────────────────────────────────
 import {
@@ -97,6 +98,9 @@ import { LedgerService } from './services/ledger.service';
 import { WaiverService } from './services/waiver.service';
 import { DigitalEditionService } from './services/digital-edition.service';
 import { CatalogLifecycleService } from './services/catalog-lifecycle.service';
+
+// ── New: Issue #1045 — Offline downloads ─────────────────────────────────────
+import { OfflineGrantService } from './services/offline-grant.service';
 
 // ── New: Operations services (Issue #1074) ──────────────────────────────────
 import { LibraryHealthService } from './services/library-health.service';
@@ -191,6 +195,9 @@ import { CatalogExportController } from './controllers/catalog-export.controller
 import { CatalogImportController } from './controllers/catalog-import.controller';
 import { DuplicateDetectionController } from './controllers/duplicate-detection.controller';
 
+// ── New: Issue #1045 — Offline downloads ─────────────────────────────────────
+import { OfflineGrantController } from './controllers/offline-grant.controller';
+
 // ── Guards ───────────────────────────────────────────────────────────────────
 import { LibraryOwnerGuard } from './guards/library-owner.guard';
 import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
@@ -236,6 +243,8 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
       { name: AcquisitionOrder.name, schema: AcquisitionOrderSchema },
       // Issue #990 — Import jobs
       { name: ImportJob.name, schema: ImportJobSchema },
+      // Issue #1045 — Offline downloads
+      { name: OfflineGrant.name, schema: OfflineGrantSchema },
     ]),
     PaginationModule,
     NotificationModule,
@@ -302,6 +311,8 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     CatalogImportController,
     // Issue #989 — Duplicate detection / merge
     DuplicateDetectionController,
+    // Issue #1045 — Offline downloads
+    OfflineGrantController,
   ],
   providers: [
     BooksService,
@@ -376,6 +387,8 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     CatalogImportService,
     // Issue #989 — Duplicate detection / merge
     DuplicateDetectionService,
+    // Issue #1045 — Offline downloads
+    OfflineGrantService,
   ],
   exports: [
     BooksService,
