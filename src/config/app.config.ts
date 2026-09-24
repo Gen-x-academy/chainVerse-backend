@@ -30,6 +30,14 @@ export interface AppConfig {
     skipFailed: boolean;
     keyPrefix: string;
   };
+  scholarshipFinance: {
+    horizon: { testnet: string; public: string; timeoutMs: number };
+    reconciliationIntervalMs: number;
+    reconciliationMaxAgeMs: number;
+    payoutRetryIntervalMs: number;
+    payoutMaxAttempts: number;
+    payoutEnvelopeTtlSeconds: number;
+  };
 }
 
 export default (): AppConfig => ({
@@ -80,5 +88,35 @@ export default (): AppConfig => ({
     skipSuccess: process.env.RATE_LIMIT_SKIP_SUCCESS === 'true',
     skipFailed: process.env.RATE_LIMIT_SKIP_FAILED === 'true',
     keyPrefix: process.env.RATE_LIMIT_KEY_PREFIX ?? 'rl:',
+  },
+  scholarshipFinance: {
+    horizon: {
+      testnet:
+        process.env.STELLAR_HORIZON_URL_TESTNET ??
+        'https://horizon-testnet.stellar.org',
+      public:
+        process.env.STELLAR_HORIZON_URL_PUBLIC ?? 'https://horizon.stellar.org',
+      timeoutMs: parseInt(process.env.STELLAR_HORIZON_TIMEOUT_MS ?? '10000', 10),
+    },
+    reconciliationIntervalMs: parseInt(
+      process.env.SCHOLARSHIP_RECONCILIATION_INTERVAL_MS ?? '3600000',
+      10,
+    ),
+    reconciliationMaxAgeMs: parseInt(
+      process.env.SCHOLARSHIP_RECONCILIATION_MAX_AGE_MS ?? '3600000',
+      10,
+    ),
+    payoutRetryIntervalMs: parseInt(
+      process.env.SCHOLARSHIP_PAYOUT_RETRY_INTERVAL_MS ?? '60000',
+      10,
+    ),
+    payoutMaxAttempts: parseInt(
+      process.env.SCHOLARSHIP_PAYOUT_MAX_ATTEMPTS ?? '5',
+      10,
+    ),
+    payoutEnvelopeTtlSeconds: parseInt(
+      process.env.SCHOLARSHIP_PAYOUT_ENVELOPE_TTL_SECONDS ?? '300',
+      10,
+    ),
   },
 });

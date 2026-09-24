@@ -65,4 +65,18 @@ export const envValidationSchema = Joi.object({
   RATE_LIMIT_SKIP_SUCCESS: Joi.boolean().default(false),
   RATE_LIMIT_SKIP_FAILED: Joi.boolean().default(false),
   RATE_LIMIT_KEY_PREFIX: Joi.string().default('rl:'),
+
+  // ── Scholarship finance ───────────────────────────────────────────────────
+  STELLAR_HORIZON_URL_TESTNET: Joi.string()
+    .uri()
+    .default('https://horizon-testnet.stellar.org'),
+  STELLAR_HORIZON_URL_PUBLIC: Joi.string()
+    .uri()
+    .default('https://horizon.stellar.org'),
+  STELLAR_HORIZON_TIMEOUT_MS: Joi.number().integer().positive().default(10000),
+  SCHOLARSHIP_RECONCILIATION_INTERVAL_MS: Joi.number().integer().min(0).default(3600000),
+  SCHOLARSHIP_RECONCILIATION_MAX_AGE_MS: Joi.number().integer().positive().default(3600000),
+  SCHOLARSHIP_PAYOUT_RETRY_INTERVAL_MS: Joi.number().integer().min(0).default(60000),
+  SCHOLARSHIP_PAYOUT_MAX_ATTEMPTS: Joi.number().integer().min(1).max(20).default(5),
+  SCHOLARSHIP_PAYOUT_ENVELOPE_TTL_SECONDS: Joi.number().integer().min(30).default(300),
 }).options({ allowUnknown: true });
