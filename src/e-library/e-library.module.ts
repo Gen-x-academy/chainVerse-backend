@@ -56,6 +56,12 @@ import {
 } from './schemas/acquisition-order.schema';
 import { ImportJob, ImportJobSchema } from './schemas/import-job.schema';
 
+// ── New schema: Issue #1052 — Course reserves ─────────────────────────────────
+import {
+  CourseReserve,
+  CourseReserveSchema,
+} from './schemas/course-reserve.schema';
+
 // ── Root services ────────────────────────────────────────────────────────────
 import { BooksService } from './books.service';
 import { LoanService } from './services/loan.service';
@@ -145,6 +151,9 @@ import { CatalogExportService } from './services/catalog-export.service';
 import { CatalogImportService } from './services/catalog-import.service';
 import { DuplicateDetectionService } from './services/duplicate-detection.service';
 
+// ── New: Issue #1052 — Course reserves ────────────────────────────────────────
+import { CourseReserveService } from './services/course-reserve.service';
+
 // ── Sub-directory controllers ────────────────────────────────────────────────
 import { ELibraryAuditController } from './controllers/elibrary-audit.controller';
 import { PatronNoteController } from './controllers/patron-note.controller';
@@ -207,6 +216,8 @@ import { DuplicateDetectionController } from './controllers/duplicate-detection.
 
 // ── New: Issue #1047 — File integrity verification / quarantine ─────────────
 import { RenditionIntegrityController } from './controllers/rendition-integrity.controller';
+// ── New: Issue #1052 — Course reserves ────────────────────────────────────────
+import { CourseReserveController } from './controllers/course-reserve.controller';
 
 // ── Guards ───────────────────────────────────────────────────────────────────
 import { LibraryOwnerGuard } from './guards/library-owner.guard';
@@ -256,6 +267,8 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
       // Issue #1047 — File integrity verification / quarantine
       { name: RenditionIntegrity.name, schema: RenditionIntegritySchema },
       { name: IntegrityJob.name, schema: IntegrityJobSchema },
+      // Issue #1052 — Course reserves
+      { name: CourseReserve.name, schema: CourseReserveSchema },
     ]),
     PaginationModule,
     NotificationModule,
@@ -324,6 +337,8 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     DuplicateDetectionController,
     // Issue #1047 — File integrity verification / quarantine
     RenditionIntegrityController,
+    // Issue #1052 — Course reserves
+    CourseReserveController,
   ],
   providers: [
     BooksService,
@@ -402,6 +417,8 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     RenditionIntegrityService,
     { provide: INTEGRITY_CONTENT_READER, useClass: NoopIntegrityContentReader },
     { provide: INTEGRITY_ALERT_NOTIFIER, useClass: LoggerIntegrityAlertNotifier },
+    // Issue #1052 — Course reserves
+    CourseReserveService,
   ],
   exports: [
     BooksService,
