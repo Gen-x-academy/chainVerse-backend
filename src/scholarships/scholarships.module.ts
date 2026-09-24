@@ -19,6 +19,19 @@ import {
   ScholarshipApplicationSchema,
 } from './schemas/scholarship-application.schema';
 import {
+  ProgramPrerequisite,
+  ProgramPrerequisiteSchema,
+} from './schemas/program-prerequisite.schema';
+import {
+  ProgramExclusion,
+  ProgramExclusionSchema,
+} from './schemas/program-exclusion.schema';
+import { ScholarshipProgramsService } from './services/scholarship-programs.service';
+import { ScholarshipApplicationsService } from './services/scholarship-applications.service';
+import { PrerequisiteExclusionService } from './services/prerequisite-exclusion.service';
+import { ScholarshipProgramsController } from './controllers/scholarship-programs.controller';
+import { ScholarshipApplicationsController } from './controllers/scholarship-applications.controller';
+import { PrerequisiteExclusionController } from './controllers/prerequisite-exclusion.controller';
   EligibilityAttestation,
   EligibilityAttestationSchema,
 } from './schemas/eligibility-attestation.schema';
@@ -38,6 +51,8 @@ import {
       { name: ScholarshipProgram.name, schema: ScholarshipProgramSchema },
       { name: ProgramTermsVersion.name, schema: ProgramTermsVersionSchema },
       { name: ScholarshipApplication.name, schema: ScholarshipApplicationSchema },
+      { name: ProgramPrerequisite.name, schema: ProgramPrerequisiteSchema },
+      { name: ProgramExclusion.name, schema: ProgramExclusionSchema },
       { name: EligibilityAttestation.name, schema: EligibilityAttestationSchema },
       { name: OrganizationMember.name, schema: OrganizationMemberSchema },
     ]),
@@ -46,18 +61,22 @@ import {
   controllers: [
     ScholarshipProgramsController,
     ScholarshipApplicationsController,
+    PrerequisiteExclusionController,
     EligibilityAttestationController,
     ApplicantAttestationController,
   ],
   providers: [
     ScholarshipProgramsService,
     ScholarshipApplicationsService,
+    PrerequisiteExclusionService,
     EligibilityAttestationService,
     OrganizationRolesGuard,
   ],
   exports: [
     ScholarshipProgramsService,
     ScholarshipApplicationsService,
+    PrerequisiteExclusionService,
+  ],
     EligibilityAttestationService,
   ],
 import {

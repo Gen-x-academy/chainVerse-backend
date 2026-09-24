@@ -152,6 +152,15 @@ export enum ErrorCode {
   /** Archived programs cannot be modified. */
   BIZ_PROGRAM_ARCHIVED = 'BIZ_PROGRAM_ARCHIVED',
 
+  // ── Scholarships: prerequisite and exclusion rules (#1128) ───────────────
+  RES_PROGRAM_PREREQUISITE_NOT_FOUND = 'RES_PROGRAM_PREREQUISITE_NOT_FOUND',
+  RES_PROGRAM_EXCLUSION_NOT_FOUND = 'RES_PROGRAM_EXCLUSION_NOT_FOUND',
+  /** Duplicate prerequisite (same type + referenceId) for a program. */
+  BIZ_PREREQUISITE_DUPLICATE = 'BIZ_PREREQUISITE_DUPLICATE',
+  /** Duplicate exclusion type for a program. */
+  BIZ_EXCLUSION_DUPLICATE = 'BIZ_EXCLUSION_DUPLICATE',
+  /** A prerequisite creates a self-referential cycle. */
+  BIZ_PREREQUISITE_CYCLE_DETECTED = 'BIZ_PREREQUISITE_CYCLE_DETECTED',
   // ── Scholarships: eligibility attestations (#1129) ───────────────────────
   RES_ELIGIBILITY_ATTESTATION_NOT_FOUND = 'RES_ELIGIBILITY_ATTESTATION_NOT_FOUND',
   /** Attestation has already been revoked. */
