@@ -18,6 +18,16 @@ export const DomainEvents = {
 
   /** Fired after a certificate (NFT achievement) is issued to a student. */
   CERTIFICATE_ISSUED: 'certificate.issued',
+
+  /**
+   * Fired at most once per award milestone, when a verifier approval makes the
+   * installment payable. Consumed by the disbursement-intent listener.
+   */
+  SCHOLARSHIP_PAYMENT_ELIGIBLE: 'scholarship.payment-eligible',
+
+  /** Fired when a new disbursement intent is created (never on a replay). */
+  SCHOLARSHIP_DISBURSEMENT_INTENT_CREATED:
+    'scholarship.disbursement-intent-created',
 } as const;
 
 export type DomainEventName = (typeof DomainEvents)[keyof typeof DomainEvents];

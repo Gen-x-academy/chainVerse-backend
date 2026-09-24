@@ -43,6 +43,13 @@ export interface AppConfig {
     /** When true, a failed audit write fails the mutation it describes. */
     failClosed: boolean;
   };
+  /** Scholarship milestone evidence encryption. */
+  scholarship: {
+    /** Base64-encoded 32-byte AES-256-GCM key for evidence payloads. */
+    evidenceEncryptionKey: string | undefined;
+    /** Identifier stored beside each ciphertext so keys can be rotated. */
+    evidenceEncryptionKeyId: string;
+  };
   /** Worker upload quarantine, scanning and quota settings. */
   uploads: {
     /** Storage root, kept outside any web-served directory. */
@@ -123,6 +130,12 @@ export default (): AppConfig => ({
   audit: {
     hmacSecret: process.env.AUDIT_HMAC_SECRET,
     failClosed: process.env.AUDIT_LOG_FAIL_CLOSED === 'true',
+  },
+  scholarship: {
+    evidenceEncryptionKey:
+      process.env.SCHOLARSHIP_EVIDENCE_ENCRYPTION_KEY || undefined,
+    evidenceEncryptionKeyId:
+      process.env.SCHOLARSHIP_EVIDENCE_ENCRYPTION_KEY_ID ?? 'v1',
   },
   uploads: {
     root: process.env.UPLOAD_STORAGE_ROOT ?? 'var/uploads',
