@@ -97,6 +97,27 @@ export class ScholarshipApplication {
   @Prop()
   decisionReason?: string;
 
+  /**
+   * Withdrawal fields — populated only when status transitions to WITHDRAWN.
+   *
+   * Review history fields (decidedAt, decidedBy, decisionReason) are NEVER
+   * cleared on withdrawal; the full audit trail is preserved.
+   *
+   * Privacy: withdrawalReason may contain applicant PII and is scoped to
+   * the owning tenant via organizationId.
+   */
+  @Prop()
+  withdrawalReasonCategory?: string;
+
+  @Prop({ trim: true, maxlength: 500 })
+  withdrawalReason?: string;
+
+  @Prop()
+  withdrawnAt?: Date;
+
+  @Prop()
+  withdrawnBy?: string;
+
   createdAt?: Date;
   updatedAt?: Date;
 }

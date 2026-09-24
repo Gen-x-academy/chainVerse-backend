@@ -19,6 +19,20 @@ import {
   ScholarshipApplicationSchema,
 } from './schemas/scholarship-application.schema';
 import {
+  WithdrawalPolicy,
+  WithdrawalPolicySchema,
+} from './schemas/withdrawal-policy.schema';
+import {
+  EligibilityRule,
+  EligibilityRuleSchema,
+} from './schemas/eligibility-rule.schema';
+import { ScholarshipProgramsService } from './services/scholarship-programs.service';
+import { ScholarshipApplicationsService } from './services/scholarship-applications.service';
+import { WithdrawalPolicyService } from './services/withdrawal-policy.service';
+import { EligibilityRuleService } from './services/eligibility-rule.service';
+import { ScholarshipProgramsController } from './controllers/scholarship-programs.controller';
+import { ScholarshipApplicationsController } from './controllers/scholarship-applications.controller';
+import { WithdrawalEligibilityController } from './controllers/withdrawal-eligibility.controller';
   ProgramPrerequisite,
   ProgramPrerequisiteSchema,
 } from './schemas/program-prerequisite.schema';
@@ -51,6 +65,9 @@ import {
       { name: ScholarshipProgram.name, schema: ScholarshipProgramSchema },
       { name: ProgramTermsVersion.name, schema: ProgramTermsVersionSchema },
       { name: ScholarshipApplication.name, schema: ScholarshipApplicationSchema },
+      { name: WithdrawalPolicy.name, schema: WithdrawalPolicySchema },
+      { name: EligibilityRule.name, schema: EligibilityRuleSchema },
+      // Registered so OrganizationRolesGuard can resolve tenant memberships.
       { name: ProgramPrerequisite.name, schema: ProgramPrerequisiteSchema },
       { name: ProgramExclusion.name, schema: ProgramExclusionSchema },
       { name: EligibilityAttestation.name, schema: EligibilityAttestationSchema },
@@ -61,6 +78,7 @@ import {
   controllers: [
     ScholarshipProgramsController,
     ScholarshipApplicationsController,
+    WithdrawalEligibilityController,
     PrerequisiteExclusionController,
     EligibilityAttestationController,
     ApplicantAttestationController,
@@ -68,6 +86,8 @@ import {
   providers: [
     ScholarshipProgramsService,
     ScholarshipApplicationsService,
+    WithdrawalPolicyService,
+    EligibilityRuleService,
     PrerequisiteExclusionService,
     EligibilityAttestationService,
     OrganizationRolesGuard,
@@ -75,6 +95,9 @@ import {
   exports: [
     ScholarshipProgramsService,
     ScholarshipApplicationsService,
+    WithdrawalPolicyService,
+    EligibilityRuleService,
+  ],
     PrerequisiteExclusionService,
   ],
     EligibilityAttestationService,

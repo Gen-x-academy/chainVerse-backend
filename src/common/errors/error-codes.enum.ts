@@ -152,6 +152,21 @@ export enum ErrorCode {
   /** Archived programs cannot be modified. */
   BIZ_PROGRAM_ARCHIVED = 'BIZ_PROGRAM_ARCHIVED',
 
+  // ── Scholarships: withdrawal policy (#1137) ───────────────────────────────
+  /** Self-withdrawal is disabled by the program's withdrawal policy. */
+  BIZ_WITHDRAWAL_NOT_ALLOWED = 'BIZ_WITHDRAWAL_NOT_ALLOWED',
+  /** The withdrawal window (hours after submission) has elapsed. */
+  BIZ_WITHDRAWAL_WINDOW_EXPIRED = 'BIZ_WITHDRAWAL_WINDOW_EXPIRED',
+  /** Approved applications cannot be withdrawn. */
+  BIZ_APPROVED_APPLICATION_NOT_WITHDRAWABLE = 'BIZ_APPROVED_APPLICATION_NOT_WITHDRAWABLE',
+  /** No withdrawal policy document found. */
+  RES_WITHDRAWAL_POLICY_NOT_FOUND = 'RES_WITHDRAWAL_POLICY_NOT_FOUND',
+
+  // ── Scholarships: composable eligibility rules (#1127) ────────────────────
+  /** An eligibility rule of this type already exists for the program. */
+  BIZ_ELIGIBILITY_RULE_CONFLICT = 'BIZ_ELIGIBILITY_RULE_CONFLICT',
+  /** The eligibility rule was not found. */
+  RES_ELIGIBILITY_RULE_NOT_FOUND = 'RES_ELIGIBILITY_RULE_NOT_FOUND',
   // ── Scholarships: prerequisite and exclusion rules (#1128) ───────────────
   RES_PROGRAM_PREREQUISITE_NOT_FOUND = 'RES_PROGRAM_PREREQUISITE_NOT_FOUND',
   RES_PROGRAM_EXCLUSION_NOT_FOUND = 'RES_PROGRAM_EXCLUSION_NOT_FOUND',
