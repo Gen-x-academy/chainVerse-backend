@@ -67,6 +67,7 @@ import { AdminModeratorAccountSettingsModule } from './admin-moderator-account-s
 import { HealthModule } from './health/health.module';
 import { NotificationModule } from './notification/notification.module';
 import { FinancialAidModule } from './financial-aid/financial-aid.module';
+import { ScholarshipsModule } from './scholarships/scholarships.module';
 import { OrganizationModule } from './organization/organization.module';
 import { OrganizationMemberModule } from './organization-member/organization-member.module';
 import { SubscriptionPlanModule } from './subscription-plan/subscription-plan.module';
@@ -87,6 +88,7 @@ import { IdempotencyModule } from './idempotency/idempotency.module';
 import { PrivacyPolicyManagementModule } from './privacy-policy-management/privacy-policy-management.module';
 import { VerificationModule } from './verification/verification.module';
 import { ELibraryModule } from './e-library/e-library.module';
+import { ScholarshipsModule } from './scholarships/scholarships.module';
 
 @Module({
   imports: [
@@ -175,6 +177,7 @@ import { ELibraryModule } from './e-library/e-library.module';
     HealthModule,
     NotificationModule,
     FinancialAidModule,
+    ScholarshipsModule,
     OrganizationModule,
     OrganizationMemberModule,
     SubscriptionPlanModule,
@@ -194,6 +197,7 @@ import { ELibraryModule } from './e-library/e-library.module';
     ReportsModule,
     IdempotencyModule,
     VerificationModule,
+    ScholarshipsModule,
   ],
   controllers: [AppController],
   providers: [
