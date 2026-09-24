@@ -33,6 +33,31 @@ import { EligibilityRuleService } from './services/eligibility-rule.service';
 import { ScholarshipProgramsController } from './controllers/scholarship-programs.controller';
 import { ScholarshipApplicationsController } from './controllers/scholarship-applications.controller';
 import { WithdrawalEligibilityController } from './controllers/withdrawal-eligibility.controller';
+  ProgramPrerequisite,
+  ProgramPrerequisiteSchema,
+} from './schemas/program-prerequisite.schema';
+import {
+  ProgramExclusion,
+  ProgramExclusionSchema,
+} from './schemas/program-exclusion.schema';
+import { ScholarshipProgramsService } from './services/scholarship-programs.service';
+import { ScholarshipApplicationsService } from './services/scholarship-applications.service';
+import { PrerequisiteExclusionService } from './services/prerequisite-exclusion.service';
+import { ScholarshipProgramsController } from './controllers/scholarship-programs.controller';
+import { ScholarshipApplicationsController } from './controllers/scholarship-applications.controller';
+import { PrerequisiteExclusionController } from './controllers/prerequisite-exclusion.controller';
+  EligibilityAttestation,
+  EligibilityAttestationSchema,
+} from './schemas/eligibility-attestation.schema';
+import { ScholarshipProgramsService } from './services/scholarship-programs.service';
+import { ScholarshipApplicationsService } from './services/scholarship-applications.service';
+import { EligibilityAttestationService } from './services/eligibility-attestation.service';
+import { ScholarshipProgramsController } from './controllers/scholarship-programs.controller';
+import { ScholarshipApplicationsController } from './controllers/scholarship-applications.controller';
+import {
+  EligibilityAttestationController,
+  ApplicantAttestationController,
+} from './controllers/eligibility-attestation.controller';
 
 @Module({
   imports: [
@@ -43,6 +68,9 @@ import { WithdrawalEligibilityController } from './controllers/withdrawal-eligib
       { name: WithdrawalPolicy.name, schema: WithdrawalPolicySchema },
       { name: EligibilityRule.name, schema: EligibilityRuleSchema },
       // Registered so OrganizationRolesGuard can resolve tenant memberships.
+      { name: ProgramPrerequisite.name, schema: ProgramPrerequisiteSchema },
+      { name: ProgramExclusion.name, schema: ProgramExclusionSchema },
+      { name: EligibilityAttestation.name, schema: EligibilityAttestationSchema },
       { name: OrganizationMember.name, schema: OrganizationMemberSchema },
     ]),
     PaginationModule,
@@ -51,12 +79,17 @@ import { WithdrawalEligibilityController } from './controllers/withdrawal-eligib
     ScholarshipProgramsController,
     ScholarshipApplicationsController,
     WithdrawalEligibilityController,
+    PrerequisiteExclusionController,
+    EligibilityAttestationController,
+    ApplicantAttestationController,
   ],
   providers: [
     ScholarshipProgramsService,
     ScholarshipApplicationsService,
     WithdrawalPolicyService,
     EligibilityRuleService,
+    PrerequisiteExclusionService,
+    EligibilityAttestationService,
     OrganizationRolesGuard,
   ],
   exports: [
@@ -65,5 +98,31 @@ import { WithdrawalEligibilityController } from './controllers/withdrawal-eligib
     WithdrawalPolicyService,
     EligibilityRuleService,
   ],
+    PrerequisiteExclusionService,
+  ],
+    EligibilityAttestationService,
+  ],
+import {
+  ApplicationForm,
+  ApplicationFormSchema,
+} from './schemas/application-form.schema';
+import { ApplicationFormService } from './services/application-form.service';
+import { ApplicationFormController } from './controllers/application-form.controller';
+
+/**
+ * ScholarshipsModule bundles all scholarship-related features.
+ *
+ * Currently provides:
+ *  - Configurable application forms (issue #1131)
+ */
+@Module({
+  imports: [
+    MongooseModule.forFeature([
+      { name: ApplicationForm.name, schema: ApplicationFormSchema },
+    ]),
+  ],
+  controllers: [ApplicationFormController],
+  providers: [ApplicationFormService],
+  exports: [ApplicationFormService],
 })
 export class ScholarshipsModule {}
