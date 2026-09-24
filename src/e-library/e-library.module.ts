@@ -109,6 +109,7 @@ import { LedgerService } from './services/ledger.service';
 import { WaiverService } from './services/waiver.service';
 import { DigitalEditionService } from './services/digital-edition.service';
 import { CatalogLifecycleService } from './services/catalog-lifecycle.service';
+import { CitationExportService } from './services/citation-export.service';
 
 // ── New: Issue #1045 — Offline downloads ─────────────────────────────────────
 import { OfflineGrantService } from './services/offline-grant.service';
@@ -218,6 +219,7 @@ import { AcquisitionOrderController } from './controllers/acquisition-order.cont
 import { CatalogExportController } from './controllers/catalog-export.controller';
 import { CatalogImportController } from './controllers/catalog-import.controller';
 import { DuplicateDetectionController } from './controllers/duplicate-detection.controller';
+import { CitationExportController } from './controllers/citation-export.controller';
 
 // ── New: Issue #1045 — Offline downloads ─────────────────────────────────────
 import { OfflineGrantController } from './controllers/offline-grant.controller';
@@ -346,6 +348,8 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     CatalogImportController,
     // Issue #989 — Duplicate detection / merge
     DuplicateDetectionController,
+    // Issue #1054 — Citation export (APA / MLA / Chicago / BibTeX / RIS)
+    CitationExportController,
     // Issue #1045 — Offline downloads
     OfflineGrantController,
     // Issue #1046 — Digital access audit events
@@ -428,6 +432,8 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     CatalogImportService,
     // Issue #989 — Duplicate detection / merge
     DuplicateDetectionService,
+    // Issue #1054 — Citation export (APA / MLA / Chicago / BibTeX / RIS)
+    CitationExportService,
     // Issue #1045 — Offline downloads
     OfflineGrantService,
     // Issue #1046 — Digital access audit events
