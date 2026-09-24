@@ -161,6 +161,22 @@ export enum ErrorCode {
   BIZ_EXCLUSION_DUPLICATE = 'BIZ_EXCLUSION_DUPLICATE',
   /** A prerequisite creates a self-referential cycle. */
   BIZ_PREREQUISITE_CYCLE_DETECTED = 'BIZ_PREREQUISITE_CYCLE_DETECTED',
+  // ── Scholarships: eligibility attestations (#1129) ───────────────────────
+  RES_ELIGIBILITY_ATTESTATION_NOT_FOUND = 'RES_ELIGIBILITY_ATTESTATION_NOT_FOUND',
+  /** Attestation has already been revoked. */
+  BIZ_ATTESTATION_ALREADY_REVOKED = 'BIZ_ATTESTATION_ALREADY_REVOKED',
+  /** Attestation has expired. */
+  BIZ_ATTESTATION_EXPIRED = 'BIZ_ATTESTATION_EXPIRED',
+  /** expiresAt must be a future date. */
+  BIZ_ATTESTATION_INVALID_EXPIRY = 'BIZ_ATTESTATION_INVALID_EXPIRY',
+
+  // ── E-Library reserve collection (#1052) ─────────────────────────────────
+  BIZ_RESERVE_CONFLICT = 'BIZ_RESERVE_CONFLICT',
+  BIZ_RESERVE_NOT_CANCELLABLE = 'BIZ_RESERVE_NOT_CANCELLABLE',
+  // ── Scholarships application forms (#1131) ────────────────────────────────
+  BIZ_FORM_NOT_DRAFT = 'BIZ_FORM_NOT_DRAFT',
+  BIZ_FORM_NOT_PUBLISHED = 'BIZ_FORM_NOT_PUBLISHED',
+  BIZ_FORM_VERSION_MISMATCH = 'BIZ_FORM_VERSION_MISMATCH',
 
   // ── System ────────────────────────────────────────────────────────────────
   SYS_INTERNAL_ERROR = 'SYS_INTERNAL_ERROR',

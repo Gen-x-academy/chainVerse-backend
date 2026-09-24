@@ -32,6 +32,18 @@ import { PrerequisiteExclusionService } from './services/prerequisite-exclusion.
 import { ScholarshipProgramsController } from './controllers/scholarship-programs.controller';
 import { ScholarshipApplicationsController } from './controllers/scholarship-applications.controller';
 import { PrerequisiteExclusionController } from './controllers/prerequisite-exclusion.controller';
+  EligibilityAttestation,
+  EligibilityAttestationSchema,
+} from './schemas/eligibility-attestation.schema';
+import { ScholarshipProgramsService } from './services/scholarship-programs.service';
+import { ScholarshipApplicationsService } from './services/scholarship-applications.service';
+import { EligibilityAttestationService } from './services/eligibility-attestation.service';
+import { ScholarshipProgramsController } from './controllers/scholarship-programs.controller';
+import { ScholarshipApplicationsController } from './controllers/scholarship-applications.controller';
+import {
+  EligibilityAttestationController,
+  ApplicantAttestationController,
+} from './controllers/eligibility-attestation.controller';
 
 @Module({
   imports: [
@@ -41,6 +53,7 @@ import { PrerequisiteExclusionController } from './controllers/prerequisite-excl
       { name: ScholarshipApplication.name, schema: ScholarshipApplicationSchema },
       { name: ProgramPrerequisite.name, schema: ProgramPrerequisiteSchema },
       { name: ProgramExclusion.name, schema: ProgramExclusionSchema },
+      { name: EligibilityAttestation.name, schema: EligibilityAttestationSchema },
       { name: OrganizationMember.name, schema: OrganizationMemberSchema },
     ]),
     PaginationModule,
@@ -49,11 +62,14 @@ import { PrerequisiteExclusionController } from './controllers/prerequisite-excl
     ScholarshipProgramsController,
     ScholarshipApplicationsController,
     PrerequisiteExclusionController,
+    EligibilityAttestationController,
+    ApplicantAttestationController,
   ],
   providers: [
     ScholarshipProgramsService,
     ScholarshipApplicationsService,
     PrerequisiteExclusionService,
+    EligibilityAttestationService,
     OrganizationRolesGuard,
   ],
   exports: [
@@ -61,5 +77,29 @@ import { PrerequisiteExclusionController } from './controllers/prerequisite-excl
     ScholarshipApplicationsService,
     PrerequisiteExclusionService,
   ],
+    EligibilityAttestationService,
+  ],
+import {
+  ApplicationForm,
+  ApplicationFormSchema,
+} from './schemas/application-form.schema';
+import { ApplicationFormService } from './services/application-form.service';
+import { ApplicationFormController } from './controllers/application-form.controller';
+
+/**
+ * ScholarshipsModule bundles all scholarship-related features.
+ *
+ * Currently provides:
+ *  - Configurable application forms (issue #1131)
+ */
+@Module({
+  imports: [
+    MongooseModule.forFeature([
+      { name: ApplicationForm.name, schema: ApplicationFormSchema },
+    ]),
+  ],
+  controllers: [ApplicationFormController],
+  providers: [ApplicationFormService],
+  exports: [ApplicationFormService],
 })
 export class ScholarshipsModule {}
