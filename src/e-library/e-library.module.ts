@@ -32,6 +32,11 @@ import { NotificationEvent, NotificationEventSchema } from './schemas/notificati
 import { PatronNote, PatronNoteSchema } from './schemas/patron-note.schema';
 import { SavedList, SavedListSchema } from './schemas/saved-list.schema';
 import { Series, SeriesSchema } from './schemas/series.schema';
+import {
+  RenditionIntegrity,
+  RenditionIntegritySchema,
+} from './schemas/rendition-integrity.schema';
+import { IntegrityJob, IntegrityJobSchema } from './schemas/integrity-job.schema';
 
 // ── New schemas: Issue #1037 / #1038 / #1039 ─────────────────────────────────
 import {
@@ -97,6 +102,15 @@ import { LedgerService } from './services/ledger.service';
 import { WaiverService } from './services/waiver.service';
 import { DigitalEditionService } from './services/digital-edition.service';
 import { CatalogLifecycleService } from './services/catalog-lifecycle.service';
+
+// ── New: Issue #1047 — File integrity verification / quarantine ─────────────
+import {
+  RenditionIntegrityService,
+  NoopIntegrityContentReader,
+  LoggerIntegrityAlertNotifier,
+  INTEGRITY_CONTENT_READER,
+  INTEGRITY_ALERT_NOTIFIER,
+} from './services/rendition-integrity.service';
 
 // ── New: Operations services (Issue #1074) ──────────────────────────────────
 import { LibraryHealthService } from './services/library-health.service';
@@ -191,6 +205,9 @@ import { CatalogExportController } from './controllers/catalog-export.controller
 import { CatalogImportController } from './controllers/catalog-import.controller';
 import { DuplicateDetectionController } from './controllers/duplicate-detection.controller';
 
+// ── New: Issue #1047 — File integrity verification / quarantine ─────────────
+import { RenditionIntegrityController } from './controllers/rendition-integrity.controller';
+
 // ── Guards ───────────────────────────────────────────────────────────────────
 import { LibraryOwnerGuard } from './guards/library-owner.guard';
 import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
@@ -236,6 +253,9 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
       { name: AcquisitionOrder.name, schema: AcquisitionOrderSchema },
       // Issue #990 — Import jobs
       { name: ImportJob.name, schema: ImportJobSchema },
+      // Issue #1047 — File integrity verification / quarantine
+      { name: RenditionIntegrity.name, schema: RenditionIntegritySchema },
+      { name: IntegrityJob.name, schema: IntegrityJobSchema },
     ]),
     PaginationModule,
     NotificationModule,
@@ -302,6 +322,8 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     CatalogImportController,
     // Issue #989 — Duplicate detection / merge
     DuplicateDetectionController,
+    // Issue #1047 — File integrity verification / quarantine
+    RenditionIntegrityController,
   ],
   providers: [
     BooksService,
@@ -376,6 +398,10 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     CatalogImportService,
     // Issue #989 — Duplicate detection / merge
     DuplicateDetectionService,
+    // Issue #1047 — File integrity verification / quarantine
+    RenditionIntegrityService,
+    { provide: INTEGRITY_CONTENT_READER, useClass: NoopIntegrityContentReader },
+    { provide: INTEGRITY_ALERT_NOTIFIER, useClass: LoggerIntegrityAlertNotifier },
   ],
   exports: [
     BooksService,
