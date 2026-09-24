@@ -126,6 +126,9 @@ export enum ErrorCode {
   BIZ_IMPORT_DUPLICATE_IDEMPOTENCY_KEY = 'BIZ_IMPORT_DUPLICATE_IDEMPOTENCY_KEY',
   BIZ_MERGE_SAME_RECORD = 'BIZ_MERGE_SAME_RECORD',
 
+  // ── E-Library reserve collection (#1052) ─────────────────────────────────
+  BIZ_RESERVE_CONFLICT = 'BIZ_RESERVE_CONFLICT',
+  BIZ_RESERVE_NOT_CANCELLABLE = 'BIZ_RESERVE_NOT_CANCELLABLE',
   // ── Scholarships application forms (#1131) ────────────────────────────────
   BIZ_FORM_NOT_DRAFT = 'BIZ_FORM_NOT_DRAFT',
   BIZ_FORM_NOT_PUBLISHED = 'BIZ_FORM_NOT_PUBLISHED',
