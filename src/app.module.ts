@@ -87,6 +87,7 @@ import { IdempotencyModule } from './idempotency/idempotency.module';
 import { PrivacyPolicyManagementModule } from './privacy-policy-management/privacy-policy-management.module';
 import { VerificationModule } from './verification/verification.module';
 import { ELibraryModule } from './e-library/e-library.module';
+import { ScholarshipsModule } from './scholarships/scholarships.module';
 
 @Module({
   imports: [
@@ -194,6 +195,7 @@ import { ELibraryModule } from './e-library/e-library.module';
     ReportsModule,
     IdempotencyModule,
     VerificationModule,
+    ScholarshipsModule,
   ],
   controllers: [AppController],
   providers: [

@@ -126,6 +126,11 @@ export enum ErrorCode {
   BIZ_IMPORT_DUPLICATE_IDEMPOTENCY_KEY = 'BIZ_IMPORT_DUPLICATE_IDEMPOTENCY_KEY',
   BIZ_MERGE_SAME_RECORD = 'BIZ_MERGE_SAME_RECORD',
 
+  // ── Scholarships application forms (#1131) ────────────────────────────────
+  BIZ_FORM_NOT_DRAFT = 'BIZ_FORM_NOT_DRAFT',
+  BIZ_FORM_NOT_PUBLISHED = 'BIZ_FORM_NOT_PUBLISHED',
+  BIZ_FORM_VERSION_MISMATCH = 'BIZ_FORM_VERSION_MISMATCH',
+
   // ── System ────────────────────────────────────────────────────────────────
   SYS_INTERNAL_ERROR = 'SYS_INTERNAL_ERROR',
   SYS_SERVICE_UNAVAILABLE = 'SYS_SERVICE_UNAVAILABLE',
