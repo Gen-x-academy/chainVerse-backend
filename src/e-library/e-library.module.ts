@@ -32,6 +32,7 @@ import { NotificationEvent, NotificationEventSchema } from './schemas/notificati
 import { PatronNote, PatronNoteSchema } from './schemas/patron-note.schema';
 import { SavedList, SavedListSchema } from './schemas/saved-list.schema';
 import { Series, SeriesSchema } from './schemas/series.schema';
+import { OfflineGrant, OfflineGrantSchema } from './schemas/offline-grant.schema';
 import {
   RenditionIntegrity,
   RenditionIntegritySchema,
@@ -109,6 +110,8 @@ import { WaiverService } from './services/waiver.service';
 import { DigitalEditionService } from './services/digital-edition.service';
 import { CatalogLifecycleService } from './services/catalog-lifecycle.service';
 
+// ── New: Issue #1045 — Offline downloads ─────────────────────────────────────
+import { OfflineGrantService } from './services/offline-grant.service';
 // ── New: Issue #1046 — Digital access audit events ───────────────────────────
 import { DigitalAccessAuditService } from './services/digital-access-audit.service';
 // ── New: Issue #1047 — File integrity verification / quarantine ─────────────
@@ -216,6 +219,8 @@ import { CatalogExportController } from './controllers/catalog-export.controller
 import { CatalogImportController } from './controllers/catalog-import.controller';
 import { DuplicateDetectionController } from './controllers/duplicate-detection.controller';
 
+// ── New: Issue #1045 — Offline downloads ─────────────────────────────────────
+import { OfflineGrantController } from './controllers/offline-grant.controller';
 // ── New: Issue #1046 — Digital access audit events ───────────────────────────
 import { DigitalAccessAuditController } from './controllers/digital-access-audit.controller';
 // ── New: Issue #1047 — File integrity verification / quarantine ─────────────
@@ -268,6 +273,8 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
       { name: AcquisitionOrder.name, schema: AcquisitionOrderSchema },
       // Issue #990 — Import jobs
       { name: ImportJob.name, schema: ImportJobSchema },
+      // Issue #1045 — Offline downloads
+      { name: OfflineGrant.name, schema: OfflineGrantSchema },
       // Issue #1047 — File integrity verification / quarantine
       { name: RenditionIntegrity.name, schema: RenditionIntegritySchema },
       { name: IntegrityJob.name, schema: IntegrityJobSchema },
@@ -339,6 +346,8 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     CatalogImportController,
     // Issue #989 — Duplicate detection / merge
     DuplicateDetectionController,
+    // Issue #1045 — Offline downloads
+    OfflineGrantController,
     // Issue #1046 — Digital access audit events
     DigitalAccessAuditController,
     // Issue #1047 — File integrity verification / quarantine
@@ -419,6 +428,8 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     CatalogImportService,
     // Issue #989 — Duplicate detection / merge
     DuplicateDetectionService,
+    // Issue #1045 — Offline downloads
+    OfflineGrantService,
     // Issue #1046 — Digital access audit events
     DigitalAccessAuditService,
     // Issue #1047 — File integrity verification / quarantine
