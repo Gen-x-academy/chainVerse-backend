@@ -55,6 +55,9 @@ export enum ErrorCode {
   RES_REMINDER_PREFERENCE_NOT_FOUND = 'RES_REMINDER_PREFERENCE_NOT_FOUND',
   RES_REMINDER_LOG_NOT_FOUND = 'RES_REMINDER_LOG_NOT_FOUND',
   RES_SERIES_NOT_FOUND = 'RES_SERIES_NOT_FOUND',
+  RES_SCHOLARSHIP_PROGRAM_NOT_FOUND = 'RES_SCHOLARSHIP_PROGRAM_NOT_FOUND',
+  RES_TERMS_VERSION_NOT_FOUND = 'RES_TERMS_VERSION_NOT_FOUND',
+  RES_SCHOLARSHIP_APPLICATION_NOT_FOUND = 'RES_SCHOLARSHIP_APPLICATION_NOT_FOUND',
 
   // ── E-Library new entities (#1037 / #1038 / #1039) ────────────────────────
   RES_LIBRARY_CHARGE_PAYMENT_NOT_FOUND = 'RES_LIBRARY_CHARGE_PAYMENT_NOT_FOUND',
@@ -125,6 +128,38 @@ export enum ErrorCode {
   BIZ_IMPORT_SIZE_EXCEEDED = 'BIZ_IMPORT_SIZE_EXCEEDED',
   BIZ_IMPORT_DUPLICATE_IDEMPOTENCY_KEY = 'BIZ_IMPORT_DUPLICATE_IDEMPOTENCY_KEY',
   BIZ_MERGE_SAME_RECORD = 'BIZ_MERGE_SAME_RECORD',
+  // ── Scholarships: versioned program terms (#1126) ─────────────────────────
+  BIZ_TERMS_VERSION_NOT_DRAFT = 'BIZ_TERMS_VERSION_NOT_DRAFT',
+  BIZ_TERMS_VERSION_NOT_PUBLISHED = 'BIZ_TERMS_VERSION_NOT_PUBLISHED',
+  BIZ_PROGRAM_NOT_OPEN = 'BIZ_PROGRAM_NOT_OPEN',
+  BIZ_APPLICATION_ALREADY_EXISTS = 'BIZ_APPLICATION_ALREADY_EXISTS',
+  BIZ_APPLICATION_NOT_REVIEWABLE = 'BIZ_APPLICATION_NOT_REVIEWABLE',
+  BIZ_APPLICATION_NOT_WITHDRAWABLE = 'BIZ_APPLICATION_NOT_WITHDRAWABLE',
+
+  // ── Scholarships: answer validation (#1132) ────────────────────────────────
+  /** One or more application answers failed word-limit or required-field rules. */
+  VAL_ANSWER_WORD_LIMIT_EXCEEDED = 'VAL_ANSWER_WORD_LIMIT_EXCEEDED',
+  /** An answer references a field id that does not exist on the program form. */
+  VAL_ANSWER_UNKNOWN_FIELD = 'VAL_ANSWER_UNKNOWN_FIELD',
+  /** A required form field was not answered. */
+  VAL_ANSWER_REQUIRED_FIELD_MISSING = 'VAL_ANSWER_REQUIRED_FIELD_MISSING',
+  /** The answers array contains duplicate field ids. */
+  VAL_ANSWER_DUPLICATE_FIELD = 'VAL_ANSWER_DUPLICATE_FIELD',
+
+  // ── Scholarships: program lifecycle states (#1122) ────────────────────────
+  /** The requested status transition is not permitted. */
+  BIZ_PROGRAM_INVALID_TRANSITION = 'BIZ_PROGRAM_INVALID_TRANSITION',
+  /** Archived programs cannot be modified. */
+  BIZ_PROGRAM_ARCHIVED = 'BIZ_PROGRAM_ARCHIVED',
+
+  // ── Scholarships: eligibility attestations (#1129) ───────────────────────
+  RES_ELIGIBILITY_ATTESTATION_NOT_FOUND = 'RES_ELIGIBILITY_ATTESTATION_NOT_FOUND',
+  /** Attestation has already been revoked. */
+  BIZ_ATTESTATION_ALREADY_REVOKED = 'BIZ_ATTESTATION_ALREADY_REVOKED',
+  /** Attestation has expired. */
+  BIZ_ATTESTATION_EXPIRED = 'BIZ_ATTESTATION_EXPIRED',
+  /** expiresAt must be a future date. */
+  BIZ_ATTESTATION_INVALID_EXPIRY = 'BIZ_ATTESTATION_INVALID_EXPIRY',
 
   // ── E-Library reserve collection (#1052) ─────────────────────────────────
   BIZ_RESERVE_CONFLICT = 'BIZ_RESERVE_CONFLICT',
