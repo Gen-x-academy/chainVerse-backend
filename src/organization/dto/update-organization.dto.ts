@@ -1,7 +1,4 @@
-export class UpdateOrganizationDto {
-  name?: string;
-  description?: string;
-  website?: string;
-  logoUrl?: string;
-  metadata?: Record<string, unknown>;
-}
+import { PartialType } from '@nestjs/swagger';
+import { CreateOrganizationDto } from './create-organization.dto';
+
+export class UpdateOrganizationDto extends PartialType(CreateOrganizationDto) {}

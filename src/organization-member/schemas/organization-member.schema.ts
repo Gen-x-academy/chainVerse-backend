@@ -1,19 +1,33 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 import { applySoftDeleteSchema } from '../../common/soft-delete/soft-delete.schema';
+import {
+  ORGANIZATION_ROLE_HIERARCHY,
+  OrganizationRole,
+} from '../../common/enums/organization-role.enum';
 
 export type OrganizationMemberDocument = HydratedDocument<OrganizationMember>;
 
 @Schema({ timestamps: true })
 export class OrganizationMember {
-  @Prop({ required: true })
+  @Prop({ required: true, index: true })
   organizationId: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, index: true })
   userId: string;
 
-  @Prop({ required: true })
-  role: string;
+  /**
+   * Organization-scoped role. Constrained to {@link OrganizationRole} so a
+   * membership can never carry an unrecognised value that the authorization
+   * guard would then have to interpret.
+   */
+  @Prop({
+    type: String,
+    required: true,
+    enum: ORGANIZATION_ROLE_HIERARCHY,
+    default: OrganizationRole.MEMBER,
+  })
+  role: OrganizationRole;
 
   @Prop({ type: Date, default: null })
   deletedAt?: Date | null;

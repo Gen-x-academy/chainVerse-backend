@@ -64,9 +64,7 @@ export class StudentSavedCoursesService {
     return { studentId, courses: saved.map((s) => s.courseId) };
   }
 
-  async list(
-    studentId: string,
-  ): Promise<{
+  async list(studentId: string): Promise<{
     studentId: string;
     courses: Array<{ courseId: string; course: unknown }>;
   }> {
@@ -101,10 +99,7 @@ export class StudentSavedCoursesService {
 
     return {
       studentId,
-      courses: coursesWithDetails.filter((c) => c.course !== null) as Array<{
-        courseId: string;
-        course: unknown;
-      }>,
+      courses: coursesWithDetails.filter((c) => c.course !== null),
     };
   }
 

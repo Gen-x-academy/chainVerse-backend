@@ -13,6 +13,10 @@ import {
   CourseRatingDocument,
 } from './schemas/course-rating.schema';
 import { Course } from '../admin-course/schemas/course.schema';
+import {
+  Enrollment,
+  EnrollmentDocument,
+} from '../student-enrollment/schemas/enrollment.schema';
 
 @Injectable()
 export class CourseRatingsFeedbackService {
@@ -21,6 +25,8 @@ export class CourseRatingsFeedbackService {
     private readonly ratingModel: Model<CourseRatingDocument>,
     @InjectModel(Course.name)
     private readonly courseModel: Model<Course>,
+    @InjectModel(Enrollment.name)
+    private readonly enrollmentModel: Model<EnrollmentDocument>,
   ) {}
 
   async create(
@@ -39,7 +45,10 @@ export class CourseRatingsFeedbackService {
     }
 
     // Check if student is enrolled
-    if (!course.enrolledStudents.includes(studentId)) {
+    const enrollment = await this.enrollmentModel
+      .findOne({ courseId, studentId })
+      .exec();
+    if (!enrollment) {
       throw new BadRequestException(
         'You can only rate courses you are enrolled in',
       );

@@ -1,4 +1,5 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { ParseObjectIdPipe } from '../../common/pipes/parse-object-id.pipe';
 import {
   Body,
   Controller,
@@ -19,23 +20,25 @@ import { Roles } from '../../common/decorators/roles.decorator';
 
 @ApiBearerAuth('access-token')
 @Controller('admin/certificates/name-change-review')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class AdminCertificateNameChangeReviewController {
   constructor(
     private readonly service: AdminCertificateNameChangeReviewService,
   ) {}
 
+  @Roles(Role.ADMIN, Role.MODERATOR)
   @Get()
   findAll() {
     return this.service.findAll();
   }
 
+  @Roles(Role.ADMIN, Role.MODERATOR)
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   create(@Body() payload: CreateAdminCertificateNameChangeReviewDto) {
     return this.service.create(payload);
@@ -45,7 +48,7 @@ export class AdminCertificateNameChangeReviewController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   update(
-    @Param('id') id: string,
+    @Param('id', new ParseObjectIdPipe()) id: string,
     @Body() payload: UpdateAdminCertificateNameChangeReviewDto,
   ) {
     return this.service.update(id, payload);
@@ -54,7 +57,7 @@ export class AdminCertificateNameChangeReviewController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.remove(id);
   }
 }

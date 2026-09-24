@@ -6,11 +6,10 @@ import { Session, SessionSchema } from './schemas/session.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: Session.name, schema: SessionSchema },
-    ]),
+    MongooseModule.forFeature([{ name: Session.name, schema: SessionSchema }]),
   ],
   controllers: [SessionController],
   providers: [SessionService],
+  exports: [SessionService],
 })
 export class SessionModule {}

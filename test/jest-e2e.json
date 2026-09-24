@@ -6,7 +6,8 @@
   "transform": {
     "^.+\\.(t|j)s$": ["ts-jest", { "tsconfig": "<rootDir>/tsconfig.json" }]
   },
-  "setupFiles": ["<rootDir>/setup-env.ts"],
+  "setupFiles": ["<rootDir>/setup-env.ts", "<rootDir>/smtp-setup.ts"],
+  "setupFilesAfterEnv": ["<rootDir>/setup.ts"],
   "globalSetup": "<rootDir>/mongo-setup.ts",
   "globalTeardown": "<rootDir>/mongo-teardown.ts"
 }

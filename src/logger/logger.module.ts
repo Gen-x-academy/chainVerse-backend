@@ -21,8 +21,22 @@ import { IncomingMessage } from 'http';
              * otherwise generate a fresh UUID.
              */
             genReqId: (req: IncomingMessage) =>
-              (req.headers['x-request-id'] as string) ??
-              crypto.randomUUID(),
+              (req.headers['x-request-id'] as string) ?? crypto.randomUUID(),
+
+            // Redact sensitive fields from logs to prevent credential leakage
+            redact: {
+              paths: [
+                'req.headers.authorization',
+                'req.headers.cookie',
+                'req.body.password',
+                'req.body.newPassword',
+                'req.body.confirmPassword',
+                'req.body.currentPassword',
+                'req.body.token',
+                'req.body.refreshToken',
+              ],
+              censor: '[REDACTED]',
+            },
 
             serializers: {
               req: (req: { id: string; method: string; url: string }) => ({

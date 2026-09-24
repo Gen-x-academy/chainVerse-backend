@@ -1,4 +1,7 @@
 import * as crypto from 'crypto';
+import type { Model } from 'mongoose';
+
+import type { StudentDocument } from '../../src/student-auth/schemas/student.schema';
 
 export interface StudentFields {
   firstName: string;
@@ -44,11 +47,36 @@ export function buildStudent(
       .digest('hex'),
     emailVerified: true,
     verificationToken: null,
+    verificationTokenExpiry: null,
+    verificationAttempts: 0,
+    lastVerificationAttempt: null,
     resetToken: null,
     resetTokenExpiry: null,
     role: 'student',
     ...overrides,
   };
+}
+
+export class StudentFactory {
+  constructor(private readonly studentModel: Model<StudentDocument>) {}
+
+  build(overrides: Partial<StudentFields> = {}): StudentFields {
+    return buildStudent(overrides);
+  }
+
+  async create(
+    overrides: Partial<StudentFields> = {},
+  ): Promise<StudentDocument> {
+    const student = new this.studentModel(this.build(overrides));
+    return student.save();
+  }
+}
+
+export async function createStudent(
+  studentModel: Model<StudentDocument>,
+  overrides: Partial<StudentFields> = {},
+): Promise<StudentDocument> {
+  return new StudentFactory(studentModel).create(overrides);
 }
 
 /** Resets the internal counter. Call in afterEach/afterAll if you need stable emails. */

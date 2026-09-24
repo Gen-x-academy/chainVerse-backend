@@ -1,4 +1,5 @@
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 import {
   Body,
   Controller,
@@ -19,6 +20,8 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '../common/enums/role.enum';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { AuditActor } from '../common/audit/audit-context';
+import type { AuditContext } from '../common/audit/audit-context';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Admin Courses')
@@ -29,24 +32,26 @@ export class AdminCourseController {
   constructor(private readonly adminCourseService: AdminCourseService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get all courses with optional filters' })
+  @ApiOperation({
+    summary: 'Get all courses with optional filters and pagination',
+  })
   findAll(
     @Query('status') status?: string,
     @Query('category') category?: string,
     @Query('limit') limit?: number,
-    @Query('skip') skip?: number,
+    @Query('page') page?: number,
   ) {
     return this.adminCourseService.findAll({
       status,
       category,
       limit: limit ? parseInt(String(limit), 10) : undefined,
-      skip: skip ? parseInt(String(skip), 10) : undefined,
+      page: page ? parseInt(String(page), 10) : undefined,
     });
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a single course by ID' })
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.adminCourseService.findOne(id);
   }
 
@@ -54,49 +59,64 @@ export class AdminCourseController {
   @ApiOperation({ summary: 'Review a course (approve/reject)' })
   @Roles(Role.ADMIN)
   review(
-    @Param('id') id: string,
+    @Param('id', new ParseObjectIdPipe()) id: string,
     @Body() dto: ReviewCourseDto,
     @CurrentUser('sub') adminId: string,
+    @AuditActor() audit: AuditContext,
   ) {
-    return this.adminCourseService.review(id, dto, adminId);
+    return this.adminCourseService.review(id, dto, adminId, audit);
   }
 
   @Patch(':id/publish')
   @ApiOperation({ summary: 'Publish a course' })
-  publish(@Param('id') id: string, @CurrentUser('sub') adminId: string) {
+  publish(
+    @Param('id', new ParseObjectIdPipe()) id: string,
+    @CurrentUser('sub') adminId: string,
+  ) {
     return this.adminCourseService.publish(id, adminId, true);
+    @AuditActor() audit: AuditContext,
+  ) {
+    return this.adminCourseService.publish(id, adminId, true, audit);
   }
 
   @Patch(':id/unpublish')
   @ApiOperation({ summary: 'Unpublish a course' })
-  unpublish(@Param('id') id: string, @CurrentUser('sub') adminId: string) {
+  unpublish(
+    @Param('id', new ParseObjectIdPipe()) id: string,
+    @CurrentUser('sub') adminId: string,
+  ) {
     return this.adminCourseService.unpublish(id, adminId, true);
+    @AuditActor() audit: AuditContext,
+  ) {
+    return this.adminCourseService.unpublish(id, adminId, true, audit);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update a course (admin)' })
   update(
-    @Param('id') id: string,
+    @Param('id', new ParseObjectIdPipe()) id: string,
     @Body() dto: UpdateCourseDto,
     @CurrentUser('sub') adminId: string,
+    @AuditActor() audit: AuditContext,
   ) {
-    return this.adminCourseService.update(id, dto, adminId, true);
+    return this.adminCourseService.update(id, dto, adminId, true, audit);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a course (admin)' })
   @Roles(Role.ADMIN)
   delete(
-    @Param('id') id: string,
+    @Param('id', new ParseObjectIdPipe()) id: string,
     @CurrentUser('sub') adminId: string,
+    @AuditActor() audit: AuditContext,
     @Query('reason') reason?: string,
   ) {
-    return this.adminCourseService.delete(id, adminId, true, reason);
+    return this.adminCourseService.delete(id, adminId, true, reason, audit);
   }
 
   @Get(':id/enrollments')
   @ApiOperation({ summary: 'Get course enrollments' })
-  getEnrollments(@Param('id') id: string) {
+  getEnrollments(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.adminCourseService.getEnrollments(id);
   }
 }
