@@ -32,6 +32,12 @@ import { NotificationEvent, NotificationEventSchema } from './schemas/notificati
 import { PatronNote, PatronNoteSchema } from './schemas/patron-note.schema';
 import { SavedList, SavedListSchema } from './schemas/saved-list.schema';
 import { Series, SeriesSchema } from './schemas/series.schema';
+import { OfflineGrant, OfflineGrantSchema } from './schemas/offline-grant.schema';
+import {
+  RenditionIntegrity,
+  RenditionIntegritySchema,
+} from './schemas/rendition-integrity.schema';
+import { IntegrityJob, IntegrityJobSchema } from './schemas/integrity-job.schema';
 
 // ── New schemas: Issue #1037 / #1038 / #1039 ─────────────────────────────────
 import {
@@ -50,6 +56,12 @@ import {
   AcquisitionOrderSchema,
 } from './schemas/acquisition-order.schema';
 import { ImportJob, ImportJobSchema } from './schemas/import-job.schema';
+
+// ── New schema: Issue #1052 — Course reserves ─────────────────────────────────
+import {
+  CourseReserve,
+  CourseReserveSchema,
+} from './schemas/course-reserve.schema';
 
 // ── Root services ────────────────────────────────────────────────────────────
 import { BooksService } from './books.service';
@@ -99,6 +111,19 @@ import { DigitalEditionService } from './services/digital-edition.service';
 import { CatalogLifecycleService } from './services/catalog-lifecycle.service';
 import { CitationExportService } from './services/citation-export.service';
 
+// ── New: Issue #1045 — Offline downloads ─────────────────────────────────────
+import { OfflineGrantService } from './services/offline-grant.service';
+// ── New: Issue #1046 — Digital access audit events ───────────────────────────
+import { DigitalAccessAuditService } from './services/digital-access-audit.service';
+// ── New: Issue #1047 — File integrity verification / quarantine ─────────────
+import {
+  RenditionIntegrityService,
+  NoopIntegrityContentReader,
+  LoggerIntegrityAlertNotifier,
+  INTEGRITY_CONTENT_READER,
+  INTEGRITY_ALERT_NOTIFIER,
+} from './services/rendition-integrity.service';
+
 // ── New: Operations services (Issue #1074) ──────────────────────────────────
 import { LibraryHealthService } from './services/library-health.service';
 import { ReconciliationService } from './services/reconciliation.service';
@@ -131,6 +156,9 @@ import { AcquisitionOrderService } from './services/acquisition-order.service';
 import { CatalogExportService } from './services/catalog-export.service';
 import { CatalogImportService } from './services/catalog-import.service';
 import { DuplicateDetectionService } from './services/duplicate-detection.service';
+
+// ── New: Issue #1052 — Course reserves ────────────────────────────────────────
+import { CourseReserveService } from './services/course-reserve.service';
 
 // ── Sub-directory controllers ────────────────────────────────────────────────
 import { ELibraryAuditController } from './controllers/elibrary-audit.controller';
@@ -193,6 +221,15 @@ import { CatalogImportController } from './controllers/catalog-import.controller
 import { DuplicateDetectionController } from './controllers/duplicate-detection.controller';
 import { CitationExportController } from './controllers/citation-export.controller';
 
+// ── New: Issue #1045 — Offline downloads ─────────────────────────────────────
+import { OfflineGrantController } from './controllers/offline-grant.controller';
+// ── New: Issue #1046 — Digital access audit events ───────────────────────────
+import { DigitalAccessAuditController } from './controllers/digital-access-audit.controller';
+// ── New: Issue #1047 — File integrity verification / quarantine ─────────────
+import { RenditionIntegrityController } from './controllers/rendition-integrity.controller';
+// ── New: Issue #1052 — Course reserves ────────────────────────────────────────
+import { CourseReserveController } from './controllers/course-reserve.controller';
+
 // ── Guards ───────────────────────────────────────────────────────────────────
 import { LibraryOwnerGuard } from './guards/library-owner.guard';
 import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
@@ -238,6 +275,13 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
       { name: AcquisitionOrder.name, schema: AcquisitionOrderSchema },
       // Issue #990 — Import jobs
       { name: ImportJob.name, schema: ImportJobSchema },
+      // Issue #1045 — Offline downloads
+      { name: OfflineGrant.name, schema: OfflineGrantSchema },
+      // Issue #1047 — File integrity verification / quarantine
+      { name: RenditionIntegrity.name, schema: RenditionIntegritySchema },
+      { name: IntegrityJob.name, schema: IntegrityJobSchema },
+      // Issue #1052 — Course reserves
+      { name: CourseReserve.name, schema: CourseReserveSchema },
     ]),
     PaginationModule,
     NotificationModule,
@@ -306,6 +350,14 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     DuplicateDetectionController,
     // Issue #1054 — Citation export (APA / MLA / Chicago / BibTeX / RIS)
     CitationExportController,
+    // Issue #1045 — Offline downloads
+    OfflineGrantController,
+    // Issue #1046 — Digital access audit events
+    DigitalAccessAuditController,
+    // Issue #1047 — File integrity verification / quarantine
+    RenditionIntegrityController,
+    // Issue #1052 — Course reserves
+    CourseReserveController,
   ],
   providers: [
     BooksService,
@@ -382,6 +434,16 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     DuplicateDetectionService,
     // Issue #1054 — Citation export (APA / MLA / Chicago / BibTeX / RIS)
     CitationExportService,
+    // Issue #1045 — Offline downloads
+    OfflineGrantService,
+    // Issue #1046 — Digital access audit events
+    DigitalAccessAuditService,
+    // Issue #1047 — File integrity verification / quarantine
+    RenditionIntegrityService,
+    { provide: INTEGRITY_CONTENT_READER, useClass: NoopIntegrityContentReader },
+    { provide: INTEGRITY_ALERT_NOTIFIER, useClass: LoggerIntegrityAlertNotifier },
+    // Issue #1052 — Course reserves
+    CourseReserveService,
   ],
   exports: [
     BooksService,

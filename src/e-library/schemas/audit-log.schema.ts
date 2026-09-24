@@ -21,6 +21,11 @@ export enum AuditAction {
   WAIVER_APPROVE = 'waiver_approve',
   WAIVER_REJECT = 'waiver_reject',
   DIGITAL_TAKEDOWN = 'digital_takedown',
+  DIGITAL_ACCESS_CHECKOUT = 'digital_access_checkout',
+  DIGITAL_ACCESS_RETURN = 'digital_access_return',
+  DIGITAL_ACCESS_REVOKE = 'digital_access_revoke',
+  DIGITAL_ACCESS_GRANT = 'digital_access_grant',
+  DIGITAL_ACCESS_DENIED = 'digital_access_denied',
   PATRON_NOTE_CREATE = 'patron_note_create',
   PATRON_NOTE_READ = 'patron_note_read',
   CONTENT_REPORT_ASSIGN = 'content_report_assign',
@@ -73,6 +78,8 @@ export const ELibraryAuditLogSchema =
 ELibraryAuditLogSchema.index({ actorId: 1, timestamp: -1 });
 ELibraryAuditLogSchema.index({ targetType: 1, targetId: 1, timestamp: -1 });
 ELibraryAuditLogSchema.index({ action: 1, timestamp: -1 });
+ELibraryAuditLogSchema.index({ 'metadata.editionId': 1, timestamp: -1 });
+ELibraryAuditLogSchema.index({ 'metadata.renditionId': 1, timestamp: -1 });
 
 // Immutable: block any update/delete operations
 const IMMUTABLE_MSG =
