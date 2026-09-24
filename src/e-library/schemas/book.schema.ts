@@ -123,6 +123,12 @@ export class Book {
   @Prop({ trim: true, default: '' })
   volumeLabel?: string;
 
+  @Prop({ trim: true, default: '' })
+  editionLabel?: string;
+
+  @Prop({ min: 1000, max: 9999 })
+  publicationYear?: number;
+
   createdAt?: Date;
   updatedAt?: Date;
 }

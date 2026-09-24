@@ -97,6 +97,7 @@ import { LedgerService } from './services/ledger.service';
 import { WaiverService } from './services/waiver.service';
 import { DigitalEditionService } from './services/digital-edition.service';
 import { CatalogLifecycleService } from './services/catalog-lifecycle.service';
+import { CitationExportService } from './services/citation-export.service';
 
 // ── New: Operations services (Issue #1074) ──────────────────────────────────
 import { LibraryHealthService } from './services/library-health.service';
@@ -190,6 +191,7 @@ import { AcquisitionOrderController } from './controllers/acquisition-order.cont
 import { CatalogExportController } from './controllers/catalog-export.controller';
 import { CatalogImportController } from './controllers/catalog-import.controller';
 import { DuplicateDetectionController } from './controllers/duplicate-detection.controller';
+import { CitationExportController } from './controllers/citation-export.controller';
 
 // ── Guards ───────────────────────────────────────────────────────────────────
 import { LibraryOwnerGuard } from './guards/library-owner.guard';
@@ -302,6 +304,8 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     CatalogImportController,
     // Issue #989 — Duplicate detection / merge
     DuplicateDetectionController,
+    // Issue #1054 — Citation export (APA / MLA / Chicago / BibTeX / RIS)
+    CitationExportController,
   ],
   providers: [
     BooksService,
@@ -376,6 +380,8 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     CatalogImportService,
     // Issue #989 — Duplicate detection / merge
     DuplicateDetectionService,
+    // Issue #1054 — Citation export (APA / MLA / Chicago / BibTeX / RIS)
+    CitationExportService,
   ],
   exports: [
     BooksService,
