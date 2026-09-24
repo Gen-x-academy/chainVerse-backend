@@ -65,4 +65,8 @@ export const envValidationSchema = Joi.object({
   RATE_LIMIT_SKIP_SUCCESS: Joi.boolean().default(false),
   RATE_LIMIT_SKIP_FAILED: Joi.boolean().default(false),
   RATE_LIMIT_KEY_PREFIX: Joi.string().default('rl:'),
+
+  // ── Scholarship finance background jobs ───────────────────────────────────
+  SCHOLARSHIP_FINANCE_JOBS_ENABLED: Joi.boolean().default(false),
+  SCHOLARSHIP_FINANCE_JOB_INTERVAL_MS: Joi.number().integer().min(60000).default(900000),
 }).options({ allowUnknown: true });
