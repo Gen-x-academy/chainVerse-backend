@@ -98,6 +98,9 @@ import { WaiverService } from './services/waiver.service';
 import { DigitalEditionService } from './services/digital-edition.service';
 import { CatalogLifecycleService } from './services/catalog-lifecycle.service';
 
+// ── New: Issue #1046 — Digital access audit events ───────────────────────────
+import { DigitalAccessAuditService } from './services/digital-access-audit.service';
+
 // ── New: Operations services (Issue #1074) ──────────────────────────────────
 import { LibraryHealthService } from './services/library-health.service';
 import { ReconciliationService } from './services/reconciliation.service';
@@ -190,6 +193,9 @@ import { AcquisitionOrderController } from './controllers/acquisition-order.cont
 import { CatalogExportController } from './controllers/catalog-export.controller';
 import { CatalogImportController } from './controllers/catalog-import.controller';
 import { DuplicateDetectionController } from './controllers/duplicate-detection.controller';
+
+// ── New: Issue #1046 — Digital access audit events ───────────────────────────
+import { DigitalAccessAuditController } from './controllers/digital-access-audit.controller';
 
 // ── Guards ───────────────────────────────────────────────────────────────────
 import { LibraryOwnerGuard } from './guards/library-owner.guard';
@@ -302,6 +308,8 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     CatalogImportController,
     // Issue #989 — Duplicate detection / merge
     DuplicateDetectionController,
+    // Issue #1046 — Digital access audit events
+    DigitalAccessAuditController,
   ],
   providers: [
     BooksService,
@@ -376,6 +384,8 @@ import { LibraryRateLimitGuard } from './guards/library-rate-limit.guard';
     CatalogImportService,
     // Issue #989 — Duplicate detection / merge
     DuplicateDetectionService,
+    // Issue #1046 — Digital access audit events
+    DigitalAccessAuditService,
   ],
   exports: [
     BooksService,
