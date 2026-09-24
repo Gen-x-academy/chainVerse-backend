@@ -126,6 +126,10 @@ export enum ErrorCode {
   BIZ_IMPORT_DUPLICATE_IDEMPOTENCY_KEY = 'BIZ_IMPORT_DUPLICATE_IDEMPOTENCY_KEY',
   BIZ_MERGE_SAME_RECORD = 'BIZ_MERGE_SAME_RECORD',
 
+  // ── E-Library reserve collection (#1052) ─────────────────────────────────
+  BIZ_RESERVE_CONFLICT = 'BIZ_RESERVE_CONFLICT',
+  BIZ_RESERVE_NOT_CANCELLABLE = 'BIZ_RESERVE_NOT_CANCELLABLE',
+
   // ── System ────────────────────────────────────────────────────────────────
   SYS_INTERNAL_ERROR = 'SYS_INTERNAL_ERROR',
   SYS_SERVICE_UNAVAILABLE = 'SYS_SERVICE_UNAVAILABLE',
