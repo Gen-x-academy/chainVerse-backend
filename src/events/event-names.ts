@@ -28,6 +28,20 @@ export const DomainEvents = {
   /** Fired when a new disbursement intent is created (never on a replay). */
   SCHOLARSHIP_DISBURSEMENT_INTENT_CREATED:
     'scholarship.disbursement-intent-created',
+  /** Fired after a sponsor deposit is credited to a scholarship fund. */
+  SCHOLARSHIP_DEPOSIT_CREDITED: 'scholarship-finance.deposit.credited',
+
+  /** Fired after a refund / returned payment is completed. */
+  SCHOLARSHIP_REFUND_COMPLETED: 'scholarship-finance.refund.completed',
+
+  /**
+   * Fired when a recovery claim is approved. Listeners must deliver the
+   * recovery notice to the recipient — collection is never automatic.
+   */
+  SCHOLARSHIP_RECOVERY_OPENED: 'scholarship-finance.recovery.opened',
+
+  /** Fired by the integrity job when ledger balances or recoveries drift. */
+  SCHOLARSHIP_LEDGER_DRIFT_DETECTED: 'scholarship-finance.ledger.drift-detected',
   /** Fired after a library item is checked out and a receipt is created. */
   LIBRARY_CHECKOUT_RECEIPT_CREATED: 'library.checkout.receipt_created',
 

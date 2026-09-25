@@ -94,6 +94,13 @@ export enum ErrorCode {
   BIZ_SCHOLARSHIP_ALREADY_DECIDED = 'BIZ_SCHOLARSHIP_ALREADY_DECIDED',
   BIZ_SCHOLARSHIP_INTENT_INTEGRITY = 'BIZ_SCHOLARSHIP_INTENT_INTEGRITY',
   BIZ_SCHOLARSHIP_INTENT_TRANSITION = 'BIZ_SCHOLARSHIP_INTENT_TRANSITION',
+  BIZ_INVALID_STATE_TRANSITION = 'BIZ_INVALID_STATE_TRANSITION',
+  BIZ_SEPARATION_OF_DUTIES = 'BIZ_SEPARATION_OF_DUTIES',
+  BIZ_ASSET_MISMATCH = 'BIZ_ASSET_MISMATCH',
+  BIZ_DEPOSIT_ALREADY_RECORDED = 'BIZ_DEPOSIT_ALREADY_RECORDED',
+  BIZ_FEE_EXCEEDS_AMOUNT = 'BIZ_FEE_EXCEEDS_AMOUNT',
+  BIZ_AMOUNT_EXCEEDS_OUTSTANDING = 'BIZ_AMOUNT_EXCEEDS_OUTSTANDING',
+  BIZ_FUNDING_ROUND_CLOSED = 'BIZ_FUNDING_ROUND_CLOSED',
   BIZ_ITEM_UNAVAILABLE = 'BIZ_ITEM_UNAVAILABLE',
   BIZ_LOAN_ALREADY_RETURNED = 'BIZ_LOAN_ALREADY_RETURNED',
   BIZ_RENEWAL_LIMIT_EXCEEDED = 'BIZ_RENEWAL_LIMIT_EXCEEDED',
@@ -217,6 +224,78 @@ export enum ErrorCode {
   BIZ_FORM_NOT_DRAFT = 'BIZ_FORM_NOT_DRAFT',
   BIZ_FORM_NOT_PUBLISHED = 'BIZ_FORM_NOT_PUBLISHED',
   BIZ_FORM_VERSION_MISMATCH = 'BIZ_FORM_VERSION_MISMATCH',
+
+  // ── Scholarship finance ───────────────────────────────────────────────────
+  RES_SCHOLARSHIP_PROGRAM_NOT_FOUND = 'RES_SCHOLARSHIP_PROGRAM_NOT_FOUND',
+  RES_LEDGER_ENTRY_NOT_FOUND = 'RES_LEDGER_ENTRY_NOT_FOUND',
+  RES_PAYOUT_NOT_FOUND = 'RES_PAYOUT_NOT_FOUND',
+  RES_RECEIPT_NOT_FOUND = 'RES_RECEIPT_NOT_FOUND',
+  RES_RECONCILIATION_NOT_FOUND = 'RES_RECONCILIATION_NOT_FOUND',
+  BIZ_LEDGER_UNBALANCED = 'BIZ_LEDGER_UNBALANCED',
+  BIZ_LEDGER_REFERENCE_CONFLICT = 'BIZ_LEDGER_REFERENCE_CONFLICT',
+  BIZ_LEDGER_ENTRY_ALREADY_REVERSED = 'BIZ_LEDGER_ENTRY_ALREADY_REVERSED',
+  BIZ_LEDGER_BUSY = 'BIZ_LEDGER_BUSY',
+  BIZ_PROGRAM_INSOLVENT = 'BIZ_PROGRAM_INSOLVENT',
+  BIZ_RECONCILIATION_BLOCKED = 'BIZ_RECONCILIATION_BLOCKED',
+  BIZ_PAYOUT_INVALID_STATE = 'BIZ_PAYOUT_INVALID_STATE',
+  BIZ_PAYOUT_RETRY_NOT_ALLOWED = 'BIZ_PAYOUT_RETRY_NOT_ALLOWED',
+  BIZ_PAYOUT_ENVELOPE_REUSED = 'BIZ_PAYOUT_ENVELOPE_REUSED',
+  SYS_HORIZON_UNAVAILABLE = 'SYS_HORIZON_UNAVAILABLE',
+  // ── Scholarships: normalized aggregate review scores (#1147) ──────────────
+  /** Reviewer has already submitted a review for this application. */
+  BIZ_REVIEW_ALREADY_EXISTS = 'BIZ_REVIEW_ALREADY_EXISTS',
+  /** Application is not in a reviewable state (must be UNDER_REVIEW). */
+  BIZ_APPLICATION_NOT_UNDER_REVIEW = 'BIZ_APPLICATION_NOT_UNDER_REVIEW',
+  /** Review rubric criteria weights do not sum to 1.0 (within tolerance). */
+  VAL_RUBRIC_WEIGHTS_INVALID = 'VAL_RUBRIC_WEIGHTS_INVALID',
+  /** A rubric criterion score is outside the permitted [0, maxScore] range. */
+  VAL_RUBRIC_SCORE_OUT_OF_RANGE = 'VAL_RUBRIC_SCORE_OUT_OF_RANGE',
+  /** Rubric criteria array is empty — at least one criterion is required. */
+  VAL_RUBRIC_CRITERIA_EMPTY = 'VAL_RUBRIC_CRITERIA_EMPTY',
+  /** The requested review was not found. */
+  RES_SCHOLARSHIP_REVIEW_NOT_FOUND = 'RES_SCHOLARSHIP_REVIEW_NOT_FOUND',
+  /** Aggregate score cannot be computed — no completed reviews exist. */
+  BIZ_NO_COMPLETED_REVIEWS = 'BIZ_NO_COMPLETED_REVIEWS',
+
+  // ── Scholarships: reviewer info requests (#1146) ──────────────────────────
+  /** The info-request document was not found. */
+  RES_INFO_REQUEST_NOT_FOUND = 'RES_INFO_REQUEST_NOT_FOUND',
+  /** The applicant has already responded to this request (versioned responses). */
+  BIZ_INFO_REQUEST_ALREADY_RESPONDED = 'BIZ_INFO_REQUEST_ALREADY_RESPONDED',
+  /** The info-request is not in a state that allows the requested transition. */
+  BIZ_INFO_REQUEST_INVALID_STATE = 'BIZ_INFO_REQUEST_INVALID_STATE',
+  /** The response deadline for this info-request has passed. */
+  BIZ_INFO_REQUEST_DEADLINE_PASSED = 'BIZ_INFO_REQUEST_DEADLINE_PASSED',
+  /** The deadline supplied is not in the future. */
+  VAL_INFO_REQUEST_DEADLINE_PAST = 'VAL_INFO_REQUEST_DEADLINE_PAST',
+  /** The questions array is empty — at least one question is required. */
+  VAL_INFO_REQUEST_NO_QUESTIONS = 'VAL_INFO_REQUEST_NO_QUESTIONS',
+  /** A response answer references a question id that does not exist on this request. */
+  VAL_INFO_REQUEST_UNKNOWN_QUESTION = 'VAL_INFO_REQUEST_UNKNOWN_QUESTION',
+  /** A required question was not answered. */
+  VAL_INFO_REQUEST_REQUIRED_ANSWER_MISSING = 'VAL_INFO_REQUEST_REQUIRED_ANSWER_MISSING',
+  /** Only the reviewer who created the request may cancel it. */
+  BIZ_INFO_REQUEST_CANCEL_FORBIDDEN = 'BIZ_INFO_REQUEST_CANCEL_FORBIDDEN',
+
+  // ── Scholarships: budget reservations (#1149) ─────────────────────────────
+  /** The scholarship program budget ledger was not found. */
+  RES_BUDGET_LEDGER_NOT_FOUND = 'RES_BUDGET_LEDGER_NOT_FOUND',
+  /** A budget reservation with this id was not found. */
+  RES_BUDGET_RESERVATION_NOT_FOUND = 'RES_BUDGET_RESERVATION_NOT_FOUND',
+  /** A reservation already exists for this application; cannot create a second. */
+  BIZ_RESERVATION_ALREADY_EXISTS = 'BIZ_RESERVATION_ALREADY_EXISTS',
+  /** The reservation amount exceeds the program's available (unreserved) budget. */
+  BIZ_BUDGET_INSUFFICIENT = 'BIZ_BUDGET_INSUFFICIENT',
+  /** The reservation is not in a state that allows the requested transition. */
+  BIZ_RESERVATION_INVALID_STATE = 'BIZ_RESERVATION_INVALID_STATE',
+  /** The reservation has already been released and cannot be released again. */
+  BIZ_RESERVATION_ALREADY_RELEASED = 'BIZ_RESERVATION_ALREADY_RELEASED',
+  /** The reservation has already been confirmed and cannot be cancelled. */
+  BIZ_RESERVATION_ALREADY_CONFIRMED = 'BIZ_RESERVATION_ALREADY_CONFIRMED',
+  /** expiresAt must be a future date. */
+  VAL_RESERVATION_INVALID_EXPIRY = 'VAL_RESERVATION_INVALID_EXPIRY',
+  /** totalBudget must be ≥ 0. */
+  VAL_BUDGET_AMOUNT_INVALID = 'VAL_BUDGET_AMOUNT_INVALID',
 
   // ── System ────────────────────────────────────────────────────────────────
   SYS_INTERNAL_ERROR = 'SYS_INTERNAL_ERROR',
