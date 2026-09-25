@@ -52,7 +52,8 @@ export class EmailService {
       this.configService.get<string>('email.from') ??
       'noreply@chainverse.academy';
     const resetBaseUrl =
-      baseUrl ?? this.configService.get<string>('baseUrl') ??
+      baseUrl ??
+      this.configService.get<string>('baseUrl') ??
       'http://localhost:3000';
     const resetLink = `${resetBaseUrl}/reset-password?token=${resetToken}`;
 

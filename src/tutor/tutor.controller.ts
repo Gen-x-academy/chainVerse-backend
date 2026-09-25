@@ -8,7 +8,13 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { TutorService } from './tutor.service';
 import { CreateTutorDto } from './dto/create-tutor.dto';
@@ -20,6 +26,7 @@ import { ResetTutorPasswordDto } from './dto/reset-tutor-password.dto';
 import { UpdateTutorProfileDto } from './dto/update-tutor-profile.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { Public } from '../common/decorators/public.decorator';
 
 @ApiTags('Tutor Auth')
 @Controller('tutor')
@@ -27,26 +34,38 @@ export class TutorController {
   constructor(private readonly tutorService: TutorService) {}
 
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
-  @Post('create')
+  @Public()
+  @Post('register')
   @ApiOperation({ summary: 'Register a new tutor' })
   @ApiBody({ type: CreateTutorDto })
-  @ApiResponse({ status: 201, description: 'Tutor registered. Verification email sent.' })
+  @ApiResponse({
+    status: 201,
+    description: 'Tutor registered. Verification email sent.',
+  })
   @ApiResponse({ status: 409, description: 'Email already registered.' })
   create(@Body() dto: CreateTutorDto) {
     return this.tutorService.create(dto);
   }
 
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Public()
   @Post('login')
   @ApiOperation({ summary: 'Authenticate a tutor and receive tokens' })
   @ApiBody({ type: LoginTutorDto })
-  @ApiResponse({ status: 200, description: 'Login successful, returns access and refresh tokens' })
+  @ApiResponse({
+    status: 200,
+    description: 'Login successful, returns access and refresh tokens',
+  })
   @ApiResponse({ status: 400, description: 'Missing credentials' })
-  @ApiResponse({ status: 401, description: 'Invalid credentials or unverified email' })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid credentials or unverified email',
+  })
   login(@Body() dto: LoginTutorDto) {
     return this.tutorService.login(dto);
   }
 
+  @Public()
   @Post('verify-email')
   @ApiOperation({ summary: 'Verify tutor email with token' })
   @ApiBody({ type: VerifyTutorEmailDto })
@@ -56,11 +75,15 @@ export class TutorController {
     return this.tutorService.verifyEmail(dto);
   }
 
-  @Throttle({ default: { limit: 3, ttl: 15 * 60_000 } })
+  @Throttle({ default: { limit: 3, ttl: 900_000 } }) // 3 per 15 minutes
+  @Public()
   @Post('forgot-password')
   @ApiOperation({ summary: 'Request a password reset link' })
   @ApiBody({ type: ForgetTutorPasswordDto })
-  @ApiResponse({ status: 200, description: 'Reset link sent if account exists' })
+  @ApiResponse({
+    status: 200,
+    description: 'Reset link sent if account exists',
+  })
   @ApiResponse({ status: 400, description: 'Missing or invalid email' })
   forgetPassword(@Body() dto: ForgetTutorPasswordDto, @Req() req: Request) {
     return this.tutorService.forgetPassword(
@@ -70,11 +93,15 @@ export class TutorController {
     );
   }
 
+  @Public()
   @Post('reset-password')
   @ApiOperation({ summary: 'Reset password using a valid reset token' })
   @ApiBody({ type: ResetTutorPasswordDto })
   @ApiResponse({ status: 200, description: 'Password reset successfully' })
-  @ApiResponse({ status: 400, description: 'Invalid or expired token, or weak password' })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid or expired token, or weak password',
+  })
   resetPassword(@Body() dto: ResetTutorPasswordDto, @Req() req: Request) {
     return this.tutorService.resetPassword(
       dto,
@@ -83,15 +110,22 @@ export class TutorController {
     );
   }
 
+  @Public()
   @Post('refresh-token')
-  @ApiOperation({ summary: 'Rotate tutor refresh token and issue a new token pair' })
+  @ApiOperation({
+    summary: 'Rotate tutor refresh token and issue a new token pair',
+  })
   @ApiBody({ type: RefreshTokenDto })
-  @ApiResponse({ status: 200, description: 'New access and refresh tokens issued' })
+  @ApiResponse({
+    status: 200,
+    description: 'New access and refresh tokens issued',
+  })
   @ApiResponse({ status: 401, description: 'Invalid or revoked refresh token' })
   refreshToken(@Body() dto: RefreshTokenDto) {
     return this.tutorService.refreshToken(dto);
   }
 
+  @Public()
   @Post('logout')
   @ApiOperation({ summary: 'Revoke the current tutor refresh token' })
   @ApiBody({ type: RefreshTokenDto })

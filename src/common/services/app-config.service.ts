@@ -40,7 +40,8 @@ export class AppConfigService {
   }
 
   get allowedOrigins(): string[] {
-    const raw = this.config.get<string>('ALLOWED_ORIGINS') ?? 'http://localhost:3000';
+    const raw =
+      this.config.get<string>('ALLOWED_ORIGINS') ?? 'http://localhost:3000';
     return raw.split(',').map((o) => o.trim());
   }
 }

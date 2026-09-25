@@ -2,7 +2,6 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
-  NotImplementedException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -92,6 +91,13 @@ export class StudentEnrollmentService {
       throw new BadRequestException('Cart is empty');
     }
 
+    const courseIds = cartItems
+      .filter((i) => isValidObjectId(i.courseId))
+      .map((i) => i.courseId);
+    const courses = await this.courseModel
+      .find({ _id: { $in: courseIds } })
+      .exec();
+    const courseMap = new Map(courses.map((c) => [c._id.toString(), c]));
     const enrolled: string[] = [];
     const failed: string[] = [];
     let totalAmount = 0;
@@ -103,7 +109,7 @@ export class StudentEnrollmentService {
           continue;
         }
 
-        const course = await this.courseModel.findById(item.courseId).exec();
+        const course = courseMap.get(item.courseId);
         if (!course) {
           failed.push(item.courseId);
           continue;
@@ -215,6 +221,13 @@ export class StudentEnrollmentService {
       (acc, enrollment) => {
         const course = courseMap.get(enrollment.courseId);
         if (!course) return acc;
+        const totalLessons = enrollment.lessons?.length ?? 0;
+        const completedLessons =
+          enrollment.lessons?.filter((l) => l.completed).length ?? 0;
+        const progress =
+          totalLessons > 0
+            ? Math.round((completedLessons / totalLessons) * 100)
+            : 0;
         acc.push({
           enrollment,
           course: {
@@ -223,7 +236,7 @@ export class StudentEnrollmentService {
             description: course.description,
             thumbnailUrl: course.thumbnailUrl,
             tutorName: course.tutorName,
-            progress: 0, // TODO: Implement progress tracking
+            progress,
           },
         });
         return acc;
@@ -274,5 +287,53 @@ export class StudentEnrollmentService {
 
   async getStudentEnrollmentCount(studentId: string): Promise<number> {
     return this.enrollmentModel.countDocuments({ studentId }).exec();
+  }
+
+  async updateProgress(
+    studentId: string,
+    courseId: string,
+    lessonIndex: number,
+    completed: boolean,
+  ) {
+    const enrollment = await this.enrollmentModel
+      .findOne({ studentId, courseId })
+      .exec();
+
+    if (!enrollment) {
+      throw new NotFoundException('Enrollment not found');
+    }
+
+    const existingLesson = enrollment.lessons?.find(
+      (l) => l.lessonIndex === lessonIndex,
+    );
+
+    if (existingLesson) {
+      existingLesson.completed = completed;
+      existingLesson.completedAt = completed ? new Date() : null;
+    } else {
+      enrollment.lessons.push({
+        lessonIndex,
+        completed,
+        completedAt: completed ? new Date() : null,
+      });
+    }
+
+    await enrollment.save();
+
+    const totalLessons = enrollment.lessons.length;
+    const completedLessons = enrollment.lessons.filter(
+      (l) => l.completed,
+    ).length;
+    const progress =
+      totalLessons > 0
+        ? Math.round((completedLessons / totalLessons) * 100)
+        : 0;
+
+    return {
+      enrollment,
+      progress,
+      completedLessons,
+      totalLessons,
+    };
   }
 }

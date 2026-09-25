@@ -12,30 +12,17 @@ export interface VerificationResult {
   status: VerificationStatus;
   isValid: boolean;
   message: string;
-  ticket?: {
-    id: string;
-    qrCode: string;
-    ticketType: string;
-    attendeeName: string;
-    eventId: string;
-    event?: {
-      id: string;
-      name: string;
-      eventDate: Date;
-      eventClosingDate: Date;
-    };
-  };
+  ticketCode?: string;
+  eventId?: string;
   verifiedAt: Date;
-  verifiedBy: string;
-  deviceInfo?: any;
+  verifiedBy: string | null;
 }
 
 export interface VerificationRequest {
   ticketCode: string;
-  ticketId: string | null;
-  requestEventId: string;
-  status: VerificationStatus;
+  eventId?: string;
   verifierId?: string;
+  markAsUsed?: boolean;
 }
 
 export interface VerificationLog {
@@ -44,14 +31,16 @@ export interface VerificationLog {
   ticketId: string | null;
   eventId: string;
   status: VerificationStatus;
-  verifierId?: string;
-  verifiedAt: Date;
-  deviceInfo?: any;
+  verifierId: string | null;
+  message: string;
+  createdAt: Date;
 }
 
 export interface VerificationStats {
-  totalTickets: number;
-  verifiedTickets: number;
-  remainingTickets: number;
-  verificationRate: number;
+  eventId: string;
+  total: number;
+  valid: number;
+  invalid: number;
+  alreadyUsed: number;
+  byStatus: Record<VerificationStatus, number>;
 }

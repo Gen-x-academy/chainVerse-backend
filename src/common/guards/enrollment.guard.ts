@@ -16,9 +16,7 @@ import { StudentEnrollmentService } from '../../student-enrollment/student-enrol
  */
 @Injectable()
 export class EnrollmentGuard implements CanActivate {
-  constructor(
-    private readonly enrollmentService: StudentEnrollmentService,
-  ) {}
+  constructor(private readonly enrollmentService: StudentEnrollmentService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<{

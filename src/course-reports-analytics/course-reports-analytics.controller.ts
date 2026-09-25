@@ -1,6 +1,15 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { CourseReportsAnalyticsService } from './course-reports-analytics.service';
 import { CreateCourseReportsAnalyticsDto } from './dto/create-course-reports-analytics.dto';
 import { UpdateCourseReportsAnalyticsDto } from './dto/update-course-reports-analytics.dto';
@@ -11,21 +20,23 @@ import { Roles } from '../common/decorators/roles.decorator';
 
 @ApiBearerAuth('access-token')
 @Controller('courses/reports-analytics')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class CourseReportsAnalyticsController {
   constructor(private readonly service: CourseReportsAnalyticsService) {}
 
+  @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   @Get()
   findAll() {
     return this.service.findAll();
   }
 
+  @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   @Get(':id')
   findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   create(@Body() payload: CreateCourseReportsAnalyticsDto) {
     return this.service.create(payload);

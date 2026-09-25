@@ -93,6 +93,13 @@ export class Course {
     }>;
   }>;
 
+  // Optimistic concurrency token for the section/lesson curriculum stored in
+  // the course_sections and lessons collections. Every structural change bumps
+  // it, so a reorder built against a stale outline can be rejected instead of
+  // silently interleaving with a concurrent edit.
+  @Prop({ default: 0, min: 0 })
+  curriculumVersion: number;
+
   // Enrollment tracking — student IDs are stored in the Enrollment collection,
   // not here, to avoid exceeding MongoDB's 16 MB document limit at scale.
   @Prop({ default: 0 })

@@ -21,17 +21,154 @@ export const envValidationSchema = Joi.object({
   ALLOWED_ORIGINS: Joi.string().default('http://localhost:3000'),
 
   // Stellar — secret key required in production so reward/certificate signing works
-  STELLAR_BACKEND_SECRET: Joi.string().when('NODE_ENV', {
+  STELLAR_BACKEND_SECRET: Joi.string().min(1).when('NODE_ENV', {
     is: 'production',
     then: Joi.required(),
   }),
+
+  // Contract addresses — required in production so Stellar interactions don't
+  // fail at runtime with cryptic errors.  .min(1) ensures empty strings are
+  // rejected, not just missing keys.
+  CONTRACT_CERTIFICATES: Joi.string().min(1).when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+  }),
+
+  CONTRACT_REWARD: Joi.string().min(1).when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+  }),
+
+  CONTRACT_ESCROW: Joi.string().min(1).when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+  }),
+
+  CONTRACT_CHV_TOKEN: Joi.string().min(1).when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+  }),
+
+  CONTRACT_COURSE_REGISTRY: Joi.string().min(1).when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+  }),
+
+  // ─── Email ──────────────────────────────────────────────────────────────────
+  SMTP_HOST: Joi.string().optional(),
+  SMTP_PORT: Joi.number().port().default(587).optional(),
+  SMTP_SECURE: Joi.boolean().default(false).optional(),
+
+  // Application base URL used for verification / reset links in emails
+  BASE_URL: Joi.string().uri().default('http://localhost:3000'),
+
+  // ─── Audit logging ──────────────────────────────────────────────────────────
+  // Dedicated HMAC key for audit-entry integrity hashes. Optional: when unset
+  // the service falls back to JWT_SECRET, which keeps existing deployments
+  // working. Setting it is strongly recommended in production — sharing the key
+  // with JWT_SECRET means rotating that secret silently invalidates the
+  // integrity hash of every historical audit entry. AuditService logs a warning
+  // at startup when it is missing in production.
+  AUDIT_HMAC_SECRET: Joi.string().min(32).optional(),
+
+  // When true, a failed audit write also fails the mutation being audited.
+  AUDIT_LOG_FAIL_CLOSED: Joi.boolean().default(false),
+
+  // ─── Scholarships ───────────────────────────────────────────────────────────
+  // Base64-encoded 32-byte key used to encrypt milestone evidence payloads at
+  // rest (AES-256-GCM). Required in production; development falls back to a key
+  // derived from JWT_SECRET and logs a warning.
+  SCHOLARSHIP_EVIDENCE_ENCRYPTION_KEY: Joi.string()
+    .base64()
+    .min(44)
+    .when('NODE_ENV', { is: 'production', then: Joi.required() }),
+  // Stored beside every ciphertext so a key rotation can be detected.
+  SCHOLARSHIP_EVIDENCE_ENCRYPTION_KEY_ID: Joi.string()
+    .pattern(/^[A-Za-z0-9._-]{1,32}$/)
+    .default('v1'),
+
+  // ─── Uploads: quarantine, scanning and quotas ───────────────────────────────
+  // Storage root for uploaded files. Must be outside any web-served directory.
+  UPLOAD_STORAGE_ROOT: Joi.string().default('var/uploads'),
+  UPLOAD_MAX_FILE_BYTES: Joi.number().integer().positive().default(5242880),
+  UPLOAD_QUOTA_MAX_BYTES: Joi.number().integer().positive().default(104857600),
+  UPLOAD_QUOTA_MAX_FILES: Joi.number().integer().positive().default(20),
+  UPLOAD_QUOTA_WINDOW_MS: Joi.number().integer().positive().default(86400000),
+  // Retain infected samples under `infected/` instead of deleting them.
+  UPLOAD_RETAIN_INFECTED: Joi.boolean().default(false),
+
+  MALWARE_SCAN_PROVIDER: Joi.string()
+    .valid('builtin', 'clamav')
+    .default('builtin'),
+  MALWARE_SCAN_HOST: Joi.string().default('127.0.0.1'),
+  MALWARE_SCAN_PORT: Joi.number().port().default(3310),
+  MALWARE_SCAN_TIMEOUT_MS: Joi.number().integer().positive().default(30000),
+
+  // ─── Scholarship disbursements ──────────────────────────────────────────────
+  // Secret key of the treasury account that signs scholarship payouts. Optional:
+  // when unset the executor refuses to run, so payouts fail closed.
+  SCHOLARSHIP_TREASURY_SECRET: Joi.string()
+    .pattern(/^S[A-Z2-7]{55}$/)
+    .optional(),
+  // Shared secret that automation presents in `X-Automation-Token` to trigger
+  // runs over HTTP. When unset the automation endpoints are disabled.
+  SCHOLARSHIP_AUTOMATION_TOKEN: Joi.string().min(32).optional(),
+  // In-process cron for execution and reconciliation. Off by default.
+  SCHOLARSHIP_DISBURSEMENT_CRON_ENABLED: Joi.boolean().default(false),
+  SCHOLARSHIP_REQUIRED_CONFIRMATIONS: Joi.number()
+    .integer()
+    .min(1)
+    .max(100)
+    .default(1),
+  SCHOLARSHIP_BATCH_SIZE: Joi.number().integer().min(1).max(100).default(25),
+  SCHOLARSHIP_SUBMISSION_TIMEOUT_SECONDS: Joi.number()
+    .integer()
+    .min(30)
+    .max(3600)
+    .default(180),
+  SCHOLARSHIP_EXPIRY_GRACE_SECONDS: Joi.number()
+    .integer()
+    .min(0)
+    .max(3600)
+    .default(60),
+  SCHOLARSHIP_BASE_FEE_STROOPS: Joi.number()
+    .integer()
+    .min(100)
+    .max(1000000)
+    .default(100),
+  SCHOLARSHIP_LEASE_SECONDS: Joi.number()
+    .integer()
+    .min(30)
+    .max(3600)
+    .default(300),
+  SCHOLARSHIP_WALLET_CHALLENGE_TTL_SECONDS: Joi.number()
+    .integer()
+    .min(60)
+    .max(3600)
+    .default(600),
+  SCHOLARSHIP_WALLET_CHALLENGE_MAX_ATTEMPTS: Joi.number()
+    .integer()
+    .min(1)
+    .max(10)
+    .default(5),
+  // ─── Webhook security ─────────────────────────────────────────────────────
+  // Shared secret for verifying incoming webhook HMAC-SHA256 signatures.
+  WEBHOOK_SECRET: Joi.string().min(16).optional(),
+
+  // Maximum age of a webhook timestamp before it is rejected (default 5 min).
+  WEBHOOK_TIMESTAMP_TOLERANCE_MS: Joi.number()
+    .integer()
+    .positive()
+    .default(300000),
 });
 
 /**
  * Validates a plain env object against the schema and returns the coerced
  * values. Throws a descriptive error on the first violation.
  */
-export function validateEnv(env: Record<string, unknown>): Record<string, unknown> {
+export function validateEnv(
+  env: Record<string, unknown>,
+): Record<string, unknown> {
   const { error, value } = envValidationSchema.validate(env, {
     abortEarly: true,
     allowUnknown: true,

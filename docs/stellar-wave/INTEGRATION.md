@@ -33,19 +33,24 @@ an explicit production configuration before mainnet use.
 
 ## Environment Variables
 
-The current `.env.example` has no Stellar-specific variables. Add these when
-payment verification or signing becomes configurable:
+The `.env.example` file contains Stellar-specific variables. When deploying to
+production, ensure all contract addresses and the backend secret are set:
 
 | Variable | Purpose | Required |
 | --- | --- | --- |
 | `STELLAR_NETWORK` | `testnet` or `public` | Yes |
 | `STELLAR_HORIZON_URL` | Horizon endpoint, for example `https://horizon-testnet.stellar.org` | Yes |
-| `STELLAR_TREASURY_PUBLIC_KEY` | Public account that receives course payments or funds rewards | Yes |
-| `STELLAR_PAYMENT_ASSET_CODE` | Asset accepted for paid courses, such as `XLM` or `USDC` | Yes for paid courses |
-| `STELLAR_PAYMENT_ASSET_ISSUER` | Issuer account for non-native assets | Yes for non-native assets |
-| `STELLAR_SIGNER_SECRET` | Secret key used only by backend-controlled signing flows | Only if the backend signs |
+| `STELLAR_RPC_URL` | Soroban RPC endpoint, for example `https://soroban-testnet.stellar.org` | Yes for contracts |
+| `STELLAR_NETWORK_PASSPHRASE` | Network passphrase for transaction signing | Yes for contracts |
+| `STELLAR_BACKEND_SECRET` | Secret key used only by backend-controlled signing flows | Yes (production) |
+| `STELLAR_BACKEND_PUBLIC` | Public key for the backend Stellar account | Yes |
+| `CONTRACT_CERTIFICATES` | Soroban contract ID for certificate minting | Yes (production) |
+| `CONTRACT_REWARD` | Soroban contract ID for reward distribution | Yes (production) |
+| `CONTRACT_ESCROW` | Soroban contract ID for payment escrow | Yes (production) |
+| `CONTRACT_CHV_TOKEN` | Soroban contract ID for the CHV token | Yes (production) |
+| `CONTRACT_COURSE_REGISTRY` | Soroban contract ID for course registry | Yes (production) |
 
-Do not log `STELLAR_SIGNER_SECRET`, return it from health endpoints, or commit it
+Do not log `STELLAR_BACKEND_SECRET`, return it from health endpoints, or commit it
 to `.env.example`.
 
 ## Payment Verification Flow
@@ -77,28 +82,46 @@ Minimum validation before marking a paid enrollment complete:
 
 ## Certificate Issuance Sequence
 
+The flow involves creating certificate metadata, issuing on-chain via Soroban,
+recording the on-chain transaction for background sync, and emitting events.
+
 ```mermaid
 sequenceDiagram
     participant Tutor as Tutor/Admin
     participant API as ChainVerse API
     participant Cert as Certificate Service
+    participant DB as MongoDB
     participant Events as Event Bus
     participant Points as Points Listener
     participant Stellar as Stellar Testnet
 
     Tutor->>API: Create certificate achievement
     API->>Cert: Persist certificate metadata
+    Cert->>Stellar: Issue certificate on-chain via Soroban
+    Stellar-->>Cert: Return transaction hash
+    Cert->>DB: Save CertificateTx record (status: pending)
     Cert->>Events: Emit certificate.issued
     Events->>Points: Award certificate_earned points
     Cert-->>API: Return certificate record
     API-->>Tutor: Return created certificate
-    Cert-->>Stellar: Optional future mint/anchor transaction
 ```
 
+### Background Sync (StellarSyncService)
+
+After a certificate is issued on-chain, the `StellarSyncService` runs every 60
+seconds (via `@Cron`) to poll Horizon and confirm the on-chain transaction:
+
+1. Finds all `CertificateTx` records with status `pending`
+2. Queries Horizon for the stored transaction hash
+3. Updates status to `confirmed` when the ledger result is successful
+4. Updates status to `failed` when the transaction did not succeed
+
+This ensures the database stays in sync with the on-chain state without manual
+intervention.
+
 Today, certificate creation is represented in the backend service and event
-pipeline. A future on-chain certificate step should store the Stellar transaction
-hash or contract ID alongside the certificate record before exposing it as
-verifiable proof to students.
+pipeline. The `CertificateTx` record links the on-chain transaction to the
+internal certificate ID for verifiable proof.
 
 ## Reward Distribution Flow
 

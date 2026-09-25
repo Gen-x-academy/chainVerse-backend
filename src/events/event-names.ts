@@ -18,6 +18,40 @@ export const DomainEvents = {
 
   /** Fired after a certificate (NFT achievement) is issued to a student. */
   CERTIFICATE_ISSUED: 'certificate.issued',
+
+  /** Fired when a recipient's verified payout address changes (payments go on hold). */
+  SCHOLARSHIP_PAYOUT_WALLET_CHANGED: 'scholarship.payout-wallet-changed',
+
+  /** Fired once when a scholarship payment reaches its terminal on-chain outcome. */
+  SCHOLARSHIP_PAYMENT_SETTLED: 'scholarship.payment-settled',
+  /**
+   * Fired at most once per award milestone, when a verifier approval makes the
+   * installment payable. Consumed by the disbursement-intent listener.
+   */
+  SCHOLARSHIP_PAYMENT_ELIGIBLE: 'scholarship.payment-eligible',
+
+  /** Fired when a new disbursement intent is created (never on a replay). */
+  SCHOLARSHIP_DISBURSEMENT_INTENT_CREATED:
+    'scholarship.disbursement-intent-created',
+  /** Fired after a sponsor deposit is credited to a scholarship fund. */
+  SCHOLARSHIP_DEPOSIT_CREDITED: 'scholarship-finance.deposit.credited',
+
+  /** Fired after a refund / returned payment is completed. */
+  SCHOLARSHIP_REFUND_COMPLETED: 'scholarship-finance.refund.completed',
+
+  /**
+   * Fired when a recovery claim is approved. Listeners must deliver the
+   * recovery notice to the recipient — collection is never automatic.
+   */
+  SCHOLARSHIP_RECOVERY_OPENED: 'scholarship-finance.recovery.opened',
+
+  /** Fired by the integrity job when ledger balances or recoveries drift. */
+  SCHOLARSHIP_LEDGER_DRIFT_DETECTED: 'scholarship-finance.ledger.drift-detected',
+  /** Fired after a library item is checked out and a receipt is created. */
+  LIBRARY_CHECKOUT_RECEIPT_CREATED: 'library.checkout.receipt_created',
+
+  /** Fired after a library item is returned and a receipt is created. */
+  LIBRARY_RETURN_RECEIPT_CREATED: 'library.return.receipt_created',
 } as const;
 
 export type DomainEventName = (typeof DomainEvents)[keyof typeof DomainEvents];

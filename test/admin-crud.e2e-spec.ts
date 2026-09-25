@@ -44,7 +44,7 @@ describe('Admin Auth CRUD + Permissions (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     await app.init();
-    server = app.getHttpServer() as unknown as App;
+    server = app.getHttpServer();
 
     // Pre-mint role tokens – these are valid JWTs signed with the test secret
     adminToken = makeAdminToken();

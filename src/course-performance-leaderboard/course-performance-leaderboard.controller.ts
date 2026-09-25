@@ -1,6 +1,16 @@
 import { ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { CacheInterceptor, CacheKey, CacheTTL } from '@nestjs/cache-manager';
 import { CoursePerformanceLeaderboardService } from './course-performance-leaderboard.service';
 import { CreateCoursePerformanceLeaderboardDto } from './dto/create-course-performance-leaderboard.dto';
@@ -9,12 +19,14 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
+import { Public } from '../common/decorators/public.decorator';
 
 @ApiBearerAuth('access-token')
 @Controller('courses/performance-leaderboard')
 export class CoursePerformanceLeaderboardController {
   constructor(private readonly service: CoursePerformanceLeaderboardService) {}
 
+  @Public()
   @Get()
   @UseInterceptors(CacheInterceptor)
   @CacheKey('leaderboard')
@@ -24,6 +36,7 @@ export class CoursePerformanceLeaderboardController {
     return this.service.findAll();
   }
 
+  @Public()
   @Get(':id')
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(300000)

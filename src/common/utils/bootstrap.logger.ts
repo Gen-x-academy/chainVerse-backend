@@ -45,7 +45,10 @@ export function nowIso(): string {
  */
 export function runBootstrap(fn: () => Promise<void>): void {
   fn().catch((err: unknown) => {
-    logger.error('Fatal error during bootstrap', err instanceof Error ? err.stack : String(err));
+    logger.error(
+      'Fatal error during bootstrap',
+      err instanceof Error ? err.stack : String(err),
+    );
     process.exit(1);
   });
 }

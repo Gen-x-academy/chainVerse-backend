@@ -1,6 +1,15 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { StudentReportsAnalyticsService } from './student-reports-analytics.service';
 import { CreateStudentReportsAnalyticsDto } from './dto/create-student-reports-analytics.dto';
 import { UpdateStudentReportsAnalyticsDto } from './dto/update-student-reports-analytics.dto';
@@ -10,7 +19,7 @@ import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 
 @ApiBearerAuth('access-token')
-@Controller('student-reports-analytics')
+@Controller('student/reports-analytics')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.ADMIN, Role.MODERATOR)
 export class StudentReportsAnalyticsController {

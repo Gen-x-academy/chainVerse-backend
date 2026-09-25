@@ -48,7 +48,12 @@ describe('Student Auth – E2E flow (#537)', () => {
   it('POST /student/register → 201, email queued', async () => {
     const res = await request(server)
       .post('/student/register')
-      .send({ firstName: 'E2E', lastName: 'User', email: EMAIL, password: PASSWORD })
+      .send({
+        firstName: 'E2E',
+        lastName: 'User',
+        email: EMAIL,
+        password: PASSWORD,
+      })
       .expect(201);
 
     expect(res.body.message).toMatch(/verify your email/i);
@@ -110,5 +115,20 @@ describe('Student Auth – E2E flow (#537)', () => {
       .expect(401);
 
     refreshToken = newRefreshToken;
+  });
+
+  // 7. Logout
+  it('POST /auth/student/logout → 200, refresh token revoked', async () => {
+    await request(server)
+      .post('/auth/student/logout')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ refreshToken })
+      .expect(200);
+
+    // Old refresh token should now be invalid
+    await request(server)
+      .post('/student/refresh-token')
+      .send({ refreshToken })
+      .expect(401);
   });
 });

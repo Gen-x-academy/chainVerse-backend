@@ -1,6 +1,17 @@
 import { ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { CacheInterceptor, CacheKey, CacheTTL } from '@nestjs/cache-manager';
 import { CourseCategorizationFilteringService } from './course-categorization-filtering.service';
 import { CreateCourseCategorizationFilteringDto } from './dto/create-course-categorization-filtering.dto';
@@ -10,12 +21,14 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
+import { Public } from '../common/decorators/public.decorator';
 
 @ApiBearerAuth('access-token')
 @Controller('courses/categorization-filtering')
 export class CourseCategorizationFilteringController {
   constructor(private readonly service: CourseCategorizationFilteringService) {}
 
+  @Public()
   @Get()
   @UseInterceptors(CacheInterceptor)
   @CacheKey('course-discovery')
@@ -36,6 +49,7 @@ export class CourseCategorizationFilteringController {
    *
    * Results are ordered by descending relevance score.
    */
+  @Public()
   @Get('search')
   @ApiOperation({
     summary: 'Full-text search and advanced course discovery',
@@ -55,6 +69,7 @@ export class CourseCategorizationFilteringController {
     return this.service.search(dto);
   }
 
+  @Public()
   @Get(':id')
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(300000)

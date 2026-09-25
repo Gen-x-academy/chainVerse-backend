@@ -1,6 +1,6 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+import type { Cache } from 'cache-manager';
 import { InjectModel } from '@nestjs/mongoose';
 import { CreateFaqManagementDto } from './dto/create-faq-management.dto';
 import { UpdateFaqManagementDto } from './dto/update-faq-management.dto';

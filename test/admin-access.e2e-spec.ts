@@ -1,7 +1,7 @@
 import * as request from 'supertest';
 import { INestApplication } from '@nestjs/common';
-import { createTestApp } from '../utils/test-app';
-import { generateToken } from '../utils/auth-helper';
+import { createTestApp } from './helpers/test-app.helper';
+import { generateToken } from './helpers/jwt.helper';
 
 describe('Admin Access Control (e2e)', () => {
   let app: INestApplication;

@@ -2,7 +2,9 @@ import { Controller, Get, Header, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { MetricsService } from './metrics.service';
 import { InternalOnlyGuard } from './internal-only.guard';
+import { Public } from '../common/decorators/public.decorator';
 
+@Public()
 @ApiTags('Observability')
 @Controller('metrics')
 @UseGuards(InternalOnlyGuard)

@@ -104,7 +104,7 @@ export class HealthService {
 
     const start = Date.now();
     try {
-      await this.stellarService.getServer().serverInfo();
+      await this.stellarService.getServer().root();
       return { status: 'ok', latency_ms: Date.now() - start };
     } catch (err: any) {
       return { status: 'error', error: err.message };
@@ -126,8 +126,7 @@ export class HealthService {
       this.checkStellar(),
     ]);
 
-    const degraded =
-      database.status === 'error' || cache.status === 'error';
+    const degraded = database.status === 'error' || cache.status === 'error';
 
     return {
       status: degraded ? 'degraded' : 'ok',

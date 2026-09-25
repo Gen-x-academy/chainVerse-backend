@@ -13,7 +13,13 @@ describe('FaqManagementController', () => {
   let controller: FaqManagementController;
   let service: FaqManagementService;
 
-  const mockFaq = { id: '1', question: 'Q', answer: 'A', isActive: true, order: 0 };
+  const mockFaq = {
+    id: '1',
+    question: 'Q',
+    answer: 'A',
+    isActive: true,
+    order: 0,
+  };
 
   beforeEach(async () => {
     mockCache.del.mockReset();
@@ -27,7 +33,9 @@ describe('FaqManagementController', () => {
             findAll: jest.fn().mockResolvedValue([mockFaq]),
             findOne: jest.fn().mockResolvedValue(mockFaq),
             create: jest.fn().mockResolvedValue(mockFaq),
-            update: jest.fn().mockResolvedValue({ ...mockFaq, question: 'New Q' }),
+            update: jest
+              .fn()
+              .mockResolvedValue({ ...mockFaq, question: 'New Q' }),
             remove: jest.fn().mockResolvedValue({ id: '1', deleted: true }),
           },
         },
@@ -59,7 +67,9 @@ describe('FaqManagementController', () => {
 
     it('throws NotFoundException for an unknown id', async () => {
       jest.spyOn(service, 'findOne').mockRejectedValue(new NotFoundException());
-      await expect(controller.findOne('ghost')).rejects.toThrow(NotFoundException);
+      await expect(controller.findOne('ghost')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 

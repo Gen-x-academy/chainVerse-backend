@@ -3,7 +3,9 @@ import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { CourseDiscoveryService } from './course-discovery.service';
 import { SearchCoursesDto } from './dto/search-courses.dto';
+import { Public } from '../common/decorators/public.decorator';
 
+@Public()
 @ApiTags('Courses (Public)')
 @Controller('courses')
 export class CourseDiscoveryController {
@@ -51,7 +53,7 @@ export class CourseDiscoveryController {
 
   @Get('tutor/:tutorId')
   @ApiOperation({ summary: 'Get all published courses by a tutor' })
-  findByTutor(@Param('tutorId') tutorId: string) {
+  findByTutor(@Param('tutorId', new ParseObjectIdPipe()) tutorId: string) {
     return this.courseDiscoveryService.findByTutorPublic(tutorId);
   }
 }

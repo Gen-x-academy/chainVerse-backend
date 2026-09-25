@@ -1,55 +1,30 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { MongooseModule } from '@nestjs/mongoose';
 import { VerificationService } from './verification.service';
 import { VerificationController } from './verification.controller';
-import { VerificationLog } from './verification-log.entity';
-import { VerificationLogRepository } from './verification-log.repository';
-import { TicketsModule } from '../tickets-inventory/tickets.module';
-import { EventsModule } from '../events/events.module';
-import { AuthModule } from '../auth/auth.module';
+import {
+  VerificationLogModel,
+  VerificationLogSchema,
+} from './schemas/verification-log.schema';
 
 /**
- * Verification Module for VeriTix
+ * Verification Module
  *
- * This module handles ticket verification operations at events.
- * It provides services for verifying tickets, logging verification
- * attempts, and generating verification statistics.
+ * Provides an append-only audit trail of ticket scan attempts backed
+ * by MongoDB/Mongoose. The module is self-contained — it has no
+ * dependency on a tickets-inventory or events module.
  *
- * Responsibilities:
- * - Ticket code verification
- * - Check-in operations
- * - Verification logging for audit
- * - Verification statistics
- *
- * The VerificationService is exported for use by other modules
- * that may need to perform verification operations.
- *
- * Usage:
- * ```typescript
- * // In a controller or service
- * @Injectable()
- * export class CheckInService {
- *   constructor(private readonly verificationService: VerificationService) {}
- *
- *   async processCheckIn(ticketCode: string, staffId: string) {
- *     const result = await this.verificationService.checkIn(ticketCode, staffId);
- *     if (result.isValid) {
- *       // Allow entry
- *     }
- *     return result;
- *   }
- * }
- * ```
+ * The VerificationService is exported so other modules (e.g. an
+ * admission or check-in module) can record scan outcomes.
  */
 @Module({
   imports: [
-    TypeOrmModule.forFeature([VerificationLog]),
-    TicketsModule,
-    EventsModule,
-    AuthModule,
+    MongooseModule.forFeature([
+      { name: VerificationLogModel.name, schema: VerificationLogSchema },
+    ]),
   ],
   controllers: [VerificationController],
-  providers: [VerificationService, VerificationLogRepository],
-  exports: [VerificationService, VerificationLogRepository],
+  providers: [VerificationService],
+  exports: [VerificationService],
 })
 export class VerificationModule {}
