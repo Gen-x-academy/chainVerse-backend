@@ -19,6 +19,11 @@ export const DomainEvents = {
   /** Fired after a certificate (NFT achievement) is issued to a student. */
   CERTIFICATE_ISSUED: 'certificate.issued',
 
+  /** Fired when a recipient's verified payout address changes (payments go on hold). */
+  SCHOLARSHIP_PAYOUT_WALLET_CHANGED: 'scholarship.payout-wallet-changed',
+
+  /** Fired once when a scholarship payment reaches its terminal on-chain outcome. */
+  SCHOLARSHIP_PAYMENT_SETTLED: 'scholarship.payment-settled',
   /**
    * Fired at most once per award milestone, when a verifier approval makes the
    * installment payable. Consumed by the disbursement-intent listener.

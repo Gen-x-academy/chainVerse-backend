@@ -37,6 +37,19 @@ export enum AuditAction {
   ORGANIZATION_INVITATION_ACCEPTED = 'organization_invitation.accepted',
   ORGANIZATION_INVITATION_REVOKED = 'organization_invitation.revoked',
 
+  // Scholarship disbursements (src/scholarship-disbursement)
+  SCHOLARSHIP_ASSET_PROPOSED = 'scholarship_asset.proposed',
+  SCHOLARSHIP_ASSET_APPROVED = 'scholarship_asset.approved',
+  SCHOLARSHIP_ASSET_DISABLED = 'scholarship_asset.disabled',
+  PAYOUT_WALLET_VERIFIED = 'payout_wallet.verified',
+  PAYOUT_WALLET_CHANGED = 'payout_wallet.changed',
+  SCHOLARSHIP_PAYMENT_SCHEDULED = 'scholarship_payment.scheduled',
+  SCHOLARSHIP_PAYMENT_CANCELLED = 'scholarship_payment.cancelled',
+  SCHOLARSHIP_PAYMENT_HOLD_RELEASED = 'scholarship_payment.hold_released',
+  SCHOLARSHIP_PAYMENT_RETRIED = 'scholarship_payment.retried',
+  SCHOLARSHIP_PAYMENT_FINALIZED = 'scholarship_payment.finalized',
+  SCHOLARSHIP_PAYMENT_REVERSED = 'scholarship_payment.reversed',
+  SCHOLARSHIP_DISBURSEMENT_RUN = 'scholarship_disbursement.run',
   // Scholarships: awards, milestones, verification, disbursements (src/scholarship)
   SCHOLARSHIP_AWARD_CREATED = 'scholarship_award.created',
   SCHOLARSHIP_SCHEDULE_CREATED = 'scholarship_schedule.created',
