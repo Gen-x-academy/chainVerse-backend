@@ -65,7 +65,7 @@ describe('Module registration smoke tests', () => {
     });
   });
 
-  it('should create a session via POST /api/session with auth', async () => {
+  it('should create a session via POST /api/v1/session with auth', async () => {
     const payload = {
       token: 'test-session-token',
       ipAddress: '127.0.0.1',
@@ -73,7 +73,7 @@ describe('Module registration smoke tests', () => {
     };
 
     const res = await request(server)
-      .post('/api/session')
+      .post('/api/v1/session')
       .set('Authorization', `Bearer ${studentToken}`)
       .send(payload)
       .expect(201);
@@ -86,14 +86,23 @@ describe('Module registration smoke tests', () => {
     });
   });
 
-  it('should list organizations via GET /api/organization', async () => {
-    const res = await request(server).get('/api/organization').expect(200);
+  it('should list organizations via GET /api/v1/organization', async () => {
+    const res = await request(server).get('/api/v1/organization').expect(200);
     expect(Array.isArray(res.body)).toBe(true);
   });
 
-  it('should list organization members for a user via GET /api/organization-member/user/:userId', async () => {
+  it('should list organization members via GET /api/v1/organization-member', async () => {
     const res = await request(server)
-      .get(`/api/organization-member/user/${studentId}`)
+      .get('/api/v1/organization-member')
+      .set('Authorization', `Bearer ${studentToken}`)
+      .expect(200);
+
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  it('should list organization members for a user via GET /api/v1/organization-member/user/:userId', async () => {
+    const res = await request(server)
+      .get(`/api/v1/organization-member/user/${studentId}`)
       .set('Authorization', `Bearer ${studentToken}`)
       .expect(200);
 

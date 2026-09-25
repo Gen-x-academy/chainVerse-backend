@@ -27,11 +27,18 @@ import type { AuditContext } from '../common/audit/audit-context';
 import { FindOrganizationMembersDto } from './dto/find-organization-members.dto';
 
 @ApiBearerAuth('access-token')
+@Controller(['organization-members', 'organization-member', 'v1/organization-member'])
 @ApiTags('Organization Members')
 @Controller('organization-members')
 @UseGuards(JwtAuthGuard, OrganizationRolesGuard)
 export class OrganizationMemberController {
   constructor(private readonly service: OrganizationMemberService) {}
+
+  @Get()
+  @UseGuards(JwtAuthGuard)
+  findAll() {
+    return this.service.findAll();
+  }
 
   @Get('organization/:orgId')
   @ApiOperation({ summary: 'List members of an organization (members only)' })
