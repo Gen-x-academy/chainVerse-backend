@@ -79,6 +79,9 @@ export const envValidationSchema = Joi.object({
   SCHOLARSHIP_PAYOUT_RETRY_INTERVAL_MS: Joi.number().integer().min(0).default(60000),
   SCHOLARSHIP_PAYOUT_MAX_ATTEMPTS: Joi.number().integer().min(1).max(20).default(5),
   SCHOLARSHIP_PAYOUT_ENVELOPE_TTL_SECONDS: Joi.number().integer().min(30).default(300),
+  // ── Scholarship finance background jobs ───────────────────────────────────
+  SCHOLARSHIP_FINANCE_JOBS_ENABLED: Joi.boolean().default(false),
+  SCHOLARSHIP_FINANCE_JOB_INTERVAL_MS: Joi.number().integer().min(60000).default(900000),
 }).options({ allowUnknown: true });
 import {
   IsString,

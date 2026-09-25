@@ -170,6 +170,7 @@ import { ScholarshipsModule } from './scholarships/scholarships.module';
     // Analytics
     CourseAnalyticsModule,
     // Scholarship finance
+    // Scholarships
     ScholarshipFinanceModule,
     // E-Library
     ELibraryModule,
