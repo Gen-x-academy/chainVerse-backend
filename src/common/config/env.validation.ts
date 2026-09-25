@@ -74,6 +74,19 @@ export const envValidationSchema = Joi.object({
   // When true, a failed audit write also fails the mutation being audited.
   AUDIT_LOG_FAIL_CLOSED: Joi.boolean().default(false),
 
+  // ─── Scholarships ───────────────────────────────────────────────────────────
+  // Base64-encoded 32-byte key used to encrypt milestone evidence payloads at
+  // rest (AES-256-GCM). Required in production; development falls back to a key
+  // derived from JWT_SECRET and logs a warning.
+  SCHOLARSHIP_EVIDENCE_ENCRYPTION_KEY: Joi.string()
+    .base64()
+    .min(44)
+    .when('NODE_ENV', { is: 'production', then: Joi.required() }),
+  // Stored beside every ciphertext so a key rotation can be detected.
+  SCHOLARSHIP_EVIDENCE_ENCRYPTION_KEY_ID: Joi.string()
+    .pattern(/^[A-Za-z0-9._-]{1,32}$/)
+    .default('v1'),
+
   // ─── Uploads: quarantine, scanning and quotas ───────────────────────────────
   // Storage root for uploaded files. Must be outside any web-served directory.
   UPLOAD_STORAGE_ROOT: Joi.string().default('var/uploads'),

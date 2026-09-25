@@ -37,6 +37,23 @@ export enum AuditAction {
   ORGANIZATION_INVITATION_ACCEPTED = 'organization_invitation.accepted',
   ORGANIZATION_INVITATION_REVOKED = 'organization_invitation.revoked',
 
+  // Scholarships: awards, milestones, verification, disbursements (src/scholarship)
+  SCHOLARSHIP_AWARD_CREATED = 'scholarship_award.created',
+  SCHOLARSHIP_SCHEDULE_CREATED = 'scholarship_schedule.created',
+  SCHOLARSHIP_SCHEDULE_UPDATED = 'scholarship_schedule.updated',
+  SCHOLARSHIP_SCHEDULE_ACTIVATED = 'scholarship_schedule.activated',
+  SCHOLARSHIP_SCHEDULE_AMENDMENT_PROPOSED = 'scholarship_schedule.amendment_proposed',
+  SCHOLARSHIP_SCHEDULE_AMENDMENT_APPROVED = 'scholarship_schedule.amendment_approved',
+  SCHOLARSHIP_SCHEDULE_AMENDMENT_REJECTED = 'scholarship_schedule.amendment_rejected',
+  SCHOLARSHIP_EVIDENCE_SUBMITTED = 'scholarship_evidence.submitted',
+  SCHOLARSHIP_EVIDENCE_ACCESSED = 'scholarship_evidence.accessed',
+  SCHOLARSHIP_VERIFIER_ASSIGNED = 'scholarship_verifier.assigned',
+  SCHOLARSHIP_VERIFIER_REVOKED = 'scholarship_verifier.revoked',
+  SCHOLARSHIP_VERIFICATION_DECIDED = 'scholarship_verification.decided',
+  SCHOLARSHIP_PAYMENT_ELIGIBLE = 'scholarship_payment.eligible',
+  SCHOLARSHIP_DISBURSEMENT_INTENT_CREATED = 'scholarship_disbursement_intent.created',
+  SCHOLARSHIP_DISBURSEMENT_INTENT_TRANSITIONED = 'scholarship_disbursement_intent.transitioned',
+
   // Upload lifecycle (src/worker)
   FILE_UPLOAD_QUARANTINED = 'file_upload.quarantined',
   FILE_UPLOAD_SCANNED = 'file_upload.scanned',

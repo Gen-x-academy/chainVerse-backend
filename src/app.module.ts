@@ -89,6 +89,7 @@ import { ReportsModule } from './reports/reports.module';
 import { IdempotencyModule } from './idempotency/idempotency.module';
 import { PrivacyPolicyManagementModule } from './privacy-policy-management/privacy-policy-management.module';
 import { VerificationModule } from './verification/verification.module';
+import { ScholarshipModule } from './scholarship/scholarship.module';
 import { ELibraryModule } from './e-library/e-library.module';
 import { ScholarshipsModule } from './scholarships/scholarships.module';
 
@@ -204,6 +205,7 @@ import { ScholarshipsModule } from './scholarships/scholarships.module';
     ReportsModule,
     IdempotencyModule,
     VerificationModule,
+    ScholarshipModule,
     ScholarshipsModule,
   ],
   controllers: [AppController],
