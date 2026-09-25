@@ -53,6 +53,7 @@ import { StudentSavedCoursesModule } from './student-saved-courses/student-saved
 import { StudentCartModule } from './student-cart/student-cart.module';
 import { StudentEnrollmentModule } from './student-enrollment/student-enrollment.module';
 import { CourseAnalyticsModule } from './course-analytics/course-analytics.module';
+import { ScholarshipFinanceModule } from './scholarship-finance/scholarship-finance.module';
 import { EventsModule } from './events/events.module';
 import { LibraryCirculationModule } from './library-circulation/library-circulation.module';
 import { StudentAccountSettingsModule } from './student-account-settings/student-account-settings.module';
@@ -165,6 +166,10 @@ import { ScholarshipsModule } from './scholarships/scholarships.module';
     StudentSavedCoursesModule,
     StudentCartModule,
     StudentEnrollmentModule,
+    // Analytics
+    CourseAnalyticsModule,
+    // Scholarships
+    ScholarshipFinanceModule,
     // E-Library
     ELibraryModule,
     StudentAccountSettingsModule,
