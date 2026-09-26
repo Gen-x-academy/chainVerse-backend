@@ -26,13 +26,7 @@ import {
   EligibilityRule,
   EligibilityRuleSchema,
 } from './schemas/eligibility-rule.schema';
-import { ScholarshipProgramsService } from './services/scholarship-programs.service';
-import { ScholarshipApplicationsService } from './services/scholarship-applications.service';
-import { WithdrawalPolicyService } from './services/withdrawal-policy.service';
-import { EligibilityRuleService } from './services/eligibility-rule.service';
-import { ScholarshipProgramsController } from './controllers/scholarship-programs.controller';
-import { ScholarshipApplicationsController } from './controllers/scholarship-applications.controller';
-import { WithdrawalEligibilityController } from './controllers/withdrawal-eligibility.controller';
+import {
   ProgramPrerequisite,
   ProgramPrerequisiteSchema,
 } from './schemas/program-prerequisite.schema';
@@ -40,25 +34,87 @@ import {
   ProgramExclusion,
   ProgramExclusionSchema,
 } from './schemas/program-exclusion.schema';
-import { ScholarshipProgramsService } from './services/scholarship-programs.service';
-import { ScholarshipApplicationsService } from './services/scholarship-applications.service';
-import { PrerequisiteExclusionService } from './services/prerequisite-exclusion.service';
-import { ScholarshipProgramsController } from './controllers/scholarship-programs.controller';
-import { ScholarshipApplicationsController } from './controllers/scholarship-applications.controller';
-import { PrerequisiteExclusionController } from './controllers/prerequisite-exclusion.controller';
+import {
   EligibilityAttestation,
   EligibilityAttestationSchema,
 } from './schemas/eligibility-attestation.schema';
+import {
+  ApplicationForm,
+  ApplicationFormSchema,
+} from './schemas/application-form.schema';
+// Award records (#1151)
+import {
+  ScholarshipAward,
+  ScholarshipAwardSchema,
+} from './schemas/scholarship-award.schema';
+// Award agreement acceptance (#1152)
+import {
+  AwardAgreement,
+  AwardAgreementSchema,
+} from './schemas/award-agreement.schema';
+// Applicant appeals (#1150)
+import {
+  ApplicationAppeal,
+  ApplicationAppealSchema,
+} from './schemas/application-appeal.schema';
+
+// ── Services ──────────────────────────────────────────────────────────────────
 import { ScholarshipProgramsService } from './services/scholarship-programs.service';
 import { ScholarshipApplicationsService } from './services/scholarship-applications.service';
+import { WithdrawalPolicyService } from './services/withdrawal-policy.service';
+import { EligibilityRuleService } from './services/eligibility-rule.service';
+import { PrerequisiteExclusionService } from './services/prerequisite-exclusion.service';
 import { EligibilityAttestationService } from './services/eligibility-attestation.service';
+import { ApplicationFormService } from './services/application-form.service';
+// Award records (#1151)
+import { ScholarshipAwardService } from './services/scholarship-award.service';
+// Award agreement acceptance (#1152)
+import { AwardAgreementService } from './services/award-agreement.service';
+// Applicant appeals (#1150)
+import { ApplicationAppealService } from './services/application-appeal.service';
+
+// ── Controllers ───────────────────────────────────────────────────────────────
 import { ScholarshipProgramsController } from './controllers/scholarship-programs.controller';
 import { ScholarshipApplicationsController } from './controllers/scholarship-applications.controller';
+import { WithdrawalEligibilityController } from './controllers/withdrawal-eligibility.controller';
+import { PrerequisiteExclusionController } from './controllers/prerequisite-exclusion.controller';
 import {
   EligibilityAttestationController,
   ApplicantAttestationController,
 } from './controllers/eligibility-attestation.controller';
+import { ApplicationFormController } from './controllers/application-form.controller';
+// Award records (#1151)
+import {
+  ScholarshipAwardController,
+  ScholarshipAwardMutationController,
+  ApplicantAwardController,
+} from './controllers/scholarship-award.controller';
+// Award agreement acceptance (#1152)
+import {
+  ApplicantAwardAgreementController,
+  StaffAwardAgreementController,
+} from './controllers/award-agreement.controller';
+// Applicant appeals (#1150)
+import {
+  ApplicantAppealController,
+  StaffAppealController,
+} from './controllers/application-appeal.controller';
 
+/**
+ * ScholarshipsModule bundles all scholarship-related features:
+ *
+ *  - Scholarship programs + versioned terms (#1122, #1126)
+ *  - Student applications + answer validation (#1127, #1132)
+ *  - Withdrawal policies (#1137)
+ *  - Composable eligibility rules (#1127)
+ *  - Prerequisite & exclusion rules (#1128)
+ *  - Eligibility attestations (#1129)
+ *  - Configurable application forms (#1131)
+ *  - Scholarship award records + lifecycle (#1151)
+ *  - Award agreement acceptance + declarations (#1152)
+ *  - Applicant appeals against eligible decisions (#1150)
+ *  - Award cancellation and termination (#1153)
+ */
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -67,11 +123,18 @@ import {
       { name: ScholarshipApplication.name, schema: ScholarshipApplicationSchema },
       { name: WithdrawalPolicy.name, schema: WithdrawalPolicySchema },
       { name: EligibilityRule.name, schema: EligibilityRuleSchema },
-      // Registered so OrganizationRolesGuard can resolve tenant memberships.
       { name: ProgramPrerequisite.name, schema: ProgramPrerequisiteSchema },
       { name: ProgramExclusion.name, schema: ProgramExclusionSchema },
       { name: EligibilityAttestation.name, schema: EligibilityAttestationSchema },
+      { name: ApplicationForm.name, schema: ApplicationFormSchema },
+      // Registered so OrganizationRolesGuard can resolve tenant memberships.
       { name: OrganizationMember.name, schema: OrganizationMemberSchema },
+      // Award records (#1151)
+      { name: ScholarshipAward.name, schema: ScholarshipAwardSchema },
+      // Award agreement acceptance (#1152)
+      { name: AwardAgreement.name, schema: AwardAgreementSchema },
+      // Applicant appeals (#1150)
+      { name: ApplicationAppeal.name, schema: ApplicationAppealSchema },
     ]),
     PaginationModule,
   ],
@@ -82,6 +145,17 @@ import {
     PrerequisiteExclusionController,
     EligibilityAttestationController,
     ApplicantAttestationController,
+    ApplicationFormController,
+    // Award records (#1151)
+    ScholarshipAwardController,
+    ScholarshipAwardMutationController,
+    ApplicantAwardController,
+    // Award agreement acceptance (#1152)
+    ApplicantAwardAgreementController,
+    StaffAwardAgreementController,
+    // Applicant appeals (#1150)
+    ApplicantAppealController,
+    StaffAppealController,
   ],
   providers: [
     ScholarshipProgramsService,
@@ -90,6 +164,13 @@ import {
     EligibilityRuleService,
     PrerequisiteExclusionService,
     EligibilityAttestationService,
+    ApplicationFormService,
+    // Award records (#1151)
+    ScholarshipAwardService,
+    // Award agreement acceptance (#1152)
+    AwardAgreementService,
+    // Applicant appeals (#1150)
+    ApplicationAppealService,
     OrganizationRolesGuard,
   ],
   exports: [
@@ -97,32 +178,15 @@ import {
     ScholarshipApplicationsService,
     WithdrawalPolicyService,
     EligibilityRuleService,
-  ],
     PrerequisiteExclusionService,
-  ],
     EligibilityAttestationService,
+    ApplicationFormService,
+    // Award records (#1151)
+    ScholarshipAwardService,
+    // Award agreement acceptance (#1152)
+    AwardAgreementService,
+    // Applicant appeals (#1150)
+    ApplicationAppealService,
   ],
-import {
-  ApplicationForm,
-  ApplicationFormSchema,
-} from './schemas/application-form.schema';
-import { ApplicationFormService } from './services/application-form.service';
-import { ApplicationFormController } from './controllers/application-form.controller';
-
-/**
- * ScholarshipsModule bundles all scholarship-related features.
- *
- * Currently provides:
- *  - Configurable application forms (issue #1131)
- */
-@Module({
-  imports: [
-    MongooseModule.forFeature([
-      { name: ApplicationForm.name, schema: ApplicationFormSchema },
-    ]),
-  ],
-  controllers: [ApplicationFormController],
-  providers: [ApplicationFormService],
-  exports: [ApplicationFormService],
 })
 export class ScholarshipsModule {}

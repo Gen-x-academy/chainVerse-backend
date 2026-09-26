@@ -206,6 +206,147 @@ export enum ErrorCode {
   BIZ_FORM_NOT_PUBLISHED = 'BIZ_FORM_NOT_PUBLISHED',
   BIZ_FORM_VERSION_MISMATCH = 'BIZ_FORM_VERSION_MISMATCH',
 
+  // ── Scholarships: normalized aggregate review scores (#1147) ──────────────
+  /** Reviewer has already submitted a review for this application. */
+  BIZ_REVIEW_ALREADY_EXISTS = 'BIZ_REVIEW_ALREADY_EXISTS',
+  /** Application is not in a reviewable state (must be UNDER_REVIEW). */
+  BIZ_APPLICATION_NOT_UNDER_REVIEW = 'BIZ_APPLICATION_NOT_UNDER_REVIEW',
+  /** Review rubric criteria weights do not sum to 1.0 (within tolerance). */
+  VAL_RUBRIC_WEIGHTS_INVALID = 'VAL_RUBRIC_WEIGHTS_INVALID',
+  /** A rubric criterion score is outside the permitted [0, maxScore] range. */
+  VAL_RUBRIC_SCORE_OUT_OF_RANGE = 'VAL_RUBRIC_SCORE_OUT_OF_RANGE',
+  /** Rubric criteria array is empty — at least one criterion is required. */
+  VAL_RUBRIC_CRITERIA_EMPTY = 'VAL_RUBRIC_CRITERIA_EMPTY',
+  /** The requested review was not found. */
+  RES_SCHOLARSHIP_REVIEW_NOT_FOUND = 'RES_SCHOLARSHIP_REVIEW_NOT_FOUND',
+  /** Aggregate score cannot be computed — no completed reviews exist. */
+  BIZ_NO_COMPLETED_REVIEWS = 'BIZ_NO_COMPLETED_REVIEWS',
+
+  // ── Scholarships: reviewer info requests (#1146) ──────────────────────────
+  /** The info-request document was not found. */
+  RES_INFO_REQUEST_NOT_FOUND = 'RES_INFO_REQUEST_NOT_FOUND',
+  /** The applicant has already responded to this request (versioned responses). */
+  BIZ_INFO_REQUEST_ALREADY_RESPONDED = 'BIZ_INFO_REQUEST_ALREADY_RESPONDED',
+  /** The info-request is not in a state that allows the requested transition. */
+  BIZ_INFO_REQUEST_INVALID_STATE = 'BIZ_INFO_REQUEST_INVALID_STATE',
+  /** The response deadline for this info-request has passed. */
+  BIZ_INFO_REQUEST_DEADLINE_PASSED = 'BIZ_INFO_REQUEST_DEADLINE_PASSED',
+  /** The deadline supplied is not in the future. */
+  VAL_INFO_REQUEST_DEADLINE_PAST = 'VAL_INFO_REQUEST_DEADLINE_PAST',
+  /** The questions array is empty — at least one question is required. */
+  VAL_INFO_REQUEST_NO_QUESTIONS = 'VAL_INFO_REQUEST_NO_QUESTIONS',
+  /** A response answer references a question id that does not exist on this request. */
+  VAL_INFO_REQUEST_UNKNOWN_QUESTION = 'VAL_INFO_REQUEST_UNKNOWN_QUESTION',
+  /** A required question was not answered. */
+  VAL_INFO_REQUEST_REQUIRED_ANSWER_MISSING = 'VAL_INFO_REQUEST_REQUIRED_ANSWER_MISSING',
+  /** Only the reviewer who created the request may cancel it. */
+  BIZ_INFO_REQUEST_CANCEL_FORBIDDEN = 'BIZ_INFO_REQUEST_CANCEL_FORBIDDEN',
+
+  // ── Scholarships: budget reservations (#1149) ─────────────────────────────
+  /** The scholarship program budget ledger was not found. */
+  RES_BUDGET_LEDGER_NOT_FOUND = 'RES_BUDGET_LEDGER_NOT_FOUND',
+  /** A budget reservation with this id was not found. */
+  RES_BUDGET_RESERVATION_NOT_FOUND = 'RES_BUDGET_RESERVATION_NOT_FOUND',
+  /** A reservation already exists for this application; cannot create a second. */
+  BIZ_RESERVATION_ALREADY_EXISTS = 'BIZ_RESERVATION_ALREADY_EXISTS',
+  /** The reservation amount exceeds the program's available (unreserved) budget. */
+  BIZ_BUDGET_INSUFFICIENT = 'BIZ_BUDGET_INSUFFICIENT',
+  /** The reservation is not in a state that allows the requested transition. */
+  BIZ_RESERVATION_INVALID_STATE = 'BIZ_RESERVATION_INVALID_STATE',
+  /** The reservation has already been released and cannot be released again. */
+  BIZ_RESERVATION_ALREADY_RELEASED = 'BIZ_RESERVATION_ALREADY_RELEASED',
+  /** The reservation has already been confirmed and cannot be cancelled. */
+  BIZ_RESERVATION_ALREADY_CONFIRMED = 'BIZ_RESERVATION_ALREADY_CONFIRMED',
+  /** expiresAt must be a future date. */
+  VAL_RESERVATION_INVALID_EXPIRY = 'VAL_RESERVATION_INVALID_EXPIRY',
+  /** totalBudget must be ≥ 0. */
+  VAL_BUDGET_AMOUNT_INVALID = 'VAL_BUDGET_AMOUNT_INVALID',
+
+  // ── Scholarships: award records (#1151) ───────────────────────────────────
+  /** The scholarship award record was not found. */
+  RES_SCHOLARSHIP_AWARD_NOT_FOUND = 'RES_SCHOLARSHIP_AWARD_NOT_FOUND',
+  /** An active award already exists for this application; cannot create a second. */
+  BIZ_AWARD_ALREADY_EXISTS = 'BIZ_AWARD_ALREADY_EXISTS',
+  /**
+   * The applicant already holds a conflicting active award (PENDING_ACCEPTANCE
+   * or ACCEPTED) in another program within the same organization.
+   */
+  BIZ_AWARD_CONFLICT = 'BIZ_AWARD_CONFLICT',
+  /** The acceptance deadline supplied is not in the future. */
+  VAL_AWARD_ACCEPTANCE_DEADLINE_PAST = 'VAL_AWARD_ACCEPTANCE_DEADLINE_PAST',
+  /** The award is not in a state that allows the requested transition. */
+  BIZ_AWARD_INVALID_STATE = 'BIZ_AWARD_INVALID_STATE',
+  /** The acceptance deadline has already passed; the offer has expired. */
+  BIZ_AWARD_OFFER_EXPIRED = 'BIZ_AWARD_OFFER_EXPIRED',
+  /**
+   * The authenticated user is not the applicant on this award.
+   * Acceptance must be performed by the applicant themselves.
+   */
+  BIZ_AWARD_ACCEPTANCE_FORBIDDEN = 'BIZ_AWARD_ACCEPTANCE_FORBIDDEN',
+  /** At least one milestone start date is not before its end date. */
+  VAL_AWARD_MILESTONE_DATE_INVALID = 'VAL_AWARD_MILESTONE_DATE_INVALID',
+
+  // ── Scholarships: award agreement acceptance (#1152) ─────────────────────
+  /** The award agreement document was not found. */
+  RES_AWARD_AGREEMENT_NOT_FOUND = 'RES_AWARD_AGREEMENT_NOT_FOUND',
+  /**
+   * Agreement documents are immutable once created; they cannot be modified
+   * or deleted.  A new version must be created instead.
+   */
+  BIZ_AWARD_AGREEMENT_IMMUTABLE = 'BIZ_AWARD_AGREEMENT_IMMUTABLE',
+  /**
+   * The applicant has declined this award offer; no agreement may be recorded
+   * against a DECLINED or OFFER_EXPIRED award.
+   */
+  BIZ_AGREEMENT_DECLINED_OFFER = 'BIZ_AGREEMENT_DECLINED_OFFER',
+  /**
+   * The operation requires the award to be in ACCEPTED state (i.e. the
+   * agreement has already been signed), but it is not.
+   */
+  BIZ_AGREEMENT_NOT_ACCEPTED = 'BIZ_AGREEMENT_NOT_ACCEPTED',
+  /**
+   * One or more required declarations in the acceptance body were not
+   * acknowledged (value !== true).
+   */
+  VAL_AGREEMENT_DECLARATIONS_INCOMPLETE = 'VAL_AGREEMENT_DECLARATIONS_INCOMPLETE',
+  /**
+   * An agreement has already been recorded for this award; duplicate
+   * acceptance attempts are rejected to preserve immutability.
+   */
+  BIZ_AWARD_AGREEMENT_ALREADY_EXISTS = 'BIZ_AWARD_AGREEMENT_ALREADY_EXISTS',
+
+  // ── Scholarships: applicant appeals (#1150) ───────────────────────────────
+  /** The appeal document was not found. */
+  RES_APPEAL_NOT_FOUND = 'RES_APPEAL_NOT_FOUND',
+  /**
+   * An active appeal (PENDING or UNDER_REVIEW) already exists for this
+   * application; only one active appeal is permitted at a time.
+   */
+  BIZ_APPEAL_ALREADY_ACTIVE = 'BIZ_APPEAL_ALREADY_ACTIVE',
+  /**
+   * Appeals may only be filed against applications with status REJECTED or
+   * a CommitteeDecision outcome of REJECTED.
+   */
+  BIZ_APPEAL_NOT_ELIGIBLE = 'BIZ_APPEAL_NOT_ELIGIBLE',
+  /** The appeal is not in a state that permits the requested transition. */
+  BIZ_APPEAL_INVALID_STATE = 'BIZ_APPEAL_INVALID_STATE',
+  /**
+   * The proposed reviewer is in the excluded list (they were an original
+   * reviewer on the application) and cannot review the appeal.
+   */
+  BIZ_APPEAL_REVIEWER_EXCLUDED = 'BIZ_APPEAL_REVIEWER_EXCLUDED',
+  /**
+   * Only the applicant who filed the appeal may withdraw it.
+   */
+  BIZ_APPEAL_WITHDRAW_FORBIDDEN = 'BIZ_APPEAL_WITHDRAW_FORBIDDEN',
+  /**
+   * The `resolution` value supplied to the resolve endpoint must be
+   * UPHELD or DISMISSED — not a lifecycle state such as PENDING or EXPIRED.
+   */
+  BIZ_APPEAL_RESOLUTION_INVALID = 'BIZ_APPEAL_RESOLUTION_INVALID',
+  /** resolutionDeadline must be a future date. */
+  VAL_APPEAL_DEADLINE_PAST = 'VAL_APPEAL_DEADLINE_PAST',
+
   // ── System ────────────────────────────────────────────────────────────────
   SYS_INTERNAL_ERROR = 'SYS_INTERNAL_ERROR',
   SYS_SERVICE_UNAVAILABLE = 'SYS_SERVICE_UNAVAILABLE',
