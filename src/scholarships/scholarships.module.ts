@@ -6,6 +6,8 @@ import {
   OrganizationMember,
   OrganizationMemberSchema,
 } from '../organization-member/schemas/organization-member.schema';
+
+// ── Schemas ───────────────────────────────────────────────────────────────────
 import {
   ScholarshipProgram,
   ScholarshipProgramSchema,
@@ -57,6 +59,24 @@ import {
   ApplicationAppeal,
   ApplicationAppealSchema,
 } from './schemas/application-appeal.schema';
+import {
+  ScholarshipReview,
+  ScholarshipReviewSchema,
+} from './schemas/scholarship-review.schema';
+import {
+  CommitteeDecision,
+  CommitteeDecisionSchema,
+} from './schemas/committee-decision.schema';
+import {
+  ReviewInfoRequest,
+  ReviewInfoRequestSchema,
+} from './schemas/review-info-request.schema';
+import {
+  BudgetLedger,
+  BudgetLedgerSchema,
+  BudgetReservation,
+  BudgetReservationSchema,
+} from './schemas/budget-reservation.schema';
 
 // ── Services ──────────────────────────────────────────────────────────────────
 import { ScholarshipProgramsService } from './services/scholarship-programs.service';
@@ -72,6 +92,10 @@ import { ScholarshipAwardService } from './services/scholarship-award.service';
 import { AwardAgreementService } from './services/award-agreement.service';
 // Applicant appeals (#1150)
 import { ApplicationAppealService } from './services/application-appeal.service';
+import { ScholarshipReviewService } from './services/scholarship-review.service';
+import { CommitteeDecisionService } from './services/committee-decision.service';
+import { ReviewInfoRequestService } from './services/review-info-request.service';
+import { BudgetReservationService } from './services/budget-reservation.service';
 
 // ── Controllers ───────────────────────────────────────────────────────────────
 import { ScholarshipProgramsController } from './controllers/scholarship-programs.controller';
@@ -99,6 +123,10 @@ import {
   ApplicantAppealController,
   StaffAppealController,
 } from './controllers/application-appeal.controller';
+import { ScholarshipReviewController } from './controllers/scholarship-review.controller';
+import { CommitteeDecisionController } from './controllers/committee-decision.controller';
+import { ReviewInfoRequestController } from './controllers/review-info-request.controller';
+import { BudgetReservationController } from './controllers/budget-reservation.controller';
 
 /**
  * ScholarshipsModule bundles all scholarship-related features:
@@ -114,6 +142,10 @@ import {
  *  - Award agreement acceptance + declarations (#1152)
  *  - Applicant appeals against eligible decisions (#1150)
  *  - Award cancellation and termination (#1153)
+ *  - Normalized aggregate review scores (#1147)
+ *  - Committee decision workflow (#1148)
+ *  - Reviewer info requests (#1146)
+ *  - Budget reservations (#1149)
  */
 @Module({
   imports: [
@@ -135,6 +167,15 @@ import {
       { name: AwardAgreement.name, schema: AwardAgreementSchema },
       // Applicant appeals (#1150)
       { name: ApplicationAppeal.name, schema: ApplicationAppealSchema },
+      // Review scoring (#1147)
+      { name: ScholarshipReview.name, schema: ScholarshipReviewSchema },
+      // Committee decisions (#1148)
+      { name: CommitteeDecision.name, schema: CommitteeDecisionSchema },
+      // Reviewer info requests (#1146)
+      { name: ReviewInfoRequest.name, schema: ReviewInfoRequestSchema },
+      // Budget reservations (#1149)
+      { name: BudgetLedger.name, schema: BudgetLedgerSchema },
+      { name: BudgetReservation.name, schema: BudgetReservationSchema },
     ]),
     PaginationModule,
   ],
@@ -156,6 +197,10 @@ import {
     // Applicant appeals (#1150)
     ApplicantAppealController,
     StaffAppealController,
+    ScholarshipReviewController,
+    CommitteeDecisionController,
+    ReviewInfoRequestController,
+    BudgetReservationController,
   ],
   providers: [
     ScholarshipProgramsService,
@@ -171,6 +216,10 @@ import {
     AwardAgreementService,
     // Applicant appeals (#1150)
     ApplicationAppealService,
+    ScholarshipReviewService,
+    CommitteeDecisionService,
+    ReviewInfoRequestService,
+    BudgetReservationService,
     OrganizationRolesGuard,
   ],
   exports: [
@@ -187,6 +236,10 @@ import {
     AwardAgreementService,
     // Applicant appeals (#1150)
     ApplicationAppealService,
+    ScholarshipReviewService,
+    CommitteeDecisionService,
+    ReviewInfoRequestService,
+    BudgetReservationService,
   ],
 })
 export class ScholarshipsModule {}

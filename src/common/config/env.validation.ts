@@ -74,6 +74,19 @@ export const envValidationSchema = Joi.object({
   // When true, a failed audit write also fails the mutation being audited.
   AUDIT_LOG_FAIL_CLOSED: Joi.boolean().default(false),
 
+  // ─── Scholarships ───────────────────────────────────────────────────────────
+  // Base64-encoded 32-byte key used to encrypt milestone evidence payloads at
+  // rest (AES-256-GCM). Required in production; development falls back to a key
+  // derived from JWT_SECRET and logs a warning.
+  SCHOLARSHIP_EVIDENCE_ENCRYPTION_KEY: Joi.string()
+    .base64()
+    .min(44)
+    .when('NODE_ENV', { is: 'production', then: Joi.required() }),
+  // Stored beside every ciphertext so a key rotation can be detected.
+  SCHOLARSHIP_EVIDENCE_ENCRYPTION_KEY_ID: Joi.string()
+    .pattern(/^[A-Za-z0-9._-]{1,32}$/)
+    .default('v1'),
+
   // ─── Uploads: quarantine, scanning and quotas ───────────────────────────────
   // Storage root for uploaded files. Must be outside any web-served directory.
   UPLOAD_STORAGE_ROOT: Joi.string().default('var/uploads'),
@@ -91,6 +104,53 @@ export const envValidationSchema = Joi.object({
   MALWARE_SCAN_PORT: Joi.number().port().default(3310),
   MALWARE_SCAN_TIMEOUT_MS: Joi.number().integer().positive().default(30000),
 
+  // ─── Scholarship disbursements ──────────────────────────────────────────────
+  // Secret key of the treasury account that signs scholarship payouts. Optional:
+  // when unset the executor refuses to run, so payouts fail closed.
+  SCHOLARSHIP_TREASURY_SECRET: Joi.string()
+    .pattern(/^S[A-Z2-7]{55}$/)
+    .optional(),
+  // Shared secret that automation presents in `X-Automation-Token` to trigger
+  // runs over HTTP. When unset the automation endpoints are disabled.
+  SCHOLARSHIP_AUTOMATION_TOKEN: Joi.string().min(32).optional(),
+  // In-process cron for execution and reconciliation. Off by default.
+  SCHOLARSHIP_DISBURSEMENT_CRON_ENABLED: Joi.boolean().default(false),
+  SCHOLARSHIP_REQUIRED_CONFIRMATIONS: Joi.number()
+    .integer()
+    .min(1)
+    .max(100)
+    .default(1),
+  SCHOLARSHIP_BATCH_SIZE: Joi.number().integer().min(1).max(100).default(25),
+  SCHOLARSHIP_SUBMISSION_TIMEOUT_SECONDS: Joi.number()
+    .integer()
+    .min(30)
+    .max(3600)
+    .default(180),
+  SCHOLARSHIP_EXPIRY_GRACE_SECONDS: Joi.number()
+    .integer()
+    .min(0)
+    .max(3600)
+    .default(60),
+  SCHOLARSHIP_BASE_FEE_STROOPS: Joi.number()
+    .integer()
+    .min(100)
+    .max(1000000)
+    .default(100),
+  SCHOLARSHIP_LEASE_SECONDS: Joi.number()
+    .integer()
+    .min(30)
+    .max(3600)
+    .default(300),
+  SCHOLARSHIP_WALLET_CHALLENGE_TTL_SECONDS: Joi.number()
+    .integer()
+    .min(60)
+    .max(3600)
+    .default(600),
+  SCHOLARSHIP_WALLET_CHALLENGE_MAX_ATTEMPTS: Joi.number()
+    .integer()
+    .min(1)
+    .max(10)
+    .default(5),
   // ─── Webhook security ─────────────────────────────────────────────────────
   // Shared secret for verifying incoming webhook HMAC-SHA256 signatures.
   WEBHOOK_SECRET: Joi.string().min(16).optional(),

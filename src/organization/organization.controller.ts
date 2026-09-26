@@ -23,6 +23,7 @@ import { AuditActor } from '../common/audit/audit-context';
 import type { AuditContext } from '../common/audit/audit-context';
 
 @ApiBearerAuth('access-token')
+@Controller(['organizations', 'organization', 'v1/organization'])
 @ApiTags('Organizations')
 @Controller('organizations')
 export class OrganizationController {

@@ -1,4 +1,5 @@
 0-# Scholarship Budget Reservations
+# Scholarship Budget Reservations
 
 **Issue:** [#1149](https://github.com/Gen-x-academy/chainVerse-backend/issues/1149)  
 **Domain:** Scholarships — Award Decision / Budget  
