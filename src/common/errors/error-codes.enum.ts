@@ -314,6 +314,91 @@ export enum ErrorCode {
   /** totalBudget must be ≥ 0. */
   VAL_BUDGET_AMOUNT_INVALID = 'VAL_BUDGET_AMOUNT_INVALID',
 
+  // ── Scholarships: award records (#1151) ───────────────────────────────────
+  /** The scholarship award record was not found. */
+  RES_SCHOLARSHIP_AWARD_NOT_FOUND = 'RES_SCHOLARSHIP_AWARD_NOT_FOUND',
+  /** An active award already exists for this application; cannot create a second. */
+  BIZ_AWARD_ALREADY_EXISTS = 'BIZ_AWARD_ALREADY_EXISTS',
+  /**
+   * The applicant already holds a conflicting active award (PENDING_ACCEPTANCE
+   * or ACCEPTED) in another program within the same organization.
+   */
+  BIZ_AWARD_CONFLICT = 'BIZ_AWARD_CONFLICT',
+  /** The acceptance deadline supplied is not in the future. */
+  VAL_AWARD_ACCEPTANCE_DEADLINE_PAST = 'VAL_AWARD_ACCEPTANCE_DEADLINE_PAST',
+  /** The award is not in a state that allows the requested transition. */
+  BIZ_AWARD_INVALID_STATE = 'BIZ_AWARD_INVALID_STATE',
+  /** The acceptance deadline has already passed; the offer has expired. */
+  BIZ_AWARD_OFFER_EXPIRED = 'BIZ_AWARD_OFFER_EXPIRED',
+  /**
+   * The authenticated user is not the applicant on this award.
+   * Acceptance must be performed by the applicant themselves.
+   */
+  BIZ_AWARD_ACCEPTANCE_FORBIDDEN = 'BIZ_AWARD_ACCEPTANCE_FORBIDDEN',
+  /** At least one milestone start date is not before its end date. */
+  VAL_AWARD_MILESTONE_DATE_INVALID = 'VAL_AWARD_MILESTONE_DATE_INVALID',
+
+  // ── Scholarships: award agreement acceptance (#1152) ─────────────────────
+  /** The award agreement document was not found. */
+  RES_AWARD_AGREEMENT_NOT_FOUND = 'RES_AWARD_AGREEMENT_NOT_FOUND',
+  /**
+   * Agreement documents are immutable once created; they cannot be modified
+   * or deleted.  A new version must be created instead.
+   */
+  BIZ_AWARD_AGREEMENT_IMMUTABLE = 'BIZ_AWARD_AGREEMENT_IMMUTABLE',
+  /**
+   * The applicant has declined this award offer; no agreement may be recorded
+   * against a DECLINED or OFFER_EXPIRED award.
+   */
+  BIZ_AGREEMENT_DECLINED_OFFER = 'BIZ_AGREEMENT_DECLINED_OFFER',
+  /**
+   * The operation requires the award to be in ACCEPTED state (i.e. the
+   * agreement has already been signed), but it is not.
+   */
+  BIZ_AGREEMENT_NOT_ACCEPTED = 'BIZ_AGREEMENT_NOT_ACCEPTED',
+  /**
+   * One or more required declarations in the acceptance body were not
+   * acknowledged (value !== true).
+   */
+  VAL_AGREEMENT_DECLARATIONS_INCOMPLETE = 'VAL_AGREEMENT_DECLARATIONS_INCOMPLETE',
+  /**
+   * An agreement has already been recorded for this award; duplicate
+   * acceptance attempts are rejected to preserve immutability.
+   */
+  BIZ_AWARD_AGREEMENT_ALREADY_EXISTS = 'BIZ_AWARD_AGREEMENT_ALREADY_EXISTS',
+
+  // ── Scholarships: applicant appeals (#1150) ───────────────────────────────
+  /** The appeal document was not found. */
+  RES_APPEAL_NOT_FOUND = 'RES_APPEAL_NOT_FOUND',
+  /**
+   * An active appeal (PENDING or UNDER_REVIEW) already exists for this
+   * application; only one active appeal is permitted at a time.
+   */
+  BIZ_APPEAL_ALREADY_ACTIVE = 'BIZ_APPEAL_ALREADY_ACTIVE',
+  /**
+   * Appeals may only be filed against applications with status REJECTED or
+   * a CommitteeDecision outcome of REJECTED.
+   */
+  BIZ_APPEAL_NOT_ELIGIBLE = 'BIZ_APPEAL_NOT_ELIGIBLE',
+  /** The appeal is not in a state that permits the requested transition. */
+  BIZ_APPEAL_INVALID_STATE = 'BIZ_APPEAL_INVALID_STATE',
+  /**
+   * The proposed reviewer is in the excluded list (they were an original
+   * reviewer on the application) and cannot review the appeal.
+   */
+  BIZ_APPEAL_REVIEWER_EXCLUDED = 'BIZ_APPEAL_REVIEWER_EXCLUDED',
+  /**
+   * Only the applicant who filed the appeal may withdraw it.
+   */
+  BIZ_APPEAL_WITHDRAW_FORBIDDEN = 'BIZ_APPEAL_WITHDRAW_FORBIDDEN',
+  /**
+   * The `resolution` value supplied to the resolve endpoint must be
+   * UPHELD or DISMISSED — not a lifecycle state such as PENDING or EXPIRED.
+   */
+  BIZ_APPEAL_RESOLUTION_INVALID = 'BIZ_APPEAL_RESOLUTION_INVALID',
+  /** resolutionDeadline must be a future date. */
+  VAL_APPEAL_DEADLINE_PAST = 'VAL_APPEAL_DEADLINE_PAST',
+
   // ── System ────────────────────────────────────────────────────────────────
   SYS_INTERNAL_ERROR = 'SYS_INTERNAL_ERROR',
   SYS_SERVICE_UNAVAILABLE = 'SYS_SERVICE_UNAVAILABLE',
