@@ -92,7 +92,6 @@ import { VerificationModule } from './verification/verification.module';
 import { ScholarshipDisbursementModule } from './scholarship-disbursement/scholarship-disbursement.module';
 import { ScholarshipModule } from './scholarship/scholarship.module';
 import { ELibraryModule } from './e-library/e-library.module';
-import { ScholarshipsModule } from './scholarships/scholarships.module';
 
 @Module({
   imports: [
@@ -169,6 +168,8 @@ import { ScholarshipsModule } from './scholarships/scholarships.module';
     StudentSavedCoursesModule,
     StudentCartModule,
     StudentEnrollmentModule,
+    EventsModule,
+    LibraryCirculationModule,
     // Analytics
     CourseAnalyticsModule,
     // Scholarship finance
