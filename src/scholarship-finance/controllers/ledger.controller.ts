@@ -22,7 +22,7 @@ import {
 @ApiTags('Scholarship Finance — Ledger & Audit')
 @FinanceController()
 @Controller('organizations/:organizationId/scholarship-finance')
-export class LedgerController {
+export class FinanceLedgerController {
   constructor(
     private readonly ledger: LedgerService,
     private readonly audit: FinanceAuditService,

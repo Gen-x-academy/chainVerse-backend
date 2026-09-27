@@ -56,7 +56,7 @@ export class TenantAccessService {
     const membership = await this.memberModel
       .findOne({
         organizationId,
-        userId: user.id,
+        userId: user.sub,
         role: { $in: roles },
         deletedAt: null,
       })
