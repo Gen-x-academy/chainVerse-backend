@@ -314,6 +314,58 @@ export enum ErrorCode {
   /** totalBudget must be ≥ 0. */
   VAL_BUDGET_AMOUNT_INVALID = 'VAL_BUDGET_AMOUNT_INVALID',
 
+  // ── Scholarship Student Dashboard (#1200) ─────────────────────────────────
+  /** The student dashboard snapshot was not found. */
+  RES_STUDENT_DASHBOARD_NOT_FOUND = 'RES_STUDENT_DASHBOARD_NOT_FOUND',
+  /** The applicant has no programs available to display. */
+  BIZ_NO_DISCOVERABLE_PROGRAMS = 'BIZ_NO_DISCOVERABLE_PROGRAMS',
+  /** Draft application not found for this applicant. */
+  RES_DRAFT_APPLICATION_NOT_FOUND = 'RES_DRAFT_APPLICATION_NOT_FOUND',
+  /** Duplicate draft — applicant already has a draft for this program. */
+  BIZ_DRAFT_ALREADY_EXISTS = 'BIZ_DRAFT_ALREADY_EXISTS',
+  /** Draft cannot be submitted — required fields are missing. */
+  BIZ_DRAFT_INCOMPLETE = 'BIZ_DRAFT_INCOMPLETE',
+  /** The action requires the caller to own the draft. */
+  BIZ_DRAFT_OWNERSHIP_REQUIRED = 'BIZ_DRAFT_OWNERSHIP_REQUIRED',
+
+  // ── Scholarship Sponsor Dashboard (#1201) ─────────────────────────────────
+  /** No sponsor profile found for this organization. */
+  RES_SPONSOR_PROFILE_NOT_FOUND = 'RES_SPONSOR_PROFILE_NOT_FOUND',
+  /** The sponsor summary snapshot is stale and needs a refresh. */
+  BIZ_SPONSOR_SUMMARY_STALE = 'BIZ_SPONSOR_SUMMARY_STALE',
+  /** The program budget summary does not reconcile with ledger entries. */
+  BIZ_BUDGET_RECONCILIATION_MISMATCH = 'BIZ_BUDGET_RECONCILIATION_MISMATCH',
+  /** Impact indicators are not yet available for this program cycle. */
+  BIZ_IMPACT_DATA_UNAVAILABLE = 'BIZ_IMPACT_DATA_UNAVAILABLE',
+
+  // ── Scholarship Reviewer Dashboard (#1202) ────────────────────────────────
+  /** The reviewer's assignment list is empty. */
+  BIZ_NO_REVIEWER_ASSIGNMENTS = 'BIZ_NO_REVIEWER_ASSIGNMENTS',
+  /** A reviewer conflict of interest was detected for this application. */
+  BIZ_REVIEWER_CONFLICT_OF_INTEREST = 'BIZ_REVIEWER_CONFLICT_OF_INTEREST',
+  /** The reviewer deadline has passed for this assignment. */
+  BIZ_REVIEWER_DEADLINE_PASSED = 'BIZ_REVIEWER_DEADLINE_PASSED',
+  /** The blind-review setting prevents this identity disclosure. */
+  BIZ_BLIND_REVIEW_DISCLOSURE_BLOCKED = 'BIZ_BLIND_REVIEW_DISCLOSURE_BLOCKED',
+  /** The reviewer workload count is inconsistent with stored assignments. */
+  BIZ_REVIEWER_WORKLOAD_MISMATCH = 'BIZ_REVIEWER_WORKLOAD_MISMATCH',
+  /** Reviewer assignment not found. */
+  RES_REVIEWER_ASSIGNMENT_NOT_FOUND = 'RES_REVIEWER_ASSIGNMENT_NOT_FOUND',
+
+  // ── Scholarship Finance Statement (#1203) ─────────────────────────────────
+  /** Finance statement document not found. */
+  RES_FINANCE_STATEMENT_NOT_FOUND = 'RES_FINANCE_STATEMENT_NOT_FOUND',
+  /** Statement date range is invalid (start must be before end). */
+  VAL_STATEMENT_DATE_RANGE_INVALID = 'VAL_STATEMENT_DATE_RANGE_INVALID',
+  /** Statement does not reconcile with ledger entries for the period. */
+  BIZ_STATEMENT_RECONCILIATION_FAILED = 'BIZ_STATEMENT_RECONCILIATION_FAILED',
+  /** The export job is already running; concurrent exports are not allowed. */
+  BIZ_STATEMENT_EXPORT_IN_PROGRESS = 'BIZ_STATEMENT_EXPORT_IN_PROGRESS',
+  /** No ledger entries found in the requested period. */
+  BIZ_STATEMENT_NO_ENTRIES = 'BIZ_STATEMENT_NO_ENTRIES',
+  /** Currency metadata is inconsistent across the requested period. */
+  BIZ_STATEMENT_CURRENCY_MISMATCH = 'BIZ_STATEMENT_CURRENCY_MISMATCH',
+
   // ── System ────────────────────────────────────────────────────────────────
   SYS_INTERNAL_ERROR = 'SYS_INTERNAL_ERROR',
   SYS_SERVICE_UNAVAILABLE = 'SYS_SERVICE_UNAVAILABLE',
