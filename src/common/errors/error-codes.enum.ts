@@ -314,57 +314,90 @@ export enum ErrorCode {
   /** totalBudget must be ≥ 0. */
   VAL_BUDGET_AMOUNT_INVALID = 'VAL_BUDGET_AMOUNT_INVALID',
 
-  // ── Scholarship Student Dashboard (#1200) ─────────────────────────────────
-  /** The student dashboard snapshot was not found. */
-  RES_STUDENT_DASHBOARD_NOT_FOUND = 'RES_STUDENT_DASHBOARD_NOT_FOUND',
-  /** The applicant has no programs available to display. */
-  BIZ_NO_DISCOVERABLE_PROGRAMS = 'BIZ_NO_DISCOVERABLE_PROGRAMS',
-  /** Draft application not found for this applicant. */
-  RES_DRAFT_APPLICATION_NOT_FOUND = 'RES_DRAFT_APPLICATION_NOT_FOUND',
-  /** Duplicate draft — applicant already has a draft for this program. */
-  BIZ_DRAFT_ALREADY_EXISTS = 'BIZ_DRAFT_ALREADY_EXISTS',
-  /** Draft cannot be submitted — required fields are missing. */
-  BIZ_DRAFT_INCOMPLETE = 'BIZ_DRAFT_INCOMPLETE',
-  /** The action requires the caller to own the draft. */
-  BIZ_DRAFT_OWNERSHIP_REQUIRED = 'BIZ_DRAFT_OWNERSHIP_REQUIRED',
+  // ── Scholarships: award records (#1151) ───────────────────────────────────
+  /** The scholarship award record was not found. */
+  RES_SCHOLARSHIP_AWARD_NOT_FOUND = 'RES_SCHOLARSHIP_AWARD_NOT_FOUND',
+  /** An active award already exists for this application; cannot create a second. */
+  BIZ_AWARD_ALREADY_EXISTS = 'BIZ_AWARD_ALREADY_EXISTS',
+  /**
+   * The applicant already holds a conflicting active award (PENDING_ACCEPTANCE
+   * or ACCEPTED) in another program within the same organization.
+   */
+  BIZ_AWARD_CONFLICT = 'BIZ_AWARD_CONFLICT',
+  /** The acceptance deadline supplied is not in the future. */
+  VAL_AWARD_ACCEPTANCE_DEADLINE_PAST = 'VAL_AWARD_ACCEPTANCE_DEADLINE_PAST',
+  /** The award is not in a state that allows the requested transition. */
+  BIZ_AWARD_INVALID_STATE = 'BIZ_AWARD_INVALID_STATE',
+  /** The acceptance deadline has already passed; the offer has expired. */
+  BIZ_AWARD_OFFER_EXPIRED = 'BIZ_AWARD_OFFER_EXPIRED',
+  /**
+   * The authenticated user is not the applicant on this award.
+   * Acceptance must be performed by the applicant themselves.
+   */
+  BIZ_AWARD_ACCEPTANCE_FORBIDDEN = 'BIZ_AWARD_ACCEPTANCE_FORBIDDEN',
+  /** At least one milestone start date is not before its end date. */
+  VAL_AWARD_MILESTONE_DATE_INVALID = 'VAL_AWARD_MILESTONE_DATE_INVALID',
 
-  // ── Scholarship Sponsor Dashboard (#1201) ─────────────────────────────────
-  /** No sponsor profile found for this organization. */
-  RES_SPONSOR_PROFILE_NOT_FOUND = 'RES_SPONSOR_PROFILE_NOT_FOUND',
-  /** The sponsor summary snapshot is stale and needs a refresh. */
-  BIZ_SPONSOR_SUMMARY_STALE = 'BIZ_SPONSOR_SUMMARY_STALE',
-  /** The program budget summary does not reconcile with ledger entries. */
-  BIZ_BUDGET_RECONCILIATION_MISMATCH = 'BIZ_BUDGET_RECONCILIATION_MISMATCH',
-  /** Impact indicators are not yet available for this program cycle. */
-  BIZ_IMPACT_DATA_UNAVAILABLE = 'BIZ_IMPACT_DATA_UNAVAILABLE',
+  // ── Scholarships: award agreement acceptance (#1152) ─────────────────────
+  /** The award agreement document was not found. */
+  RES_AWARD_AGREEMENT_NOT_FOUND = 'RES_AWARD_AGREEMENT_NOT_FOUND',
+  /**
+   * Agreement documents are immutable once created; they cannot be modified
+   * or deleted.  A new version must be created instead.
+   */
+  BIZ_AWARD_AGREEMENT_IMMUTABLE = 'BIZ_AWARD_AGREEMENT_IMMUTABLE',
+  /**
+   * The applicant has declined this award offer; no agreement may be recorded
+   * against a DECLINED or OFFER_EXPIRED award.
+   */
+  BIZ_AGREEMENT_DECLINED_OFFER = 'BIZ_AGREEMENT_DECLINED_OFFER',
+  /**
+   * The operation requires the award to be in ACCEPTED state (i.e. the
+   * agreement has already been signed), but it is not.
+   */
+  BIZ_AGREEMENT_NOT_ACCEPTED = 'BIZ_AGREEMENT_NOT_ACCEPTED',
+  /**
+   * One or more required declarations in the acceptance body were not
+   * acknowledged (value !== true).
+   */
+  VAL_AGREEMENT_DECLARATIONS_INCOMPLETE = 'VAL_AGREEMENT_DECLARATIONS_INCOMPLETE',
+  /**
+   * An agreement has already been recorded for this award; duplicate
+   * acceptance attempts are rejected to preserve immutability.
+   */
+  BIZ_AWARD_AGREEMENT_ALREADY_EXISTS = 'BIZ_AWARD_AGREEMENT_ALREADY_EXISTS',
 
-  // ── Scholarship Reviewer Dashboard (#1202) ────────────────────────────────
-  /** The reviewer's assignment list is empty. */
-  BIZ_NO_REVIEWER_ASSIGNMENTS = 'BIZ_NO_REVIEWER_ASSIGNMENTS',
-  /** A reviewer conflict of interest was detected for this application. */
-  BIZ_REVIEWER_CONFLICT_OF_INTEREST = 'BIZ_REVIEWER_CONFLICT_OF_INTEREST',
-  /** The reviewer deadline has passed for this assignment. */
-  BIZ_REVIEWER_DEADLINE_PASSED = 'BIZ_REVIEWER_DEADLINE_PASSED',
-  /** The blind-review setting prevents this identity disclosure. */
-  BIZ_BLIND_REVIEW_DISCLOSURE_BLOCKED = 'BIZ_BLIND_REVIEW_DISCLOSURE_BLOCKED',
-  /** The reviewer workload count is inconsistent with stored assignments. */
-  BIZ_REVIEWER_WORKLOAD_MISMATCH = 'BIZ_REVIEWER_WORKLOAD_MISMATCH',
-  /** Reviewer assignment not found. */
-  RES_REVIEWER_ASSIGNMENT_NOT_FOUND = 'RES_REVIEWER_ASSIGNMENT_NOT_FOUND',
-
-  // ── Scholarship Finance Statement (#1203) ─────────────────────────────────
-  /** Finance statement document not found. */
-  RES_FINANCE_STATEMENT_NOT_FOUND = 'RES_FINANCE_STATEMENT_NOT_FOUND',
-  /** Statement date range is invalid (start must be before end). */
-  VAL_STATEMENT_DATE_RANGE_INVALID = 'VAL_STATEMENT_DATE_RANGE_INVALID',
-  /** Statement does not reconcile with ledger entries for the period. */
-  BIZ_STATEMENT_RECONCILIATION_FAILED = 'BIZ_STATEMENT_RECONCILIATION_FAILED',
-  /** The export job is already running; concurrent exports are not allowed. */
-  BIZ_STATEMENT_EXPORT_IN_PROGRESS = 'BIZ_STATEMENT_EXPORT_IN_PROGRESS',
-  /** No ledger entries found in the requested period. */
-  BIZ_STATEMENT_NO_ENTRIES = 'BIZ_STATEMENT_NO_ENTRIES',
-  /** Currency metadata is inconsistent across the requested period. */
-  BIZ_STATEMENT_CURRENCY_MISMATCH = 'BIZ_STATEMENT_CURRENCY_MISMATCH',
+  // ── Scholarships: applicant appeals (#1150) ───────────────────────────────
+  /** The appeal document was not found. */
+  RES_APPEAL_NOT_FOUND = 'RES_APPEAL_NOT_FOUND',
+  /**
+   * An active appeal (PENDING or UNDER_REVIEW) already exists for this
+   * application; only one active appeal is permitted at a time.
+   */
+  BIZ_APPEAL_ALREADY_ACTIVE = 'BIZ_APPEAL_ALREADY_ACTIVE',
+  /**
+   * Appeals may only be filed against applications with status REJECTED or
+   * a CommitteeDecision outcome of REJECTED.
+   */
+  BIZ_APPEAL_NOT_ELIGIBLE = 'BIZ_APPEAL_NOT_ELIGIBLE',
+  /** The appeal is not in a state that permits the requested transition. */
+  BIZ_APPEAL_INVALID_STATE = 'BIZ_APPEAL_INVALID_STATE',
+  /**
+   * The proposed reviewer is in the excluded list (they were an original
+   * reviewer on the application) and cannot review the appeal.
+   */
+  BIZ_APPEAL_REVIEWER_EXCLUDED = 'BIZ_APPEAL_REVIEWER_EXCLUDED',
+  /**
+   * Only the applicant who filed the appeal may withdraw it.
+   */
+  BIZ_APPEAL_WITHDRAW_FORBIDDEN = 'BIZ_APPEAL_WITHDRAW_FORBIDDEN',
+  /**
+   * The `resolution` value supplied to the resolve endpoint must be
+   * UPHELD or DISMISSED — not a lifecycle state such as PENDING or EXPIRED.
+   */
+  BIZ_APPEAL_RESOLUTION_INVALID = 'BIZ_APPEAL_RESOLUTION_INVALID',
+  /** resolutionDeadline must be a future date. */
+  VAL_APPEAL_DEADLINE_PAST = 'VAL_APPEAL_DEADLINE_PAST',
 
   // ── System ────────────────────────────────────────────────────────────────
   SYS_INTERNAL_ERROR = 'SYS_INTERNAL_ERROR',

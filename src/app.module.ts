@@ -87,18 +87,6 @@ import { EventsModule } from './events/events.module';
 import { LibraryCirculationModule } from './library-circulation/library-circulation.module';
 import { ELibraryModule } from './e-library/e-library.module';
 
-// Scholarship domain modules
-import { ScholarshipsModule } from './scholarships/scholarships.module';
-import { ScholarshipModule } from './scholarship/scholarship.module';
-import { ScholarshipDisbursementModule } from './scholarship-disbursement/scholarship-disbursement.module';
-import { ScholarshipFinanceModule } from './scholarship-finance/scholarship-finance.module';
-
-// Scholarship dashboard modules (new)
-import { ScholarshipStudentDashboardModule } from './scholarship-student-dashboard/scholarship-student-dashboard.module';
-import { ScholarshipSponsorDashboardModule } from './scholarship-sponsor-dashboard/scholarship-sponsor-dashboard.module';
-import { ScholarshipReviewerDashboardModule } from './scholarship-reviewer-dashboard/scholarship-reviewer-dashboard.module';
-import { ScholarshipFinanceStatementModule } from './scholarship-finance-statement/scholarship-finance-statement.module';
-
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -174,6 +162,15 @@ import { ScholarshipFinanceStatementModule } from './scholarship-finance-stateme
     StudentSavedCoursesModule,
     StudentCartModule,
     StudentEnrollmentModule,
+    EventsModule,
+    LibraryCirculationModule,
+    // Analytics
+    CourseAnalyticsModule,
+    // Scholarship finance
+    // Scholarships
+    ScholarshipFinanceModule,
+    // E-Library
+    ELibraryModule,
     StudentAccountSettingsModule,
     StudentCertificateNameChangeRequestModule,
     StudentReportsAnalyticsModule,

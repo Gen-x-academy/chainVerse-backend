@@ -44,6 +44,21 @@ import {
   ApplicationForm,
   ApplicationFormSchema,
 } from './schemas/application-form.schema';
+// Award records (#1151)
+import {
+  ScholarshipAward,
+  ScholarshipAwardSchema,
+} from './schemas/scholarship-award.schema';
+// Award agreement acceptance (#1152)
+import {
+  AwardAgreement,
+  AwardAgreementSchema,
+} from './schemas/award-agreement.schema';
+// Applicant appeals (#1150)
+import {
+  ApplicationAppeal,
+  ApplicationAppealSchema,
+} from './schemas/application-appeal.schema';
 import {
   ScholarshipReview,
   ScholarshipReviewSchema,
@@ -71,6 +86,12 @@ import { EligibilityRuleService } from './services/eligibility-rule.service';
 import { PrerequisiteExclusionService } from './services/prerequisite-exclusion.service';
 import { EligibilityAttestationService } from './services/eligibility-attestation.service';
 import { ApplicationFormService } from './services/application-form.service';
+// Award records (#1151)
+import { ScholarshipAwardService } from './services/scholarship-award.service';
+// Award agreement acceptance (#1152)
+import { AwardAgreementService } from './services/award-agreement.service';
+// Applicant appeals (#1150)
+import { ApplicationAppealService } from './services/application-appeal.service';
 import { ScholarshipReviewService } from './services/scholarship-review.service';
 import { CommitteeDecisionService } from './services/committee-decision.service';
 import { ReviewInfoRequestService } from './services/review-info-request.service';
@@ -86,6 +107,22 @@ import {
   ApplicantAttestationController,
 } from './controllers/eligibility-attestation.controller';
 import { ApplicationFormController } from './controllers/application-form.controller';
+// Award records (#1151)
+import {
+  ScholarshipAwardController,
+  ScholarshipAwardMutationController,
+  ApplicantAwardController,
+} from './controllers/scholarship-award.controller';
+// Award agreement acceptance (#1152)
+import {
+  ApplicantAwardAgreementController,
+  StaffAwardAgreementController,
+} from './controllers/award-agreement.controller';
+// Applicant appeals (#1150)
+import {
+  ApplicantAppealController,
+  StaffAppealController,
+} from './controllers/application-appeal.controller';
 import { ScholarshipReviewController } from './controllers/scholarship-review.controller';
 import { CommitteeDecisionController } from './controllers/committee-decision.controller';
 import { ReviewInfoRequestController } from './controllers/review-info-request.controller';
@@ -101,6 +138,10 @@ import { BudgetReservationController } from './controllers/budget-reservation.co
  *  - Prerequisite & exclusion rules (#1128)
  *  - Eligibility attestations (#1129)
  *  - Configurable application forms (#1131)
+ *  - Scholarship award records + lifecycle (#1151)
+ *  - Award agreement acceptance + declarations (#1152)
+ *  - Applicant appeals against eligible decisions (#1150)
+ *  - Award cancellation and termination (#1153)
  *  - Normalized aggregate review scores (#1147)
  *  - Committee decision workflow (#1148)
  *  - Reviewer info requests (#1146)
@@ -120,6 +161,12 @@ import { BudgetReservationController } from './controllers/budget-reservation.co
       { name: ApplicationForm.name, schema: ApplicationFormSchema },
       // Registered so OrganizationRolesGuard can resolve tenant memberships.
       { name: OrganizationMember.name, schema: OrganizationMemberSchema },
+      // Award records (#1151)
+      { name: ScholarshipAward.name, schema: ScholarshipAwardSchema },
+      // Award agreement acceptance (#1152)
+      { name: AwardAgreement.name, schema: AwardAgreementSchema },
+      // Applicant appeals (#1150)
+      { name: ApplicationAppeal.name, schema: ApplicationAppealSchema },
       // Review scoring (#1147)
       { name: ScholarshipReview.name, schema: ScholarshipReviewSchema },
       // Committee decisions (#1148)
@@ -140,6 +187,16 @@ import { BudgetReservationController } from './controllers/budget-reservation.co
     EligibilityAttestationController,
     ApplicantAttestationController,
     ApplicationFormController,
+    // Award records (#1151)
+    ScholarshipAwardController,
+    ScholarshipAwardMutationController,
+    ApplicantAwardController,
+    // Award agreement acceptance (#1152)
+    ApplicantAwardAgreementController,
+    StaffAwardAgreementController,
+    // Applicant appeals (#1150)
+    ApplicantAppealController,
+    StaffAppealController,
     ScholarshipReviewController,
     CommitteeDecisionController,
     ReviewInfoRequestController,
@@ -153,6 +210,12 @@ import { BudgetReservationController } from './controllers/budget-reservation.co
     PrerequisiteExclusionService,
     EligibilityAttestationService,
     ApplicationFormService,
+    // Award records (#1151)
+    ScholarshipAwardService,
+    // Award agreement acceptance (#1152)
+    AwardAgreementService,
+    // Applicant appeals (#1150)
+    ApplicationAppealService,
     ScholarshipReviewService,
     CommitteeDecisionService,
     ReviewInfoRequestService,
@@ -167,6 +230,12 @@ import { BudgetReservationController } from './controllers/budget-reservation.co
     PrerequisiteExclusionService,
     EligibilityAttestationService,
     ApplicationFormService,
+    // Award records (#1151)
+    ScholarshipAwardService,
+    // Award agreement acceptance (#1152)
+    AwardAgreementService,
+    // Applicant appeals (#1150)
+    ApplicationAppealService,
     ScholarshipReviewService,
     CommitteeDecisionService,
     ReviewInfoRequestService,
