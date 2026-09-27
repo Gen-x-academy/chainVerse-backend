@@ -92,33 +92,20 @@ export class ScholarshipProgramsService {
   }
 
   /**
-   * Legacy status setter — no transition validation, kept for compatibility.
-   * New callers should use `transitionProgramStatus` which enforces the state
-   * machine and records the actor/timestamp.
-   */
-  async setProgramStatus(
-    organizationId: string,
-    programId: string,
-    status: ScholarshipProgramStatus,
-  ): Promise<ScholarshipProgramDocument> {
-    await this.getProgram(organizationId, programId);
-    return (await this.programModel
-      .findOneAndUpdate(
-        { _id: programId, organizationId },
-        { $set: { status } },
-        { new: true },
-      )
-      .exec()) as ScholarshipProgramDocument;
-  }
-
-  /**
    * Validates and applies a lifecycle status transition (issue #1122).
+   *
+   * This is the only way a program's status may change.  The legacy
+   * `setProgramStatus` bypass (which wrote an arbitrary status with no
+   * state-machine check) was removed in #1248, because it allowed a CLOSED
+   * or ARCHIVED program to be silently reopened without an audit entry.
    *
    * Rules enforced:
    *   1. The program must exist in the requesting organization (tenant guard).
    *   2. Archived programs cannot be transitioned further.
    *   3. The `(current → requested)` pair must appear in PROGRAM_STATUS_TRANSITIONS.
    *   4. The transition is recorded in `statusHistory` (append-only audit trail).
+   *   5. The write is conditional on the status read in step 1, so two
+   *      concurrent transitions cannot both succeed.
    *
    * @param organizationId  Tenant scope — verified by OrganizationRolesGuard before this call.
    * @param programId       MongoDB ObjectId of the program.
@@ -156,7 +143,7 @@ export class ScholarshipProgramsService {
       changedAt: now,
     };
 
-    return (await this.programModel
+    const updated = await this.programModel
       .findOneAndUpdate(
         { _id: programId, organizationId, status: program.status },
         {
@@ -169,7 +156,18 @@ export class ScholarshipProgramsService {
         },
         { new: true },
       )
-      .exec()) as ScholarshipProgramDocument;
+      .exec();
+
+    // The conditional filter means a concurrent transition already moved the
+    // program out of `program.status`; surface that instead of returning null.
+    if (!updated) {
+      throw new ResourceConflictException(
+        'The program changed status concurrently; re-read it and retry',
+        ErrorCode.BIZ_PROGRAM_INVALID_TRANSITION,
+      );
+    }
+
+    return updated as ScholarshipProgramDocument;
   }
 
   async createTermsDraft(

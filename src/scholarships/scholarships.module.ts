@@ -77,6 +77,13 @@ import {
   BudgetReservation,
   BudgetReservationSchema,
 } from './schemas/budget-reservation.schema';
+// Personalized matching (#1176)
+import {
+  ScholarshipInterestProfile,
+  ScholarshipInterestProfileSchema,
+  ScholarshipMatchDismissal,
+  ScholarshipMatchDismissalSchema,
+} from './matching/schemas/matching.schema';
 
 // ── Services ──────────────────────────────────────────────────────────────────
 import { ScholarshipProgramsService } from './services/scholarship-programs.service';
@@ -96,6 +103,8 @@ import { ScholarshipReviewService } from './services/scholarship-review.service'
 import { CommitteeDecisionService } from './services/committee-decision.service';
 import { ReviewInfoRequestService } from './services/review-info-request.service';
 import { BudgetReservationService } from './services/budget-reservation.service';
+// Personalized matching (#1176)
+import { ScholarshipMatchingService } from './matching/services/scholarship-matching.service';
 
 // ── Controllers ───────────────────────────────────────────────────────────────
 import { ScholarshipProgramsController } from './controllers/scholarship-programs.controller';
@@ -127,6 +136,8 @@ import { ScholarshipReviewController } from './controllers/scholarship-review.co
 import { CommitteeDecisionController } from './controllers/committee-decision.controller';
 import { ReviewInfoRequestController } from './controllers/review-info-request.controller';
 import { BudgetReservationController } from './controllers/budget-reservation.controller';
+// Personalized matching (#1176)
+import { ScholarshipMatchingController } from './matching/controllers/scholarship-matching.controller';
 
 /**
  * ScholarshipsModule bundles all scholarship-related features:
@@ -146,6 +157,7 @@ import { BudgetReservationController } from './controllers/budget-reservation.co
  *  - Committee decision workflow (#1148)
  *  - Reviewer info requests (#1146)
  *  - Budget reservations (#1149)
+ *  - Personalized matching with fairness guarantees (#1176)
  */
 @Module({
   imports: [
@@ -176,6 +188,9 @@ import { BudgetReservationController } from './controllers/budget-reservation.co
       // Budget reservations (#1149)
       { name: BudgetLedger.name, schema: BudgetLedgerSchema },
       { name: BudgetReservation.name, schema: BudgetReservationSchema },
+      // Personalized matching (#1176)
+      { name: ScholarshipInterestProfile.name, schema: ScholarshipInterestProfileSchema },
+      { name: ScholarshipMatchDismissal.name, schema: ScholarshipMatchDismissalSchema },
     ]),
     PaginationModule,
   ],
@@ -201,6 +216,8 @@ import { BudgetReservationController } from './controllers/budget-reservation.co
     CommitteeDecisionController,
     ReviewInfoRequestController,
     BudgetReservationController,
+    // Personalized matching (#1176)
+    ScholarshipMatchingController,
   ],
   providers: [
     ScholarshipProgramsService,
@@ -220,6 +237,8 @@ import { BudgetReservationController } from './controllers/budget-reservation.co
     CommitteeDecisionService,
     ReviewInfoRequestService,
     BudgetReservationService,
+    // Personalized matching (#1176)
+    ScholarshipMatchingService,
     OrganizationRolesGuard,
   ],
   exports: [
@@ -240,6 +259,9 @@ import { BudgetReservationController } from './controllers/budget-reservation.co
     CommitteeDecisionService,
     ReviewInfoRequestService,
     BudgetReservationService,
+    // Personalized matching (#1176) — exported so other bounded contexts can
+    // reuse the fairness helpers rather than re-implementing their own ranker.
+    ScholarshipMatchingService,
   ],
 })
 export class ScholarshipsModule {}

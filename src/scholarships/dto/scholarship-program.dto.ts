@@ -60,18 +60,11 @@ export class ScholarshipProgramQueryDto extends OrgScopedQueryDto {
 }
 
 /**
- * DTO for the PATCH /:programId/status endpoint (legacy, kept for backward
- * compatibility with pre-#1122 callers).  New callers should use
- * PATCH /:programId/transition which validates the state machine.
- */
-export class UpdateScholarshipProgramStatusDto {
-  @ApiProperty({ enum: ScholarshipProgramStatus })
-  @IsEnum(ScholarshipProgramStatus)
-  status: ScholarshipProgramStatus;
-}
-
-/**
  * DTO for the program lifecycle transition endpoint (issue #1122).
+ *
+ * This is the only DTO that can change a program's status: the legacy
+ * `UpdateScholarshipProgramStatusDto` (PATCH /:programId/status) was removed in
+ * #1248 together with the unvalidated service method behind it.
  *
  * Authorization notes:
  *   - Only OWNER or ADMIN of the owning organization may trigger transitions.

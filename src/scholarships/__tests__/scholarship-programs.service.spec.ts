@@ -267,6 +267,133 @@ describe('ScholarshipProgramsService', () => {
     });
   });
 
+  describe('program lifecycle state machine (#1248)', () => {
+    const programId = '507f1f77bcf86cd799439011';
+
+    it('does not expose an unvalidated status setter on the service', () => {
+      // The legacy `setProgramStatus` wrote an arbitrary status with no
+      // state-machine check and no audit entry, which allowed a CLOSED or
+      // ARCHIVED program to be silently reopened. It must not come back.
+      const surface = Object.getOwnPropertyNames(
+        ScholarshipProgramsService.prototype,
+      ) as string[];
+      expect(surface).not.toContain('setProgramStatus');
+      expect(
+        surface.filter((name) => /status/i.test(name)),
+      ).toEqual(['transitionProgramStatus']);
+    });
+
+    it('rejects reopening a CLOSED program', async () => {
+      programModel.findOne.mockReturnValue(
+        execResolved(makeProgram({ status: ScholarshipProgramStatus.CLOSED })) as never,
+      );
+
+      await expect(
+        service.transitionProgramStatus(
+          'org-1',
+          programId,
+          ScholarshipProgramStatus.PUBLISHED,
+          'staff-1',
+        ),
+      ).rejects.toMatchObject({
+        code: ErrorCode.BIZ_PROGRAM_INVALID_TRANSITION,
+      });
+      expect(programModel.findOneAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('rejects every transition out of ARCHIVED', async () => {
+      for (const target of Object.values(ScholarshipProgramStatus)) {
+        programModel.findOne.mockReturnValue(
+          execResolved(makeProgram({ status: ScholarshipProgramStatus.ARCHIVED })) as never,
+        );
+
+        await expect(
+          service.transitionProgramStatus('org-1', programId, target, 'staff-1'),
+        ).rejects.toMatchObject({ code: ErrorCode.BIZ_PROGRAM_ARCHIVED });
+      }
+      expect(programModel.findOneAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('rejects skipping a lifecycle step (DRAFT → CLOSED)', async () => {
+      programModel.findOne.mockReturnValue(execResolved(makeProgram()) as never);
+
+      await expect(
+        service.transitionProgramStatus(
+          'org-1',
+          programId,
+          ScholarshipProgramStatus.CLOSED,
+          'staff-1',
+        ),
+      ).rejects.toMatchObject({
+        code: ErrorCode.BIZ_PROGRAM_INVALID_TRANSITION,
+      });
+      expect(programModel.findOneAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('records the actor and timestamp in the append-only history', async () => {
+      programModel.findOne.mockReturnValue(execResolved(makeProgram()) as never);
+      programModel.findOneAndUpdate.mockReturnValue(
+        execResolved(
+          makeProgram({ status: ScholarshipProgramStatus.PUBLISHED }),
+        ) as never,
+      );
+
+      await service.transitionProgramStatus(
+        'org-1',
+        programId,
+        ScholarshipProgramStatus.PUBLISHED,
+        'staff-1',
+      );
+
+      expect(programModel.findOneAndUpdate).toHaveBeenCalledWith(
+        { _id: programId, organizationId: 'org-1', status: ScholarshipProgramStatus.DRAFT },
+        expect.objectContaining({
+          $push: {
+            statusHistory: expect.objectContaining({
+              status: ScholarshipProgramStatus.PUBLISHED,
+              changedBy: 'staff-1',
+              changedAt: expect.any(Date),
+            }),
+          },
+        }),
+        { new: true },
+      );
+    });
+
+    it('reports a conflict when a concurrent transition already moved the program', async () => {
+      // The conditional filter matched nothing, i.e. another actor advanced
+      // the program between our read and our write.
+      programModel.findOne.mockReturnValue(execResolved(makeProgram()) as never);
+      programModel.findOneAndUpdate.mockReturnValue(execResolved(null) as never);
+
+      await expect(
+        service.transitionProgramStatus(
+          'org-1',
+          programId,
+          ScholarshipProgramStatus.PUBLISHED,
+          'staff-1',
+        ),
+      ).rejects.toMatchObject({
+        code: ErrorCode.BIZ_PROGRAM_INVALID_TRANSITION,
+      });
+    });
+
+    it('refuses to transition a program owned by another tenant', async () => {
+      programModel.findOne.mockReturnValue(execResolved(null) as never);
+
+      await expect(
+        service.transitionProgramStatus(
+          'org-2',
+          programId,
+          ScholarshipProgramStatus.PUBLISHED,
+          'staff-1',
+        ),
+      ).rejects.toMatchObject({
+        code: ErrorCode.RES_SCHOLARSHIP_PROGRAM_NOT_FOUND,
+      });
+    });
+  });
+
   describe('published revision immutability', () => {
     it('marks every terms content field immutable at the schema level', () => {
       for (const field of [

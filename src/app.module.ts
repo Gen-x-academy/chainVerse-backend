@@ -52,9 +52,9 @@ import { CourseAnalyticsModule } from './course-analytics/course-analytics.modul
 import { StudentSavedCoursesModule } from './student-saved-courses/student-saved-courses.module';
 import { StudentCartModule } from './student-cart/student-cart.module';
 import { StudentEnrollmentModule } from './student-enrollment/student-enrollment.module';
-import { CourseAnalyticsModule } from './course-analytics/course-analytics.module';
 // Scholarship finance
 import { ScholarshipFinanceModule } from './scholarship-finance/scholarship-finance.module';
+// Platform extras imported by student flows
 import { EventsModule } from './events/events.module';
 import { LibraryCirculationModule } from './library-circulation/library-circulation.module';
 import { StudentAccountSettingsModule } from './student-account-settings/student-account-settings.module';
@@ -170,12 +170,9 @@ import { ELibraryModule } from './e-library/e-library.module';
     StudentEnrollmentModule,
     EventsModule,
     LibraryCirculationModule,
-    // Analytics
-    CourseAnalyticsModule,
     // Scholarship finance
-    // Scholarships
     ScholarshipFinanceModule,
-    // E-Library
+    // E-Library + student reporting
     ELibraryModule,
     StudentAccountSettingsModule,
     StudentCertificateNameChangeRequestModule,
@@ -209,7 +206,6 @@ import { ELibraryModule } from './e-library/e-library.module';
     VerificationModule,
     ScholarshipDisbursementModule,
     ScholarshipModule,
-    ScholarshipsModule,
   ],
   controllers: [AppController],
   providers: [
