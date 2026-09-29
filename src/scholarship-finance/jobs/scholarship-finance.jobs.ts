@@ -3,12 +3,22 @@ import {
   Logger,
   OnApplicationShutdown,
   OnApplicationBootstrap,
+  OnModuleDestroy,
+  OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppConfig } from '../../config/app.config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { DomainEvents } from '../../events/event-names';
 import { PayoutsService } from '../payouts/payouts.service';
 import { ScholarshipProgramService } from '../programs/scholarship-program.service';
 import { ReconciliationService } from '../reconciliation/reconciliation.service';
+import { FundingService } from '../services/funding.service';
+import { BalanceDrift, LedgerService } from '../services/ledger.service';
+import {
+  RecoveryReconciliation,
+  RecoveryService,
+} from '../services/recovery.service';
 
 /**
  * In-process schedulers for the scholarship finance domain.
@@ -20,12 +30,18 @@ import { ReconciliationService } from '../reconciliation/reconciliation.service'
  *
  * Every step is idempotent, so running more than one replica is safe; it
  * only wastes a little work. Ticks never overlap within a process.
+ *
+ * Distinct from {@link ScholarshipFinanceJobs}, which is the periodic
+ * *maintenance* sweep (round closing, ledger drift, recovery reconciliation).
+ * The two are separate classes on purpose: they run on different lifecycles
+ * (`OnApplicationBootstrap` vs `OnModuleInit`) and depend on different
+ * services, so merging them would couple unrelated concerns.
  */
 @Injectable()
-export class ScholarshipFinanceJobs
+export class ScholarshipFinanceSchedulers
   implements OnApplicationBootstrap, OnApplicationShutdown
 {
-  private readonly logger = new Logger(ScholarshipFinanceJobs.name);
+  private readonly logger = new Logger(ScholarshipFinanceSchedulers.name);
   private readonly timers: NodeJS.Timeout[] = [];
   private readonly running = new Set<string>();
 
@@ -102,18 +118,7 @@ export class ScholarshipFinanceJobs
     timer.unref();
     this.timers.push(timer);
   }
-  OnModuleDestroy,
-  OnModuleInit,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { DomainEvents } from '../../events/event-names';
-import { FundingService } from '../services/funding.service';
-import { BalanceDrift, LedgerService } from '../services/ledger.service';
-import {
-  RecoveryReconciliation,
-  RecoveryService,
-} from '../services/recovery.service';
+}
 
 export interface JobRunResult {
   startedAt: Date;

@@ -136,7 +136,7 @@ export class ReceiptsService {
 
   async listMine(user: AuthenticatedUser) {
     const receipts = await this.receiptModel
-      .find({ recipientId: user.id })
+      .find({ recipientId: user.sub })
       .sort({ completedAt: -1 })
       .lean()
       .exec();
@@ -166,7 +166,7 @@ export class ReceiptsService {
       : null;
     const allowed =
       receipt &&
-      (receipt.recipientId === user.id ||
+      (receipt.recipientId === user.sub ||
         (await this.tenant.canRead(user, receipt.organizationId)));
     if (!receipt || !allowed) {
       // Same response whether missing or foreign, to avoid leaking existence.

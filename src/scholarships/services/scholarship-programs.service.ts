@@ -56,11 +56,60 @@ export class ScholarshipProgramsService {
 
   async listPrograms(
     organizationId: string,
-    filters: { status?: ScholarshipProgramStatus },
+    filters: {
+      status?: ScholarshipProgramStatus;
+      search?: string;
+      minAwardValue?: number;
+      maxAwardValue?: number;
+      awardCurrency?: string;
+      deadlineBefore?: Date;
+      deadlineAfter?: Date;
+      fundingType?: 'horizon' | 'manual' | 'deposit';
+      network?: 'testnet' | 'public';
+      includeClosed?: boolean;
+    },
     pagination?: PaginationDto,
   ) {
     const filter: Record<string, unknown> = { organizationId };
     if (filters.status) filter.status = filters.status;
+
+    // The catalog is a discovery surface: by default it must not surface
+    // programs a student can no longer apply to. Staff pass includeClosed=true
+    // for audits and reconciliation.
+    if (!filters.includeClosed) {
+      filter.status = { $in: [ScholarshipProgramStatus.PUBLISHED] };
+    } else if (filters.status) {
+      filter.status = filters.status;
+    }
+
+    if (filters.search) {
+      // Escaped so a query containing regex metacharacters is treated as
+      // literal text rather than being interpreted as a pattern.
+      const needle = filters.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(needle, 'i');
+      filter.$or = [{ title: regex }, { description: regex }];
+    }
+
+    if (filters.minAwardValue !== undefined || filters.maxAwardValue !== undefined) {
+      const range: Record<string, number> = {};
+      if (filters.minAwardValue !== undefined) range.$gte = filters.minAwardValue;
+      if (filters.maxAwardValue !== undefined) range.$lte = filters.maxAwardValue;
+      filter.awardValue = range;
+    }
+
+    if (filters.awardCurrency) {
+      filter.awardCurrency = filters.awardCurrency.toUpperCase();
+    }
+
+    if (filters.deadlineBefore || filters.deadlineAfter) {
+      const range: Record<string, Date> = {};
+      if (filters.deadlineAfter) range.$gte = filters.deadlineAfter;
+      if (filters.deadlineBefore) range.$lte = filters.deadlineBefore;
+      filter.applicationDeadline = range;
+    }
+
+    if (filters.fundingType) filter.fundingType = filters.fundingType;
+    if (filters.network) filter.network = filters.network;
 
     if (pagination) {
       return this.paginationService.paginate(
@@ -249,6 +298,13 @@ export class ScholarshipProgramsService {
           $set: {
             currentTermsVersionId: version._id,
             currentTermsVersionNumber: version.versionNumber,
+            // Keep the catalog's denormalized search projection in step with the
+            // revision that just became current (#1175). Without this the award
+            // and deadline filters would silently keep matching the *previous*
+            // terms — a stale read that no test of the filter itself would catch.
+            awardValue: version.awardValue ?? 0,
+            awardCurrency: version.awardCurrency ?? null,
+            applicationDeadline: deadlineOf(version),
           },
         },
       )
@@ -284,4 +340,39 @@ export class ScholarshipProgramsService {
     }
     return version;
   }
+}
+
+/**
+ * Extracts the application deadline from a terms revision's `deadlines` map.
+ *
+ * `deadlines` is an untyped `Record<string, unknown>` so that sponsors can
+ * publish domain-specific dates without a schema migration. That flexibility
+ * means the consumer has to know which keys are actually read, and this is the
+ * single place that knows: it checks the conventional keys in priority order and
+ * returns the first date-shaped value.
+ *
+ * Returns null when the revision publishes no recognizable deadline, which the
+ * catalog stores as "no deadline" rather than guessing.
+ */
+function deadlineOf(terms: {
+  deadlines?: Record<string, unknown>;
+}): Date | null {
+  const deadlines = terms?.deadlines;
+  if (!deadlines || typeof deadlines !== 'object') return null;
+
+  for (const key of [
+    'closesAt',
+    'applicationDeadline',
+    'dueAt',
+    'deadline',
+    'closes',
+    'applicationsClose',
+  ]) {
+    const value = deadlines[key];
+    if (value instanceof Date) return value;
+    if (typeof value === 'string' && !Number.isNaN(Date.parse(value))) {
+      return new Date(value);
+    }
+  }
+  return null;
 }
