@@ -11,6 +11,7 @@ import {
 import {
   ApiBearerAuth,
   ApiOperation,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -29,7 +30,7 @@ import { CreateTermsVersionDto } from '../dto/program-terms.dto';
 import {
   CreateScholarshipProgramDto,
   OrgScopedQueryDto,
-  ScholarshipProgramQueryDto,
+  ScholarshipProgramSearchDto,
   TransitionProgramStatusDto,
   UpdateScholarshipProgramStatusDto,
 } from '../dto/scholarship-program.dto';
@@ -68,13 +69,29 @@ export class ScholarshipProgramsController {
     OrganizationRole.INSTRUCTOR,
     OrganizationRole.MEMBER,
   )
-  @ApiOperation({ summary: 'List an organization's scholarship programs' })
-  list(@Query() dto: ScholarshipProgramQueryDto) {
-    return this.programsService.listPrograms(
-      dto.organizationId,
-      { status: dto.status },
-      { page: dto.page, limit: dto.limit },
-    );
+  @ApiOperation({ summary: 'List an organization\'s scholarship programs' })
+  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'minAwardValue', required: false, type: Number })
+  @ApiQuery({ name: 'maxAwardValue', required: false, type: Number })
+  @ApiQuery({ name: 'awardCurrency', required: false, type: String })
+  @ApiQuery({ name: 'deadlineBefore', required: false, type: String, format: 'date-time' })
+  @ApiQuery({ name: 'deadlineAfter', required: false, type: String, format: 'date-time' })
+  @ApiQuery({ name: 'fundingType', required: false, enum: ['horizon', 'manual', 'deposit'] })
+  @ApiQuery({ name: 'network', required: false, enum: ['testnet', 'public'] })
+  @ApiQuery({ name: 'includeClosed', required: false, type: Boolean })
+  list(@Query() dto: ScholarshipProgramSearchDto) {
+    return this.programsService.listPrograms(dto.organizationId, {
+      status: dto.status,
+      search: dto.search,
+      minAwardValue: dto.minAwardValue,
+      maxAwardValue: dto.maxAwardValue,
+      awardCurrency: dto.awardCurrency,
+      deadlineBefore: dto.deadlineBefore,
+      deadlineAfter: dto.deadlineAfter,
+      fundingType: dto.fundingType,
+      network: dto.network,
+      includeClosed: dto.includeClosed,
+    });
   }
 
   @Get(':programId')

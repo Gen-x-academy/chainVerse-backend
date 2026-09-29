@@ -97,7 +97,7 @@ export class ReconciliationController {
     return presentRun(
       await this.reconciliation.run(program, {
         trigger: 'manual',
-        triggeredBy: req.user.id,
+        triggeredBy: req.user.sub,
         externalBalance: dto.externalBalance,
         externalObservedAt: dto.externalObservedAt,
       }),
@@ -181,7 +181,7 @@ export class ReconciliationAlertsController {
     @Req() req: AuthenticatedRequest,
   ) {
     await this.tenant.assertCanWrite(req.user, organizationId);
-    return this.alerts.acknowledge(organizationId, alertId, req.user.id);
+    return this.alerts.acknowledge(organizationId, alertId, req.user.sub);
   }
 
   @Post(':alertId/resolution')
@@ -197,6 +197,6 @@ export class ReconciliationAlertsController {
     @Req() req: AuthenticatedRequest,
   ) {
     await this.tenant.assertCanWrite(req.user, organizationId);
-    return this.alerts.resolve(organizationId, alertId, req.user.id, dto.note);
+    return this.alerts.resolve(organizationId, alertId, req.user.sub, dto.note);
   }
 }

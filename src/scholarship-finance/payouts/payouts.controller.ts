@@ -61,7 +61,7 @@ export class PayoutsController {
     return this.payouts.create(
       await this.programs.get(organizationId, programId),
       dto,
-      req.user.id,
+      req.user.sub,
     );
   }
 
@@ -118,7 +118,7 @@ export class PayoutsController {
       await this.programs.get(organizationId, programId),
       payoutId,
       dto,
-      req.user.id,
+      req.user.sub,
     );
   }
 

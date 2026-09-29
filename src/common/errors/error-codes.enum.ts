@@ -243,8 +243,11 @@ export enum ErrorCode {
   RES_WALLET_CHALLENGE_NOT_FOUND = 'RES_WALLET_CHALLENGE_NOT_FOUND',
   AUTH_AUTOMATION_TOKEN_INVALID = 'AUTH_AUTOMATION_TOKEN_INVALID',
   // ── Scholarship finance ───────────────────────────────────────────────────
-  RES_SCHOLARSHIP_PROGRAM_NOT_FOUND = 'RES_SCHOLARSHIP_PROGRAM_NOT_FOUND',
-  RES_LEDGER_ENTRY_NOT_FOUND = 'RES_LEDGER_ENTRY_NOT_FOUND',
+  // NOTE: RES_SCHOLARSHIP_PROGRAM_NOT_FOUND and RES_LEDGER_ENTRY_NOT_FOUND were
+  // re-declared here after already being declared above, which is a TS2300
+  // "Duplicate identifier" error and fails the build of every module that
+  // imports ErrorCode.  The single canonical declarations are kept in place and
+  // referenced from here; do not re-add them. (#1246)
   RES_PAYOUT_NOT_FOUND = 'RES_PAYOUT_NOT_FOUND',
   RES_RECEIPT_NOT_FOUND = 'RES_RECEIPT_NOT_FOUND',
   RES_RECONCILIATION_NOT_FOUND = 'RES_RECONCILIATION_NOT_FOUND',

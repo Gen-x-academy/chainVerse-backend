@@ -1,16 +1,20 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { IdempotencyModule } from '../idempotency/idempotency.module';
 import {
   OrganizationMembership,
   OrganizationMembershipSchema,
 } from './common/organization-membership.schema';
 import { TenantAccessService } from './common/tenant-access.service';
 import { HorizonClient } from './integrations/horizon.client';
-import { ScholarshipFinanceJobs } from './jobs/scholarship-finance.jobs';
+import {
+  ScholarshipFinanceJobs,
+  ScholarshipFinanceSchedulers,
+} from './jobs/scholarship-finance.jobs';
 import { LedgerEntry, LedgerEntrySchema } from './ledger/ledger-entry.schema';
 import { LedgerQueryService } from './ledger/ledger-query.service';
-import { LedgerController } from './ledger/ledger.controller';
-import { LedgerService } from './ledger/ledger.service';
+import { ProgramLedgerController } from './ledger/ledger.controller';
+import { ProgramLedgerService } from './ledger/ledger.service';
 import {
   PayoutIntent,
   PayoutIntentSchema,
@@ -48,21 +52,15 @@ import {
 } from './reconciliation/reconciliation.schemas';
 import { ReconciliationService } from './reconciliation/reconciliation.service';
 import { SolvencyGuardService } from './reconciliation/solvency-guard.service';
-
-/**
- * Scholarship finance: per-program double-entry ledgers, payout intents with
- * controlled failure recovery, recipient receipts, and treasury reconciliation.
-import { IdempotencyModule } from '../idempotency/idempotency.module';
 import { FeeSchedulesController } from './controllers/fee-schedules.controller';
 import { FundingController } from './controllers/funding.controller';
 import {
   FinanceJobsController,
-  LedgerController,
+  FinanceLedgerController,
 } from './controllers/ledger.controller';
 import { RecoveriesController } from './controllers/recoveries.controller';
 import { RefundsController } from './controllers/refunds.controller';
 import { FinanceAccessGuard } from './guards/finance-access.guard';
-import { ScholarshipFinanceJobs } from './jobs/scholarship-finance.jobs';
 import {
   AllocationChange,
   AllocationChangeSchema,
@@ -103,15 +101,42 @@ import { FundingService } from './services/funding.service';
 import { LedgerService } from './services/ledger.service';
 import { RecoveryService } from './services/recovery.service';
 import { RefundService } from './services/refund.service';
+import { FinanceDashboardService } from './dashboard/finance-dashboard.service';
+import { FinanceDashboardController } from './dashboard/finance-dashboard.controller';
 
 /**
- * Scholarship finance: sponsor deposits & funding rounds, versioned fees,
- * refunds / returned payments, and recoveries / clawbacks — all posting to
- * one append-only double-entry ledger scoped per organization (tenant).
- * See docs/scholarship-finance.md.
+ * Scholarship finance (#1247).
+ *
+ * One module owning the treasury aggregate:
+ *
+ *  - **Program treasury** — `ScholarshipProgram` (asset, network, treasury
+ *    account, ledger lock) plus its double-entry `LedgerEntry` records.
+ *  - **Funding** — `FundingRound`, `SponsorDeposit`, `AllocationChange`.
+ *  - **Payouts & receipts** — `PayoutIntent` with controlled failure recovery,
+ *    and the recipient `PaymentReceipt`.
+ *  - **Reconciliation** — `ReconciliationRun` / `ReconciliationAlert`, plus
+ *    `LedgerBalance`, `LedgerJournal` and `FinanceAuditEvent`.
+ *  - **Refunds & recoveries** — `Refund`, `RecoveryClaim`, `RecoveryCollection`.
+ *  - **Fees** — `FeeSchedule`.
+ *
+ * Ownership was ambiguous before: two classes were each named `LedgerService`
+ * and two `LedgerController`, and the file carried duplicate imports, duplicate
+ * `@Module` keys and an unterminated block comment that swallowed ~50 lines of
+ * imports. The names are now unique and the ownership is explicit:
+ *
+ *  | Aggregate | Owner |
+ *  | --- | --- |
+ *  | double-entry journal, balances, integrity, audit | `services/ledger.service` → `LedgerService` |
+ *  | per-program entry posting | `ledger/ledger.service` → `ProgramLedgerService` |
+ *  | org-level ledger/audit read view | `controllers/ledger.controller` → `FinanceLedgerController` |
+ *  | per-program entry read view | `ledger/ledger.controller` → `ProgramLedgerController` |
+ *
+ * See docs/adr/0001-scholarship-bounded-contexts.md and
+ * docs/scholarships/scholarship-finance-consolidation.md.
  */
 @Module({
   imports: [
+    IdempotencyModule,
     MongooseModule.forFeature([
       { name: ScholarshipProgram.name, schema: ScholarshipProgramSchema },
       { name: LedgerEntry.name, schema: LedgerEntrySchema },
@@ -123,39 +148,6 @@ import { RefundService } from './services/refund.service';
         name: OrganizationMembership.name,
         schema: OrganizationMembershipSchema,
       },
-    ]),
-  ],
-  controllers: [
-    ScholarshipProgramController,
-    LedgerController,
-    PayoutsController,
-    PayoutSignerController,
-    ReceiptsController,
-    OrganizationReceiptsController,
-    ReconciliationController,
-    ReconciliationAlertsController,
-  ],
-  providers: [
-    TenantAccessService,
-    HorizonClient,
-    ScholarshipProgramService,
-    LedgerQueryService,
-    LedgerService,
-    ReconciliationAlertsService,
-    ReconciliationService,
-    SolvencyGuardService,
-    ReceiptsService,
-    PayoutsService,
-    ScholarshipFinanceJobs,
-  ],
-  exports: [
-    LedgerService,
-    LedgerQueryService,
-    SolvencyGuardService,
-    ReceiptsService,
-  ],
-    IdempotencyModule,
-    MongooseModule.forFeature([
       { name: LedgerJournal.name, schema: LedgerJournalSchema },
       { name: LedgerBalance.name, schema: LedgerBalanceSchema },
       { name: FinanceAuditEvent.name, schema: FinanceAuditEventSchema },
@@ -169,23 +161,51 @@ import { RefundService } from './services/refund.service';
     ]),
   ],
   controllers: [
+    ScholarshipProgramController,
+    FinanceLedgerController,
+    ProgramLedgerController,
+    PayoutsController,
+    PayoutSignerController,
+    ReceiptsController,
+    OrganizationReceiptsController,
+    ReconciliationController,
+    ReconciliationAlertsController,
     FeeSchedulesController,
     FundingController,
     RefundsController,
     RecoveriesController,
-    LedgerController,
     FinanceJobsController,
+    FinanceDashboardController,
   ],
   providers: [
     FinanceAccessGuard,
+    TenantAccessService,
+    HorizonClient,
+    ScholarshipProgramService,
     LedgerService,
+    ProgramLedgerService,
+    LedgerQueryService,
+    ReconciliationAlertsService,
+    ReconciliationService,
+    SolvencyGuardService,
+    ReceiptsService,
+    PayoutsService,
     FinanceAuditService,
     FeeService,
     FundingService,
     RefundService,
     RecoveryService,
     ScholarshipFinanceJobs,
+    ScholarshipFinanceSchedulers,
+    FinanceDashboardService,
   ],
-  exports: [LedgerService, FeeService],
+  exports: [
+    LedgerService,
+    ProgramLedgerService,
+    LedgerQueryService,
+    SolvencyGuardService,
+    ReceiptsService,
+    FeeService,
+  ],
 })
 export class ScholarshipFinanceModule {}

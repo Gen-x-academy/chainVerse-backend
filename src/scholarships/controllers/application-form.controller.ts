@@ -18,6 +18,7 @@ import {
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { ApplicationFormService } from '../services/application-form.service';
 import {
@@ -27,7 +28,7 @@ import {
 } from '../dto/application-form.dto';
 
 interface AuthenticatedRequest {
-  user: { id: string; role: string };
+  user: { sub: string; role: string };
 }
 
 /**
@@ -60,9 +61,9 @@ export class ApplicationFormController {
   @ApiResponse({ status: 403, description: 'Insufficient permissions.' })
   create(
     @Body() dto: CreateApplicationFormDto,
-    @Request() req: AuthenticatedRequest,
+    @CurrentUser('sub') actorId: string,
   ) {
-    return this.formService.create(dto, req.user.id);
+    return this.formService.create(dto, actorId);
   }
 
   // ── GET /program/:programId ────────────────────────────────────────────────
@@ -111,9 +112,9 @@ export class ApplicationFormController {
   update(
     @Param('id') id: string,
     @Body() dto: UpdateApplicationFormDto,
-    @Request() req: AuthenticatedRequest,
+    @CurrentUser('sub') actorId: string,
   ) {
-    return this.formService.update(id, dto, req.user.id);
+    return this.formService.update(id, dto, actorId);
   }
 
   // ── POST /:id/publish ──────────────────────────────────────────────────────
@@ -129,8 +130,8 @@ export class ApplicationFormController {
   @ApiResponse({ status: 200, description: 'Published form.' })
   @ApiResponse({ status: 404, description: 'Form not found.' })
   @ApiResponse({ status: 422, description: 'Form is not in DRAFT status.' })
-  publish(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
-    return this.formService.publish(id, req.user.id);
+  publish(@Param('id') id: string, @CurrentUser('sub') actorId: string) {
+    return this.formService.publish(id, actorId);
   }
 
   // ── POST /:id/archive ──────────────────────────────────────────────────────
@@ -145,8 +146,8 @@ export class ApplicationFormController {
   @ApiResponse({ status: 200, description: 'Archived form.' })
   @ApiResponse({ status: 404, description: 'Form not found.' })
   @ApiResponse({ status: 422, description: 'Form is not in PUBLISHED status.' })
-  archive(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
-    return this.formService.archive(id, req.user.id);
+  archive(@Param('id') id: string, @CurrentUser('sub') actorId: string) {
+    return this.formService.archive(id, actorId);
   }
 
   // ── POST /:id/validate-answers ─────────────────────────────────────────────

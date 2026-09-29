@@ -42,7 +42,7 @@ export class ScholarshipProgramController {
     @Req() req: AuthenticatedRequest,
   ) {
     await this.tenant.assertCanWrite(req.user, organizationId);
-    return this.programs.create(organizationId, dto, req.user.id);
+    return this.programs.create(organizationId, dto, req.user.sub);
   }
 
   @Get()
