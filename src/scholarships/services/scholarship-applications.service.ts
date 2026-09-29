@@ -16,10 +16,16 @@ import {
   ProgramTermsVersionDocument,
   TermsVersionStatus,
 } from '../schemas/program-terms-version.schema';
-import { ApplicationDecision } from '../dto/scholarship-application.dto';
+import {
+  APPLICATION_HISTORY_MAX_LIMIT,
+  ApplicationDecision,
+  ApplicationHistorySortField,
+  ScholarshipApplicationHistoryQueryDto,
+} from '../dto/scholarship-application.dto';
 import { AnswerDto, DEFAULT_ANSWER_WORD_LIMIT } from '../dto/answer.dto';
 import { PaginationService } from '../../common/pagination/pagination.service';
-import { PaginationDto } from '../../common/dto/pagination.dto';
+import { PaginationDto, SortOrder } from '../../common/dto/pagination.dto';
+import { PaginatedResponse } from '../../common/interfaces/pagination.interface';
 import {
   ForbiddenDomainException,
   ResourceConflictException,
@@ -32,6 +38,9 @@ const ACTIVE_STATUSES = [
   ScholarshipApplicationStatus.SUBMITTED,
   ScholarshipApplicationStatus.UNDER_REVIEW,
 ];
+
+/** Page size used when the caller does not send `limit`. */
+export const DEFAULT_APPLICATION_HISTORY_LIMIT = 20;
 
 // ── Answer validation helpers ─────────────────────────────────────────────────
 
@@ -236,11 +245,47 @@ export class ScholarshipApplicationsService {
     });
   }
 
-  async listMine(applicantId: string): Promise<ScholarshipApplicationDocument[]> {
-    return this.applicationModel
-      .find({ applicantId })
-      .sort({ createdAt: -1 })
-      .exec();
+  /**
+   * Paged history of one applicant's own applications (#1249).
+   *
+   * Previously this ran an unbounded `find({ applicantId })` and returned the
+   * whole array, which meant a long-lived account loaded its entire history
+   * into memory on every request.  It is now bounded and stable:
+   *
+   *   - `page` / `limit` come from {@link ScholarshipApplicationHistoryQueryDto},
+   *     which caps `limit` at {@link APPLICATION_HISTORY_MAX_LIMIT}.
+   *   - The sort always ends with `_id` in the same direction as the requested
+   *     field.  `createdAt` has millisecond resolution, so many applications
+   *     can legitimately share a timestamp; without the tie-breaker MongoDB may
+   *     return them in a different order on each page, which shows up as
+   *     duplicated or skipped rows while paging.
+   *
+   * Ownership / tenancy:
+   *   - `applicantId` comes from the verified JWT subject, so a caller can only
+   *     ever page their own history.  Organization tenancy is preserved because
+   *     every application document already carries its `organizationId`; the
+   *     student is not an org member and must see applications across sponsors.
+   */
+  async listMine(
+    applicantId: string,
+    query: ScholarshipApplicationHistoryQueryDto,
+  ): Promise<PaginatedResponse<ScholarshipApplicationDocument>> {
+    const page = query.page ?? 1;
+    const limit = Math.min(
+      query.limit ?? DEFAULT_APPLICATION_HISTORY_LIMIT,
+      APPLICATION_HISTORY_MAX_LIMIT,
+    );
+    const sortField = query.sortBy ?? ApplicationHistorySortField.CREATED_AT;
+    const sortOrder = query.sortOrder === SortOrder.ASC ? 1 : -1;
+
+    return this.paginationService.paginate(
+      this.applicationModel,
+      { page, limit },
+      { applicantId },
+      undefined,
+      // Deterministic tie-breaker; see the doc comment above.
+      { [sortField]: sortOrder, _id: sortOrder },
+    );
   }
 
   async getApplicationForApplicant(
@@ -294,6 +339,13 @@ export class ScholarshipApplicationsService {
       .exec()) as ScholarshipApplicationDocument;
   }
 
+  /**
+   * Staff-facing list of every application to one program.
+   *
+   * Tenant-scoped: the program lookup filters on `organizationId`, so a valid
+   * membership in organization A can never page organization B's applications.
+   * The same `_id` tie-breaker as {@link listMine} keeps paging stable.
+   */
   async listForProgram(
     organizationId: string,
     programId: string,
@@ -318,11 +370,13 @@ export class ScholarshipApplicationsService {
         this.applicationModel,
         pagination,
         filter,
+        undefined,
+        { createdAt: -1, _id: -1 },
       );
     }
     return this.applicationModel
       .find(filter)
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: -1, _id: -1 })
       .exec();
   }
 

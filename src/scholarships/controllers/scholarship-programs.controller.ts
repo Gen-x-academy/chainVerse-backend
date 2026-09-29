@@ -32,7 +32,6 @@ import {
   OrgScopedQueryDto,
   ScholarshipProgramSearchDto,
   TransitionProgramStatusDto,
-  UpdateScholarshipProgramStatusDto,
 } from '../dto/scholarship-program.dto';
 import {
   ReviewScholarshipApplicationDto,
@@ -70,6 +69,12 @@ export class ScholarshipProgramsController {
     OrganizationRole.MEMBER,
   )
   @ApiOperation({ summary: 'List an organization\'s scholarship programs' })
+  list(@Query() dto: ScholarshipProgramQueryDto) {
+    return this.programsService.listPrograms(
+      dto.organizationId,
+      { status: dto.status },
+      { page: dto.page, limit: dto.limit },
+    );
   @ApiQuery({ name: 'search', required: false, type: String })
   @ApiQuery({ name: 'minAwardValue', required: false, type: Number })
   @ApiQuery({ name: 'maxAwardValue', required: false, type: Number })
@@ -112,29 +117,6 @@ export class ScholarshipProgramsController {
   }
 
   /**
-   * Legacy status setter (no state-machine validation).
-   * Retained for backward compatibility.  Prefer `PATCH :programId/transition`.
-   */
-  @Patch(':programId/status')
-  @OrgScope({ source: 'query', key: 'organizationId' })
-  @OrgRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
-  @ApiOperation({
-    summary: '(Legacy) Directly set program status — no transition validation',
-    deprecated: true,
-  })
-  setStatus(
-    @Param('programId', new ParseObjectIdPipe()) programId: string,
-    @Query() scope: OrgScopedQueryDto,
-    @Body() dto: UpdateScholarshipProgramStatusDto,
-  ) {
-    return this.programsService.setProgramStatus(
-      scope.organizationId,
-      programId,
-      dto.status,
-    );
-  }
-
-  /**
    * Lifecycle transition endpoint (issue #1122).
    *
    * Enforces the program state machine:
@@ -153,6 +135,10 @@ export class ScholarshipProgramsController {
    *     are permitted.  The program and its applications remain queryable.
    *   - Transitioning to PAUSED or CLOSED prevents new applications from
    *     being submitted (PUBLISHED status required to accept applications).
+   *
+   * Legacy bypass (`PATCH :programId/status`) was removed in #1248 — this is
+   * the only route that can change a program's status.  See
+   * docs/scholarships/program-lifecycle-status-sunset.md.
    */
   @Patch(':programId/transition')
   @OrgScope({ source: 'query', key: 'organizationId' })

@@ -171,6 +171,10 @@ export class UpdateScholarshipProgramStatusDto {
 /**
  * DTO for the program lifecycle transition endpoint (issue #1122).
  *
+ * This is the only DTO that can change a program's status: the legacy
+ * `UpdateScholarshipProgramStatusDto` (PATCH /:programId/status) was removed in
+ * #1248 together with the unvalidated service method behind it.
+ *
  * Authorization notes:
  *   - Only OWNER or ADMIN of the owning organization may trigger transitions.
  *   - The `organizationId` is sourced from the query string and verified by
