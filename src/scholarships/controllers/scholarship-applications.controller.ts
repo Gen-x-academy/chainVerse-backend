@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -14,8 +15,12 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-object-id.pipe';
+import { ApiPaginatedResponse } from '../../common/dto/paginated-response.dto';
 import { ScholarshipApplicationsService } from '../services/scholarship-applications.service';
-import { CreateScholarshipApplicationDto } from '../dto/scholarship-application.dto';
+import {
+  CreateScholarshipApplicationDto,
+  ScholarshipApplicationHistoryQueryDto,
+} from '../dto/scholarship-application.dto';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Scholarships — Applications')
@@ -41,10 +46,32 @@ export class ScholarshipApplicationsController {
     return this.applicationsService.apply(dto, applicantId);
   }
 
+  /**
+   * Paged history of the caller's own applications (#1249).
+   *
+   * Response shape (breaking change for callers that expected a bare array):
+   *   `{ data: [...], total, page, limit, totalPages }`
+   *
+   * Ownership:
+   *   - The applicant is read from the verified JWT subject, never from the
+   *     query string, so one student can never page another's history.
+   *   - `limit` is capped at 100 and paging is stable across pages (ties on
+   *     `createdAt` are broken by `_id`), so a long history contains no
+   *     duplicated or skipped applications.
+   */
   @Get('me')
-  @ApiOperation({ summary: 'List my scholarship applications' })
-  listMine(@CurrentUser('sub') applicantId: string) {
-    return this.applicationsService.listMine(applicantId);
+  @ApiOperation({
+    summary: 'List my scholarship applications (paged, newest first)',
+    description:
+      'Ordering is `sortBy` with `_id` as a deterministic tie-breaker. ' +
+      'page/limit are URL-backed; `limit` may not exceed 100.',
+  })
+  @ApiPaginatedResponse('Applications owned by the authenticated applicant')
+  listMine(
+    @CurrentUser('sub') applicantId: string,
+    @Query() query: ScholarshipApplicationHistoryQueryDto,
+  ) {
+    return this.applicationsService.listMine(applicantId, query);
   }
 
   @Get(':applicationId')

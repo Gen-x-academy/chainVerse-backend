@@ -82,8 +82,8 @@ export function presentLedgerEntry(entry: LedgerEntry & { _id?: unknown }) {
 }
 
 @Injectable()
-export class LedgerService {
-  private readonly logger = new Logger(LedgerService.name);
+export class ProgramLedgerService {
+  private readonly logger = new Logger(ProgramLedgerService.name);
 
   constructor(
     @InjectModel(LedgerEntry.name)

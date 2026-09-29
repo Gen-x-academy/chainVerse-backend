@@ -25,7 +25,10 @@ import {
   reverseLedgerEntrySchema,
 } from './dto/ledger.dto';
 import { LedgerQueryService } from './ledger-query.service';
-import { LedgerService, presentLedgerEntry } from './ledger.service';
+import {
+  ProgramLedgerService,
+  presentLedgerEntry,
+} from './ledger.service';
 
 @ApiTags('Scholarship Finance — Ledger')
 @ApiBearerAuth('access-token')
@@ -33,9 +36,9 @@ import { LedgerService, presentLedgerEntry } from './ledger.service';
 @Controller(
   'organizations/:organizationId/scholarship-programs/:programId/ledger',
 )
-export class LedgerController {
+export class ProgramLedgerController {
   constructor(
-    private readonly ledger: LedgerService,
+    private readonly ledger: ProgramLedgerService,
     private readonly query: LedgerQueryService,
     private readonly programs: ScholarshipProgramService,
     private readonly tenant: TenantAccessService,
@@ -57,7 +60,7 @@ export class LedgerController {
   ) {
     await this.tenant.assertCanWrite(req.user, organizationId);
     const program = await this.programs.get(organizationId, programId);
-    return this.ledger.post(program, dto, req.user.id);
+    return this.ledger.post(program, dto, req.user.sub);
   }
 
   @Post('entries/:entryId/reversals')
@@ -75,7 +78,7 @@ export class LedgerController {
   ) {
     await this.tenant.assertCanWrite(req.user, organizationId);
     const program = await this.programs.get(organizationId, programId);
-    return this.ledger.reverse(program, entryId, dto, req.user.id);
+    return this.ledger.reverse(program, entryId, dto, req.user.sub);
   }
 
   @Get('entries')

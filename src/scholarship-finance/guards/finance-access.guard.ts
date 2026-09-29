@@ -36,7 +36,8 @@ export class FinanceActorContext {
 }
 
 interface FinanceRequest {
-  user?: { id?: string; role?: string };
+  /** Canonical principal: `sub` is the field to read (#1250). */
+  user?: { sub?: string; role?: string };
   params?: Record<string, string | undefined>;
   financeActor?: FinanceActorContext;
 }
@@ -70,7 +71,7 @@ export class FinanceAccessGuard implements CanActivate {
     const user = request.user;
     const organizationId = request.params?.organizationId;
 
-    if (!user?.id) {
+    if (!user?.sub) {
       throw new AuthException(
         'User not authenticated',
         ErrorCode.AUTH_MISSING_TOKEN,
@@ -104,7 +105,7 @@ export class FinanceAccessGuard implements CanActivate {
       const membership = await this.connection
         .collection('organizationmembers')
         .findOne(
-          { organizationId, userId: user.id, deletedAt: null },
+          { organizationId, userId: user.sub, deletedAt: null },
           { projection: { role: 1 } },
         );
       permissions =
@@ -119,7 +120,7 @@ export class FinanceAccessGuard implements CanActivate {
     }
 
     const actor: FinanceActorContext = {
-      userId: user.id,
+      userId: user.sub,
       organizationId,
       isPlatformAdmin,
       permissions,
