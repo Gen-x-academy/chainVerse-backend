@@ -65,11 +65,10 @@ import { StudentReportsAnalyticsModule } from './student-reports-analytics/stude
 import { AdminFinancialAidManagementModule } from './admin-financial-aid-management/admin-financial-aid-management.module';
 import { AdminModeratorAccountSettingsModule } from './admin-moderator-account-settings/admin-moderator-account-settings.module';
 
-// Platform feature modules
+// Platform / feature modules
 import { HealthModule } from './health/health.module';
 import { NotificationModule } from './notification/notification.module';
 import { FinancialAidModule } from './financial-aid/financial-aid.module';
-import { ScholarshipsModule } from './scholarships/scholarships.module';
 import { OrganizationModule } from './organization/organization.module';
 import { OrganizationMemberModule } from './organization-member/organization-member.module';
 import { SubscriptionPlanModule } from './subscription-plan/subscription-plan.module';
@@ -80,6 +79,7 @@ import { CertificateSocialSharingModule } from './certificate-social-sharing/cer
 import { CertificationModule } from './certification/certification.module';
 import { ContactMessageModule } from './contact-message/contact-message.module';
 import { FaqManagementModule } from './faq-management/faq-management.module';
+import { PrivacyPolicyManagementModule } from './privacy-policy-management/privacy-policy-management.module';
 import { TermsConditionsManagementModule } from './terms-conditions-management/terms-conditions-management.module';
 import { AboutManagementModule } from './about-management/about-management.module';
 import { PrivateTutoringBookingsModule } from './private-tutoring-bookings/private-tutoring-bookings.module';
@@ -87,10 +87,9 @@ import { RemovalRequestModule } from './removal-request/removal-request.module';
 import { ReportAbuseModule } from './report-abuse/report-abuse.module';
 import { ReportsModule } from './reports/reports.module';
 import { IdempotencyModule } from './idempotency/idempotency.module';
-import { PrivacyPolicyManagementModule } from './privacy-policy-management/privacy-policy-management.module';
 import { VerificationModule } from './verification/verification.module';
-import { ScholarshipDisbursementModule } from './scholarship-disbursement/scholarship-disbursement.module';
-import { ScholarshipModule } from './scholarship/scholarship.module';
+import { EventsModule } from './events/events.module';
+import { LibraryCirculationModule } from './library-circulation/library-circulation.module';
 import { ELibraryModule } from './e-library/e-library.module';
 
 @Module({
@@ -184,7 +183,6 @@ import { ELibraryModule } from './e-library/e-library.module';
     HealthModule,
     NotificationModule,
     FinancialAidModule,
-    ScholarshipsModule,
     OrganizationModule,
     OrganizationMemberModule,
     SubscriptionPlanModule,
@@ -204,6 +202,19 @@ import { ELibraryModule } from './e-library/e-library.module';
     ReportsModule,
     IdempotencyModule,
     VerificationModule,
+    EventsModule,
+    LibraryCirculationModule,
+    ELibraryModule,
+    // Scholarship domain
+    ScholarshipsModule,
+    ScholarshipModule,
+    ScholarshipDisbursementModule,
+    ScholarshipFinanceModule,
+    // Scholarship dashboards
+    ScholarshipStudentDashboardModule,
+    ScholarshipSponsorDashboardModule,
+    ScholarshipReviewerDashboardModule,
+    ScholarshipFinanceStatementModule,
     ScholarshipDisbursementModule,
     ScholarshipModule,
   ],
