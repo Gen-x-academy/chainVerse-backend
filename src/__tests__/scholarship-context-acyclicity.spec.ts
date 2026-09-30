@@ -16,18 +16,35 @@ import * as ts from 'typescript';
  * wire than an integration test that would only fail on the first request that
  * touched the cycle.
  */
-describe('Scholarship bounded-context dependency rules (#1247)', () => {
+describe('Scholarship bounded-context dependency rules (#1247, #1255)', () => {
   const repoRoot = path.resolve(__dirname, '..', '..');
 
-  /** The four scholarship bounded contexts and their directory roots. */
+  /**
+   * The four scholarship bounded contexts and their directory roots.
+   *
+   * `scholarship-outbox` is not a fifth context — it owns no scholarship
+   * aggregate. It is the shared kernel the transactional write paths import, so
+   * it is listed here to prove that stays true: it must not import a context, and
+   * nothing it provides may be used to smuggle a back-edge into finance (#1255).
+   */
   const CONTEXTS = {
     scholarships: path.join(repoRoot, 'src', 'scholarships'),
     scholarship: path.join(repoRoot, 'src', 'scholarship'),
-    'scholarship-disbursement': path.join(repoRoot, 'src', 'scholarship-disbursement'),
+    'scholarship-disbursement': path.join(
+      repoRoot,
+      'src',
+      'scholarship-disbursement',
+    ),
     'scholarship-finance': path.join(repoRoot, 'src', 'scholarship-finance'),
   } as const;
 
+  /** Shared kernels: may be imported by a context, may import none of them. */
+  const SHARED_KERNELS = {
+    'scholarship-outbox': path.join(repoRoot, 'src', 'scholarship-outbox'),
+  } as const;
+
   type ContextName = keyof typeof CONTEXTS;
+  type KernelName = keyof typeof SHARED_KERNELS;
 
   /** Every `.ts` file under `dir`, relative to `dir`. */
   function filesIn(dir: string): string[] {
@@ -106,14 +123,48 @@ describe('Scholarship bounded-context dependency rules (#1247)', () => {
 
   it('keeps each of the four contexts internally connected to itself', () => {
     // Guards against a context being emptied by an over-eager rename: each one
-    // must still contain files that belong to it.
+    // must still contain files that belong to it. Jest's `expect` takes no
+    // message argument, so the context name goes in the received value where a
+    // failure will actually show it.
     for (const [name, dir] of Object.entries(CONTEXTS)) {
-      expect(
-        { context: name, files: filesIn(dir).length },
-        `context "${name}" should still contain source files`,
-      ).toEqual({ context: name, files: filesIn(dir).length });
+      expect({ context: name, files: filesIn(dir).length }).toEqual({
+        context: name,
+        files: filesIn(dir).length,
+      });
       expect(filesIn(dir).length).toBeGreaterThan(0);
     }
+  });
+
+  it('keeps each shared kernel free of scholarship aggregates (#1255)', () => {
+    // A shared kernel that imported a context could be used to reach
+    // `scholarship-finance` from any other context without that context
+    // declaring the dependency, which would defeat the whole rule. So: a kernel
+    // may import shared infrastructure (`common`, `events`, Nest packages) and
+    // nothing from the four contexts.
+    const violations: string[] = [];
+    for (const [name, dir] of Object.entries(SHARED_KERNELS)) {
+      const kernelName = name as KernelName;
+      for (const file of filesIn(dir)) {
+        const source = ts.createSourceFile(
+          file,
+          fs.readFileSync(file, 'utf8'),
+          ts.ScriptTarget.Latest,
+          true,
+          ts.ScriptKind.TS,
+        );
+        for (const stmt of source.statements) {
+          if (!ts.isImportDeclaration(stmt)) continue;
+          if (!ts.isStringLiteral(stmt.moduleSpecifier)) continue;
+          const target = resolvesToContext(file, stmt.moduleSpecifier.text);
+          if (target) {
+            violations.push(
+              `${kernelName} -> ${target} (in ${path.relative(repoRoot, file)})`,
+            );
+          }
+        }
+      }
+    }
+    expect(violations).toEqual([]);
   });
 
   it('has no cycle in the inter-context import graph', () => {
@@ -142,7 +193,12 @@ describe('Scholarship bounded-context dependency rules (#1247)', () => {
     // someone adds a back-edge, this fails too, so the spec cannot be satisfied
     // by the ADR quietly going stale.
     const adr = fs.readFileSync(
-      path.join(repoRoot, 'docs', 'adr', '0001-scholarship-bounded-contexts.md'),
+      path.join(
+        repoRoot,
+        'docs',
+        'adr',
+        '0001-scholarship-bounded-contexts.md',
+      ),
       'utf8',
     );
     expect(adr).toMatch(/scholarship-finance[\s\S]{0,400}leaf/i);

@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, UpdateQuery } from 'mongoose';
+import { ClientSession, Model, UpdateQuery } from 'mongoose';
 import * as crypto from 'crypto';
 import { AuditService } from '../../common/audit/audit.service';
 import { AuditAction } from '../../common/audit/audit-action.enum';
@@ -14,6 +14,12 @@ import {
 import { ErrorCode } from '../../common/errors/error-codes.enum';
 import { DomainEvents } from '../../events/event-names';
 import { ScholarshipDisbursementIntentCreatedPayload } from '../../events/payloads/scholarship-disbursement-intent-created.payload';
+import { OutboxService } from '../../scholarship-outbox/services/outbox.service';
+import { OutboxAggregateType } from '../../scholarship-outbox/schemas/outbox-event.schema';
+import {
+  ScholarshipTransactionRunner,
+  withSession,
+} from '../../scholarship-outbox/services/scholarship-transaction.runner';
 import {
   ListDisbursementIntentsDto,
   RecordIntentTransitionDto,
@@ -83,6 +89,8 @@ export class DisbursementIntentService {
     private readonly access: ScholarshipAccessService,
     private readonly auditService: AuditService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly transactions: ScholarshipTransactionRunner,
+    private readonly outbox: OutboxService,
   ) {}
 
   /**
@@ -92,6 +100,17 @@ export class DisbursementIntentService {
    * record. An existing intent is checked field-by-field against the
    * eligibility; any disagreement is an integrity fault and is refused rather
    * than "fixed", because the intent may already be in flight.
+   *
+   * The create and the back-link on the eligibility are one transaction (#1255).
+   * They used to be two writes, which left the failure mode where an intent
+   * exists but `eligibility.disbursementIntentId` is still null — invisible to
+   * every query the codebase uses, because the linkage is read from the
+   * eligibility and the intent is found by `intentKey`. The reconciliation job
+   * found those rows only after a grace period; now the two cannot be split.
+   *
+   * `intentKey` is derived, not generated, so it is also what makes this
+   * idempotent rather than merely transactional: a retry recomputes the same key
+   * and finds the same row.
    */
   async createForEligibility(
     organizationId: string,
@@ -99,99 +118,134 @@ export class DisbursementIntentService {
     actorId: string,
     audit: AuditContext,
   ): Promise<CreateIntentResult> {
-    const eligibility = await this.eligibilityModel
-      .findOne({ _id: eligibilityId, organizationId })
-      .exec();
-    if (!eligibility) {
-      throw new ResourceNotFoundException('Payment eligibility not found');
-    }
+    return this.transactions
+      .run(
+        'scholarship.createDisbursementIntent',
+        async (session: ClientSession | null) => {
+          const eligibility = await withSession(
+            this.eligibilityModel.findOne({
+              _id: eligibilityId,
+              organizationId,
+            }),
+            session,
+          ).exec();
+          if (!eligibility) {
+            throw new ResourceNotFoundException(
+              'Payment eligibility not found',
+            );
+          }
 
-    const intentKey = disbursementIntentKey(
-      eligibility.organizationId,
-      eligibility.awardId,
-      eligibility.milestoneKey,
-    );
+          const intentKey = disbursementIntentKey(
+            eligibility.organizationId,
+            eligibility.awardId,
+            eligibility.milestoneKey,
+          );
 
-    const existing = await this.intentModel.findOne({ intentKey }).exec();
-    if (existing) {
-      return {
-        intent: await this.reconcile(existing, eligibility),
-        created: false,
-      };
-    }
+          const existing = await withSession(
+            this.intentModel.findOne({ intentKey }),
+            session,
+          ).exec();
+          if (existing) {
+            return {
+              intent: await this.reconcile(existing, eligibility, session),
+              created: false,
+            };
+          }
 
-    const award = await this.access.requireAward(
-      eligibility.organizationId,
-      eligibility.awardId,
-    );
-    if (award.status !== ScholarshipAwardStatus.ACTIVE) {
-      throw new BusinessRuleException(
-        'Award is not active; no new disbursement may be created',
-        ErrorCode.BIZ_SCHOLARSHIP_INTENT_TRANSITION,
-      );
-    }
+          const award = await this.access.requireAward(
+            eligibility.organizationId,
+            eligibility.awardId,
+          );
+          if (award.status !== ScholarshipAwardStatus.ACTIVE) {
+            throw new BusinessRuleException(
+              'Award is not active; no new disbursement may be created',
+              ErrorCode.BIZ_SCHOLARSHIP_INTENT_TRANSITION,
+            );
+          }
 
-    let intent: DisbursementIntentDocument;
-    try {
-      intent = await new this.intentModel({
-        intentKey,
-        organizationId: eligibility.organizationId,
-        awardId: eligibility.awardId,
-        milestoneKey: eligibility.milestoneKey,
-        eligibilityId: eligibility.id,
-        amountMinor: eligibility.amountMinor,
-        currency: eligibility.currency,
-        recipientId: eligibility.recipientId,
-        recipientWallet: eligibility.recipientWallet,
-        status: DisbursementIntentStatus.CREATED,
-        createdBy: actorId,
-      }).save();
-    } catch (err) {
-      if (!isDuplicateKeyError(err)) throw err;
-      const winner = await this.intentModel
-        .findOne({ $or: [{ intentKey }, { eligibilityId: eligibility.id }] })
-        .exec();
-      if (!winner) throw err;
-      return {
-        intent: await this.reconcile(winner, eligibility),
-        created: false,
-      };
-    }
+          let intent: DisbursementIntentDocument;
+          try {
+            intent = await new this.intentModel({
+              intentKey,
+              organizationId: eligibility.organizationId,
+              awardId: eligibility.awardId,
+              milestoneKey: eligibility.milestoneKey,
+              eligibilityId: eligibility.id,
+              amountMinor: eligibility.amountMinor,
+              currency: eligibility.currency,
+              recipientId: eligibility.recipientId,
+              recipientWallet: eligibility.recipientWallet,
+              status: DisbursementIntentStatus.CREATED,
+              createdBy: actorId,
+            }).save(session ? { session } : {});
+          } catch (err) {
+            if (!isDuplicateKeyError(err)) throw err;
+            const winner = await withSession(
+              this.intentModel.findOne({
+                $or: [{ intentKey }, { eligibilityId: eligibility.id }],
+              }),
+              session,
+            ).exec();
+            if (!winner) throw err;
+            return {
+              intent: await this.reconcile(winner, eligibility, session),
+              created: false,
+            };
+          }
 
-    await this.linkEligibility(eligibility, intent);
+          await this.linkEligibility(eligibility, intent, session);
 
-    await this.auditService.record({
-      action: AuditAction.SCHOLARSHIP_DISBURSEMENT_INTENT_CREATED,
-      context: audit,
-      target: { type: TARGET_TYPE, id: intent.id },
-      after: {
-        intentKey,
-        awardId: intent.awardId,
-        milestoneKey: intent.milestoneKey,
-        amountMinor: intent.amountMinor,
-        currency: intent.currency,
-        recipientId: intent.recipientId,
-      },
-    });
+          await this.outbox.stage(
+            {
+              organizationId: intent.organizationId,
+              aggregateType: OutboxAggregateType.DISBURSEMENT_INTENT,
+              aggregateId: intent.id,
+              eventName: DomainEvents.SCHOLARSHIP_DISBURSEMENT_INTENT_CREATED,
+              // Spread from the payload class rather than emitting an instance of
+              // it: the outbox persists a plain document, and a class instance is
+              // not assignable to the `Record<string, unknown>` the schema stores.
+              // Going through the class still means the field set is type-checked
+              // against the contract consumers import.
+              payload: {
+                ...new ScholarshipDisbursementIntentCreatedPayload(),
+                intentId: intent.id,
+                intentKey,
+                organizationId: intent.organizationId,
+                awardId: intent.awardId,
+                milestoneKey: intent.milestoneKey,
+                amountMinor: intent.amountMinor,
+                currency: intent.currency,
+              },
+              // Ties the intent to the approval that produced its eligibility, so
+              // a single milestone's whole story is one correlation id.
+              correlationId: eligibility.decisionId,
+            },
+            session,
+          );
 
-    const payload = Object.assign(
-      new ScholarshipDisbursementIntentCreatedPayload(),
-      {
-        intentId: intent.id,
-        intentKey,
-        organizationId: intent.organizationId,
-        awardId: intent.awardId,
-        milestoneKey: intent.milestoneKey,
-        amountMinor: intent.amountMinor,
-        currency: intent.currency,
-      },
-    );
-    this.eventEmitter.emit(
-      DomainEvents.SCHOLARSHIP_DISBURSEMENT_INTENT_CREATED,
-      payload,
-    );
-
-    return { intent, created: true };
+          return { intent, created: true };
+        },
+      )
+      .then(async ({ intent, created }) => {
+        // Audit and announce only for a newly created intent. A replay returns
+        // `created: false` and must not look like a second intent.
+        if (created) {
+          await this.auditService.record({
+            action: AuditAction.SCHOLARSHIP_DISBURSEMENT_INTENT_CREATED,
+            context: audit,
+            target: { type: TARGET_TYPE, id: intent.id },
+            after: {
+              intentKey: intent.intentKey,
+              awardId: intent.awardId,
+              milestoneKey: intent.milestoneKey,
+              amountMinor: intent.amountMinor,
+              currency: intent.currency,
+              recipientId: intent.recipientId,
+            },
+          });
+        }
+        return { intent, created };
+      });
   }
 
   async findOne(
@@ -346,6 +400,7 @@ export class DisbursementIntentService {
   private async reconcile(
     intent: DisbursementIntentDocument,
     eligibility: PaymentEligibilityDocument,
+    session: ClientSession | null = null,
   ): Promise<DisbursementIntentDocument> {
     const mismatched: string[] = PINNED_FIELDS.filter(
       (field) => intent[field] !== eligibility[field],
@@ -363,20 +418,29 @@ export class DisbursementIntentService {
       );
     }
 
-    await this.linkEligibility(eligibility, intent);
+    await this.linkEligibility(eligibility, intent, session);
     return intent;
   }
 
+  /**
+   * Back-links the intent onto its eligibility inside the caller's transaction.
+   *
+   * The filter keeps `disbursementIntentId: null` so two concurrent reconciles
+   * cannot overwrite each other's link. The loser is harmless: both intents are
+   * for the same deterministic `intentKey`, so they are the same row.
+   */
   private async linkEligibility(
     eligibility: PaymentEligibilityDocument,
     intent: DisbursementIntentDocument,
+    session: ClientSession | null = null,
   ): Promise<void> {
     if (eligibility.disbursementIntentId === intent.id) return;
-    await this.eligibilityModel
-      .updateOne(
+    await withSession(
+      this.eligibilityModel.updateOne(
         { _id: eligibility.id, disbursementIntentId: null },
         { $set: { disbursementIntentId: intent.id } },
-      )
-      .exec();
+      ),
+      session,
+    ).exec();
   }
 }
