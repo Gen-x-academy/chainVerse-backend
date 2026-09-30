@@ -223,7 +223,7 @@ export class AwardAgreement {
    *
    * Privacy: PII — scope to tenant; never expose to other applicants.
    */
-  @Prop({ default: null, trim: true })
+  @Prop({ type: String, default: null, trim: true })
   signerIpAddress: string | null;
 
   /**
@@ -260,7 +260,7 @@ export class AwardAgreement {
    * Privacy: May contain applicant PII; scoped to the tenant.
    * Immutable — set once at creation.
    */
-  @Prop({ trim: true, maxlength: 2000, default: null })
+  @Prop({ type: String, trim: true, maxlength: 2000, default: null })
   applicantNote: string | null;
 
   createdAt?: Date;

@@ -265,7 +265,7 @@ export class BudgetReservation {
    * (EXPIRED, CANCELLED, RELEASED) or to CONFIRMED.
    * Null while still PENDING.
    */
-  @Prop({ default: null })
+  @Prop({ type: Date, default: null })
   resolvedAt: Date | null;
 
   /**
@@ -273,7 +273,7 @@ export class BudgetReservation {
    * Set to the system scheduler id (e.g. 'system:expiry-job') for automated
    * expiries.
    */
-  @Prop({ default: null })
+  @Prop({ type: String, default: null })
   resolvedBy: string | null;
 
   /**
@@ -281,7 +281,7 @@ export class BudgetReservation {
    * Required when an OWNER/ADMIN cancels or releases a reservation so the
    * audit trail captures intent.
    */
-  @Prop({ trim: true, maxlength: 500, default: null })
+  @Prop({ type: String, trim: true, maxlength: 500, default: null })
   reason: string | null;
 
   /** JWT `sub` of the staff member who created this reservation. */
@@ -311,8 +311,36 @@ BudgetReservationSchema.index(
 
 /**
  * Unique active-reservation constraint: at most one PENDING or CONFIRMED
- * reservation per application.  Enforced in the service layer (not as a
- * DB-level unique index) because expired/cancelled/released reservations for
- * the same application must also be retained for auditing.
+ * reservation per application.
+ *
+ * This was previously enforced only in the service layer, with a read for an
+ * existing active reservation immediately before the insert. That is a
+ * read-then-write with nothing to make the two agree, so two concurrent
+ * committee actions on the same application both passed the check, both
+ * incremented the ledger, and both inserted — double-reserving the same
+ * application (#1255).
+ *
+ * A **partial unique index** is the correct shape here rather than a plain unique
+ * index on `applicationId`, because terminal reservations must be retained for
+ * audit alongside the new active one. `partialFilterExpression` restricts
+ * uniqueness to active rows; expired/cancelled/released rows are simply not
+ * part of the index and therefore cannot collide.
+ *
+ * Migration:
+ *   This index is new and must be built before the transactional write path in
+ *   `BudgetReservationService` is deployed, or existing double-reservations
+ *   will fail the build. `docs/scholarships/atomic-award-outbox.md` lists the
+ *   preflight aggregation that finds them; the fix is to expire or cancel one
+ *   of each duplicate pair, never to drop the index.
  */
 BudgetReservationSchema.index({ applicationId: 1, status: 1 });
+BudgetReservationSchema.index(
+  { applicationId: 1 },
+  {
+    unique: true,
+    name: 'uniq_active_reservation_per_application',
+    partialFilterExpression: {
+      status: { $in: [ReservationStatus.PENDING, ReservationStatus.CONFIRMED] },
+    },
+  },
+);

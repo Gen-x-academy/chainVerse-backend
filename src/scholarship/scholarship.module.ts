@@ -50,13 +50,17 @@ import { MilestoneScheduleService } from './services/milestone-schedule.service'
 import { MilestoneVerificationService } from './services/milestone-verification.service';
 import { ScholarshipAccessService } from './services/scholarship-access.service';
 import { ScholarshipAwardService } from './services/scholarship-award.service';
+// Transaction runner + transactional outbox (#1255)
+import { ScholarshipOutboxModule } from '../scholarship-outbox/scholarship-outbox.module';
 
 /**
  * Scholarship awards, milestone-based disbursement schedules, evidence,
  * verification and disbursement intents. See docs/scholarships/.
  *
  * Relies on `ScheduleModule.forRoot()` (registered by StellarModule) for the
- * reconciliation cron and on the global EventEmitter and AuditModule.
+ * reconciliation cron, on `ScholarshipOutboxModule` for atomic cross-collection
+ * writes and durable events (#1255), and on the global EventEmitter and
+ * AuditModule.
  */
 @Module({
   imports: [
@@ -71,6 +75,9 @@ import { ScholarshipAwardService } from './services/scholarship-award.service';
       { name: DisbursementIntent.name, schema: DisbursementIntentSchema },
       { name: OrganizationMember.name, schema: OrganizationMemberSchema },
     ]),
+    // Supplies ScholarshipTransactionRunner + OutboxService to the milestone and
+    // disbursement-intent write paths.
+    ScholarshipOutboxModule,
   ],
   controllers: [
     ScholarshipAwardController,

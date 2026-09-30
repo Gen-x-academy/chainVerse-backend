@@ -20,6 +20,12 @@ const SETTLE_MS = 60_000;
  * it repairs approvals without an eligibility, then creates intents for
  * eligibilities without one. Both paths are idempotent, so running the job on
  * every instance concurrently is safe.
+ *
+ * Since #1255 the fast path is fed by the transactional outbox rather than by an
+ * in-process `emit`, so the event cannot be lost in the gap between the
+ * eligibility committing and the listener running. The cron is now genuinely a
+ * backstop rather than the primary repair mechanism — it exists for events
+ * dead-lettered by the relay, and it still runs.
  */
 @Injectable()
 export class DisbursementReconciliationJob {
@@ -72,10 +78,15 @@ export class DisbursementReconciliationJob {
       await this.verification.findApprovedWithoutEligibility(BATCH_SIZE);
     for (const progress of orphans) {
       try {
-        await this.verification.ensurePaymentEligibility(progress);
-        this.logger.warn(
-          `Repaired missing eligibility for award ${progress.awardId} milestone ${progress.milestoneKey}`,
-        );
+        const { created } =
+          await this.verification.ensurePaymentEligibility(progress);
+        // Another instance may have repaired the same approval between the scan
+        // and this call; only the creator's row is worth reporting.
+        if (created) {
+          this.logger.warn(
+            `Repaired missing eligibility for award ${progress.awardId} milestone ${progress.milestoneKey}`,
+          );
+        }
       } catch (err) {
         this.logger.error(
           `Eligibility repair failed for award ${progress.awardId} milestone ${progress.milestoneKey}: ${(err as Error).message}`,

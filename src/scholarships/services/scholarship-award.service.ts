@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { Model, Types } from 'mongoose';
+import { ClientSession, Model, Types } from 'mongoose';
 import {
   AwardStatus,
   ACTIVE_AWARD_STATUSES,
@@ -37,6 +37,24 @@ import {
   ValidationDomainException,
 } from '../../common/errors/domain.exception';
 import { ErrorCode } from '../../common/errors/error-codes.enum';
+import { DomainEvents } from '../../events/event-names';
+import { OutboxService } from '../../scholarship-outbox/services/outbox.service';
+import {
+  ScholarshipTransactionRunner,
+  withSession,
+} from '../../scholarship-outbox/services/scholarship-transaction.runner';
+import { OutboxAggregateType } from '../../scholarship-outbox/schemas/outbox-event.schema';
+
+/** True for the duplicate-key errors the active-award index produces. */
+function isDuplicateKeyError(error: unknown): boolean {
+  const code = (error as { code?: number } | null)?.code;
+  const codeName = (error as { codeName?: string } | null)?.codeName;
+  return (
+    code === 11000 ||
+    codeName === 'DuplicateKey' ||
+    (error instanceof Error && /E11000/.test(error.message))
+  );
+}
 
 // ── Serialization helpers ─────────────────────────────────────────────────────
 
@@ -74,6 +92,31 @@ function toAwardResult(doc: ScholarshipAwardDocument): AwardResult {
   };
 }
 
+/**
+ * The ledger movement implied by a reservation transition, in one place so the
+ * reserved/disbursed arithmetic cannot drift between call sites.
+ *
+ *   PENDING   → CONFIRMED : the amount becomes disbursed. It was already
+ *                             promised and the applicant has now accepted.
+ *   PENDING   → terminal   : the hold is abandoned, so it returns to available
+ *                             capacity.
+ *   CONFIRMED → RELEASED   : the award was rescinded before payout, so the
+ *                             disbursed tally is credited back.
+ */
+function ledgerDelta(
+  from: ReservationStatus,
+  to: ReservationStatus,
+  amount: number,
+): Record<string, number> {
+  if (to === ReservationStatus.CONFIRMED) {
+    return { reservedAmount: -amount, disbursedAmount: amount };
+  }
+  if (from === ReservationStatus.CONFIRMED) {
+    return { disbursedAmount: -amount };
+  }
+  return { reservedAmount: -amount };
+}
+
 // ── Service ───────────────────────────────────────────────────────────────────
 
 /**
@@ -84,9 +127,9 @@ function toAwardResult(doc: ScholarshipAwardDocument): AwardResult {
  * Key invariants:
  *
  *   1. **One active award per application.**
- *      `applicationId` carries a unique index; attempting to create a second
- *      non-terminal award for the same application returns 409
- *      BIZ_AWARD_ALREADY_EXISTS.
+ *      Enforced by the `uniq_active_award_per_application` partial unique index,
+ *      with a pre-flight read on top for a better error message. The index is
+ *      what actually holds under concurrency — a read cannot (#1255).
  *
  *   2. **Conflict prevention.**
  *      Before creating a new award the service checks for any existing active
@@ -108,7 +151,10 @@ function toAwardResult(doc: ScholarshipAwardDocument): AwardResult {
  *      When `reservationId` is supplied on the award, acceptance transitions the
  *      reservation PENDING → CONFIRMED, and expiry/decline transitions it
  *      PENDING → EXPIRED/CANCELLED.  Rescission transitions CONFIRMED → RELEASED.
- *      All reservation mutations are atomic conditional `findOneAndUpdate` calls.
+ *      Every one of those — award write, reservation CAS, ledger movement and
+ *      outbox row — is a **single transaction** (#1255). The award's status and
+ *      the ledger's arithmetic are the same fact, so they are never allowed to
+ *      commit separately.
  *
  *   6. **Tenant isolation.**
  *      Every public method accepts `organizationId` as its first argument and
@@ -127,6 +173,8 @@ export class ScholarshipAwardService {
     private readonly reservationModel: Model<BudgetReservationDocument>,
     @InjectModel(BudgetLedger.name)
     private readonly ledgerModel: Model<BudgetLedgerDocument>,
+    private readonly transactions: ScholarshipTransactionRunner,
+    private readonly outbox: OutboxService,
   ) {}
 
   // ── Private helpers ────────────────────────────────────────────────────────
@@ -168,126 +216,217 @@ export class ScholarshipAwardService {
   }
 
   /**
-   * Releases the budget reservation linked to an award (PENDING → target),
-   * adjusting the ledger accordingly.  Safe to call when `reservationId` is
-   * null — returns immediately without error.
+   * Moves a linked budget reservation and the award together, in one transaction.
    *
-   * @param reservationId  ObjectId of the BudgetReservation to transition.
-   * @param fromStatus     Expected current status (filter guard for exactly-once).
-   * @param toStatus       Target terminal status (EXPIRED | CANCELLED).
-   * @param actorId        JWT `sub` for audit; `'system'` for cron-triggered calls.
-   * @param reason         Reason stored on the reservation document.
+   * An award transition and its budget movement are the same fact viewed from two
+   * collections: accepting an award *is* the reservation becoming confirmed, and
+   * the money only moves to `disbursedAmount` because the applicant said yes.
+   * Writing them separately left a window in which the award was `ACCEPTED`
+   * while the ledger still showed the money as merely reserved — so a
+   * rescission arriving in that window released from the wrong bucket, or
+   * released nothing at all.
+   *
+   * Routing the whole award transition through one helper is what closes that
+   * window: the award CAS, the reservation CAS, the ledger `$inc` and the
+   * outbox row commit or abort as a unit.
+   *
+   * The award move is itself a compare-and-set on `expectFrom`, which is what
+   * makes the automatic expiry path exactly-once across overlapping cron runs —
+   * the loser matches no document and its whole transaction, including the
+   * ledger movement, is a no-op.
+   *
+   * @param expectFrom Status the award must currently hold.
+   * @throws ResourceConflictException when another caller got there first.
    */
-  private async releaseLinkedReservation(
-    reservationId: Types.ObjectId | null,
-    fromStatus: ReservationStatus,
-    toStatus: ReservationStatus.EXPIRED | ReservationStatus.CANCELLED,
-    actorId: string,
-    reason: string,
-  ): Promise<void> {
-    if (!reservationId) return;
+  private async transitionAward(
+    label: string,
+    params: {
+      organizationId: string;
+      awardId: Types.ObjectId;
+      toStatus: AwardStatus;
+      expectFrom: AwardStatus;
+      actorId: string;
+      /** Extra fields to `$set` alongside the status. */
+      set?: Record<string, unknown>;
+      /** Appended to `statusHistory`; `reason` is optional. */
+      historyReason?: string;
+      /** Reservation movement to make alongside, or null for none. */
+      reservation: {
+        from: ReservationStatus;
+        to: ReservationStatus;
+        reason: string;
+      } | null;
+    },
+  ): Promise<ScholarshipAwardDocument> {
+    const {
+      organizationId,
+      awardId,
+      toStatus,
+      expectFrom,
+      actorId,
+      set = {},
+      historyReason,
+      reservation,
+    } = params;
 
-    const updated = await this.reservationModel
-      .findOneAndUpdate(
-        { _id: reservationId, status: fromStatus },
-        {
-          $set: {
-            status: toStatus,
-            resolvedAt: new Date(),
-            resolvedBy: actorId,
-            reason,
+    return this.transactions.run(
+      label,
+      async (session: ClientSession | null) => {
+        const updated = await withSession(
+          this.awardModel.findOneAndUpdate(
+            { _id: awardId, organizationId, status: expectFrom },
+            {
+              $set: { ...set, status: toStatus },
+              $push: {
+                statusHistory: {
+                  status: toStatus,
+                  changedBy: actorId,
+                  changedAt: new Date(),
+                  reason: historyReason,
+                },
+              },
+            },
+            { new: true },
+          ),
+          session,
+        ).exec();
+
+        if (!updated) {
+          throw new ResourceConflictException(
+            `Award ${awardId.toString()} is no longer ${expectFrom}; it was ` +
+              `transitioned concurrently.`,
+            ErrorCode.BIZ_AWARD_INVALID_STATE,
+          );
+        }
+
+        // `reservation` non-null with no `reservationId` is an award whose budget
+        // cannot be settled. Moving the award anyway would strand the funds
+        // reserved for it, so refuse.
+        if (reservation && !updated.reservationId) {
+          throw new ResourceConflictException(
+            `Award ${awardId.toString()} has no budget reservation to settle ` +
+              `into ${reservation.to}; it was not transitioned.`,
+            ErrorCode.RES_BUDGET_RESERVATION_NOT_FOUND,
+          );
+        }
+        if (reservation && updated.reservationId) {
+          await this.settleReservationInSession(
+            updated.reservationId,
+            organizationId,
+            reservation,
+            actorId,
+            session,
+          );
+        }
+
+        await this.outbox.stage(
+          {
+            organizationId,
+            aggregateType: OutboxAggregateType.SCHOLARSHIP_AWARD,
+            aggregateId: updated._id.toString(),
+            eventName: DomainEvents.SCHOLARSHIP_AWARD_STATUS_CHANGED,
+            payload: {
+              awardId: updated._id.toString(),
+              organizationId,
+              programId: updated.programId.toString(),
+              applicationId: updated.applicationId.toString(),
+              status: toStatus,
+              amount: updated.amount,
+              currency: updated.currency,
+            },
           },
-        },
-        { new: true },
-      )
-      .exec();
+          session,
+        );
 
-    if (!updated) return; // already transitioned by a concurrent operation — idempotent
-
-    // Decrement reservedAmount on the ledger.
-    await this.ledgerModel
-      .updateOne(
-        { programId: updated.programId, organizationId: updated.organizationId },
-        { $inc: { reservedAmount: -updated.amount } },
-      )
-      .exec();
+        return updated;
+      },
+    );
   }
 
   /**
-   * Confirms the budget reservation linked to an award (PENDING → CONFIRMED),
-   * moving the amount from reservedAmount to disbursedAmount on the ledger.
+   * Moves the award's reservation and adjusts the ledger, inside the caller's
+   * transaction.
+   *
+   * @returns the transitioned reservation, or `null` when it was already in a
+   *   different state — which is the idempotent path, not a fault.
    */
-  private async confirmLinkedReservation(
-    reservationId: Types.ObjectId | null,
-    actorId: string,
-    note: string | null,
-  ): Promise<void> {
-    if (!reservationId) return;
-
-    const updated = await this.reservationModel
-      .findOneAndUpdate(
-        { _id: reservationId, status: ReservationStatus.PENDING },
-        {
-          $set: {
-            status: ReservationStatus.CONFIRMED,
-            resolvedAt: new Date(),
-            resolvedBy: actorId,
-            reason: note,
-          },
-        },
-        { new: true },
-      )
-      .exec();
-
-    if (!updated) return; // already confirmed or transitioned — idempotent
-
-    await this.ledgerModel
-      .updateOne(
-        { programId: updated.programId, organizationId: updated.organizationId },
-        {
-          $inc: {
-            reservedAmount: -updated.amount,
-            disbursedAmount: updated.amount,
-          },
-        },
-      )
-      .exec();
-  }
-
   /**
-   * Releases a CONFIRMED reservation back to available budget capacity
-   * (CONFIRMED → RELEASED), used when rescinding an accepted award.
+   * Moves the award's linked reservation, and the budget ledger with it.
+   *
+   * Every exit here is either a full transition or a thrown error. A missing row
+   * or a lost compare-and-set throws rather than returning null, because the
+   * caller has already moved the award: returning would let the award commit
+   * while its reservation and the ledger stayed put, which is precisely the
+   * award/budget divergence #1255 exists to make impossible. Throwing aborts the
+   * whole transaction instead.
    */
-  private async releaseConfirmedReservation(
-    reservationId: Types.ObjectId | null,
+  private async settleReservationInSession(
+    reservationId: Types.ObjectId,
+    organizationId: string,
+    reservation: {
+      from: ReservationStatus;
+      to: ReservationStatus;
+      reason: string;
+    },
     actorId: string,
-    reason: string,
-  ): Promise<void> {
-    if (!reservationId) return;
-
-    const updated = await this.reservationModel
-      .findOneAndUpdate(
-        { _id: reservationId, status: ReservationStatus.CONFIRMED },
+    session: ClientSession | null,
+  ): Promise<BudgetReservationDocument> {
+    const updated = await withSession(
+      this.reservationModel.findOneAndUpdate(
+        { _id: reservationId, organizationId, status: reservation.from },
         {
           $set: {
-            status: ReservationStatus.RELEASED,
+            status: reservation.to,
             resolvedAt: new Date(),
             resolvedBy: actorId,
-            reason,
+            reason: reservation.reason,
           },
         },
         { new: true },
-      )
-      .exec();
+      ),
+      session,
+    ).exec();
 
-    if (!updated) return;
+    if (!updated) {
+      throw new ResourceConflictException(
+        `Reservation ${reservationId.toString()} is no longer ` +
+          `${reservation.from}; it was settled concurrently. The award was not ` +
+          `transitioned.`,
+        ErrorCode.BIZ_RESERVATION_INVALID_STATE,
+      );
+    }
 
-    await this.ledgerModel
-      .updateOne(
-        { programId: updated.programId, organizationId: updated.organizationId },
-        { $inc: { disbursedAmount: -updated.amount } },
-      )
-      .exec();
+    await withSession(
+      this.ledgerModel.updateOne(
+        { programId: updated.programId, organizationId },
+        { $inc: ledgerDelta(reservation.from, reservation.to, updated.amount) },
+      ),
+      session,
+    ).exec();
+
+    // The reservation moved, so its own subscribers need to hear about it — not
+    // only the award's. A listener reconciling budget from reservations would
+    // otherwise see the ledger move with no event explaining it.
+    await this.outbox.stage(
+      {
+        organizationId,
+        aggregateType: OutboxAggregateType.BUDGET_RESERVATION,
+        aggregateId: updated._id.toString(),
+        eventName: DomainEvents.SCHOLARSHIP_BUDGET_RESERVATION_CHANGED,
+        payload: {
+          reservationId: updated._id.toString(),
+          organizationId,
+          programId: updated.programId.toString(),
+          applicationId: updated.applicationId?.toString() ?? null,
+          status: reservation.to,
+          amount: updated.amount,
+          currency: updated.currency,
+        },
+      },
+      session,
+    );
+
+    return updated;
   }
 
   // ── Create ─────────────────────────────────────────────────────────────────
@@ -304,7 +443,13 @@ export class ScholarshipAwardService {
    *   5. Validate milestone date ordering.
    *   6. When `reservationId` is supplied, verify the reservation exists and
    *      belongs to this organization and program.
-   *   7. Persist the award document.
+   *   7. Persist the award document and stage its outbox row in one transaction.
+   *
+   * The transaction is what makes the duplicate-award check sound: the read at
+   * step 2 and the insert at step 7 must observe the same snapshot, or two
+   * concurrent committee actions can both pass the check and both create an
+   * award. `uniq_active_award_per_application` is the backstop when even that
+   * is not enough — when it fires, the transaction has already rolled back.
    *
    * @param programId  Path parameter — the owning scholarship program.
    * @param applicationId  Path parameter — the winning application.
@@ -318,120 +463,168 @@ export class ScholarshipAwardService {
     actorId: string,
   ): Promise<AwardResult> {
     const { organizationId } = dto;
+    const programObjectId = new Types.ObjectId(programId);
 
-    // 1. Verify the application exists and belongs to this organization.
-    const application = await this.applicationModel
-      .findOne({ _id: applicationId, organizationId })
-      .exec();
-    if (!application) {
-      throw new ResourceNotFoundException(
-        `Application ${applicationId} not found in organization ${organizationId}.`,
-        ErrorCode.RES_SCHOLARSHIP_APPLICATION_NOT_FOUND,
-      );
-    }
+    const award = await this.transactions.run(
+      'scholarships.createAward',
+      async (session) => {
+        // 1. Verify the application exists and belongs to this organization.
+        const application = await withSession(
+          this.applicationModel.findOne({ _id: applicationId, organizationId }),
+          session,
+        ).exec();
+        if (!application) {
+          throw new ResourceNotFoundException(
+            `Application ${applicationId} not found in organization ${organizationId}.`,
+            ErrorCode.RES_SCHOLARSHIP_APPLICATION_NOT_FOUND,
+          );
+        }
 
-    // 2. Duplicate award check: only one non-terminal award per application.
-    const existingAward = await this.awardModel
-      .findOne({
-        applicationId: new Types.ObjectId(applicationId),
-        organizationId,
-        status: { $in: Array.from(ACTIVE_AWARD_STATUSES) },
-      })
-      .exec();
-    if (existingAward) {
-      throw new ResourceConflictException(
-        `An active award (${existingAward.status}) already exists for application ${applicationId}.`,
-        ErrorCode.BIZ_AWARD_ALREADY_EXISTS,
-      );
-    }
+        // 2. Duplicate award check: only one non-terminal award per application.
+        const existingAward = await withSession(
+          this.awardModel.findOne({
+            applicationId: new Types.ObjectId(applicationId),
+            organizationId,
+            status: { $in: Array.from(ACTIVE_AWARD_STATUSES) },
+          }),
+          session,
+        ).exec();
+        if (existingAward) {
+          throw new ResourceConflictException(
+            `An active award (${existingAward.status}) already exists for application ${applicationId}.`,
+            ErrorCode.BIZ_AWARD_ALREADY_EXISTS,
+          );
+        }
 
-    // 3. Conflict prevention: applicant must not hold another active award in this org.
-    const conflictingAward = await this.awardModel
-      .findOne({
-        applicantId: application.applicantId,
-        organizationId,
-        status: { $in: Array.from(ACTIVE_AWARD_STATUSES) },
-        // Exclude the same application (edge case: re-creation after terminal state).
-        applicationId: { $ne: new Types.ObjectId(applicationId) },
-      })
-      .exec();
-    if (conflictingAward) {
-      throw new BusinessRuleException(
-        `Applicant ${application.applicantId} already holds an active award ` +
-          `(${conflictingAward.status}) in organization ${organizationId}. ` +
-          `An applicant cannot hold conflicting awards simultaneously.`,
-        ErrorCode.BIZ_AWARD_CONFLICT,
-      );
-    }
+        // 3. Conflict prevention: applicant must not hold another active award in this org.
+        const conflictingAward = await withSession(
+          this.awardModel.findOne({
+            applicantId: application.applicantId,
+            organizationId,
+            status: { $in: Array.from(ACTIVE_AWARD_STATUSES) },
+            // Exclude the same application (edge case: re-creation after terminal state).
+            applicationId: { $ne: new Types.ObjectId(applicationId) },
+          }),
+          session,
+        ).exec();
+        if (conflictingAward) {
+          throw new BusinessRuleException(
+            `Applicant ${application.applicantId} already holds an active award ` +
+              `(${conflictingAward.status}) in organization ${organizationId}. ` +
+              `An applicant cannot hold conflicting awards simultaneously.`,
+            ErrorCode.BIZ_AWARD_CONFLICT,
+          );
+        }
 
-    // 4. Acceptance deadline must be in the future.
-    const acceptanceDeadline = new Date(dto.acceptanceDeadline);
-    if (acceptanceDeadline <= new Date()) {
-      throw new ValidationDomainException(
-        'acceptanceDeadline must be a future date.',
-        ErrorCode.VAL_AWARD_ACCEPTANCE_DEADLINE_PAST,
-      );
-    }
+        // 4. Acceptance deadline must be in the future.
+        const acceptanceDeadline = new Date(dto.acceptanceDeadline);
+        if (acceptanceDeadline <= new Date()) {
+          throw new ValidationDomainException(
+            'acceptanceDeadline must be a future date.',
+            ErrorCode.VAL_AWARD_ACCEPTANCE_DEADLINE_PAST,
+          );
+        }
 
-    // 5. Validate milestone date ordering.
-    if (dto.milestones?.length) {
-      this.validateMilestoneDates(dto.milestones);
-    }
+        // 5. Validate milestone date ordering.
+        if (dto.milestones?.length) {
+          this.validateMilestoneDates(dto.milestones);
+        }
 
-    // 6. Verify the linked reservation (when supplied).
-    if (dto.reservationId) {
-      const reservation = await this.reservationModel
-        .findOne({
-          _id: new Types.ObjectId(dto.reservationId),
-          organizationId,
-          programId: new Types.ObjectId(programId),
-        })
-        .exec();
-      if (!reservation) {
-        throw new ResourceNotFoundException(
-          `Budget reservation ${dto.reservationId} not found for program ${programId}.`,
-          ErrorCode.RES_BUDGET_RESERVATION_NOT_FOUND,
+        // 6. Verify the linked reservation (when supplied).
+        if (dto.reservationId) {
+          const reservation = await withSession(
+            this.reservationModel.findOne({
+              _id: new Types.ObjectId(dto.reservationId),
+              organizationId,
+              programId: programObjectId,
+            }),
+            session,
+          ).exec();
+          if (!reservation) {
+            throw new ResourceNotFoundException(
+              `Budget reservation ${dto.reservationId} not found for program ${programId}.`,
+              ErrorCode.RES_BUDGET_RESERVATION_NOT_FOUND,
+            );
+          }
+        }
+
+        // 7. Persist.
+        const now = new Date();
+        let created: ScholarshipAwardDocument;
+        try {
+          [created] = await this.awardModel.create(
+            [
+              {
+                organizationId,
+                applicationId: new Types.ObjectId(applicationId),
+                programId: programObjectId,
+                applicantId: application.applicantId,
+                reservationId: dto.reservationId
+                  ? new Types.ObjectId(dto.reservationId)
+                  : null,
+                amount: dto.amount,
+                currency: dto.currency.toUpperCase(),
+                termsText: dto.termsText,
+                milestones: (dto.milestones ?? []).map((m) => ({
+                  _id: new Types.ObjectId(),
+                  title: m.title,
+                  description: m.description,
+                  amount: m.amount,
+                  startsAt: m.startsAt ? new Date(m.startsAt) : null,
+                  endsAt: m.endsAt ? new Date(m.endsAt) : null,
+                })),
+                acceptanceDeadline,
+                status: AwardStatus.PENDING_ACCEPTANCE,
+                respondedAt: null,
+                applicantNote: null,
+                rescindedAt: null,
+                rescindedBy: null,
+                rescissionReason: null,
+                createdBy: actorId,
+                statusHistory: [
+                  {
+                    status: AwardStatus.PENDING_ACCEPTANCE,
+                    changedBy: actorId,
+                    changedAt: now,
+                  },
+                ],
+              },
+            ],
+            session ? { session } : {},
+          );
+        } catch (error) {
+          if (isDuplicateKeyError(error)) {
+            throw new ResourceConflictException(
+              `An active award for application ${applicationId} was created ` +
+                `concurrently; only one active award per application is permitted.`,
+              ErrorCode.BIZ_AWARD_ALREADY_EXISTS,
+            );
+          }
+          throw error;
+        }
+
+        await this.outbox.stage(
+          {
+            organizationId,
+            aggregateType: OutboxAggregateType.SCHOLARSHIP_AWARD,
+            aggregateId: created._id.toString(),
+            eventName: DomainEvents.SCHOLARSHIP_AWARD_STATUS_CHANGED,
+            payload: {
+              awardId: created._id.toString(),
+              organizationId,
+              programId,
+              applicationId,
+              status: AwardStatus.PENDING_ACCEPTANCE,
+              amount: dto.amount,
+              currency: dto.currency.toUpperCase(),
+            },
+          },
+          session,
         );
-      }
-    }
 
-    // 7. Persist.
-    const now = new Date();
-    const award = await this.awardModel.create({
-      organizationId,
-      applicationId: new Types.ObjectId(applicationId),
-      programId: new Types.ObjectId(programId),
-      applicantId: application.applicantId,
-      reservationId: dto.reservationId
-        ? new Types.ObjectId(dto.reservationId)
-        : null,
-      amount: dto.amount,
-      currency: dto.currency.toUpperCase(),
-      termsText: dto.termsText,
-      milestones: (dto.milestones ?? []).map((m) => ({
-        _id: new Types.ObjectId(),
-        title: m.title,
-        description: m.description,
-        amount: m.amount,
-        startsAt: m.startsAt ? new Date(m.startsAt) : null,
-        endsAt: m.endsAt ? new Date(m.endsAt) : null,
-      })),
-      acceptanceDeadline,
-      status: AwardStatus.PENDING_ACCEPTANCE,
-      respondedAt: null,
-      applicantNote: null,
-      rescindedAt: null,
-      rescindedBy: null,
-      rescissionReason: null,
-      createdBy: actorId,
-      statusHistory: [
-        {
-          status: AwardStatus.PENDING_ACCEPTANCE,
-          changedBy: actorId,
-          changedAt: now,
-        },
-      ],
-    });
+        return created;
+      },
+    );
 
     this.logger.log(
       `Award created: application=${applicationId}, amount=${dto.amount} ` +
@@ -494,27 +687,27 @@ export class ScholarshipAwardService {
 
     this.assertTransitionAllowed(award.status, AwardStatus.ACCEPTED);
 
-    const now = new Date();
-    award.status = AwardStatus.ACCEPTED;
-    award.respondedAt = now;
-    award.applicantNote = dto.note ?? null;
-    award.statusHistory.push({
-      status: AwardStatus.ACCEPTED,
-      changedBy: callerId,
-      changedAt: now,
+    // The award move and the reservation move are one transaction, so an
+    // accepted award and a confirmed reservation cannot disagree.
+    const accepted = await this.transitionAward('scholarships.acceptAward', {
+      organizationId: award.organizationId,
+      awardId: award._id,
+      toStatus: AwardStatus.ACCEPTED,
+      expectFrom: AwardStatus.PENDING_ACCEPTANCE,
+      actorId: callerId,
+      set: {
+        respondedAt: new Date(),
+        applicantNote: dto.note ?? null,
+      },
+      reservation: {
+        from: ReservationStatus.PENDING,
+        to: ReservationStatus.CONFIRMED,
+        reason: dto.note ?? 'Award accepted by applicant',
+      },
     });
 
-    await award.save();
-
-    // Confirm the linked budget reservation.
-    await this.confirmLinkedReservation(
-      award.reservationId,
-      callerId,
-      dto.note ?? null,
-    );
-
     this.logger.log(`Award ${awardId} accepted by applicant ${callerId}`);
-    return toAwardResult(award);
+    return toAwardResult(accepted);
   }
 
   // ── Decline ────────────────────────────────────────────────────────────────
@@ -559,29 +752,26 @@ export class ScholarshipAwardService {
 
     this.assertTransitionAllowed(award.status, AwardStatus.DECLINED);
 
-    const now = new Date();
-    award.status = AwardStatus.DECLINED;
-    award.respondedAt = now;
-    award.applicantNote = dto.reason ?? null;
-    award.statusHistory.push({
-      status: AwardStatus.DECLINED,
-      changedBy: callerId,
-      changedAt: now,
-      reason: dto.reason,
+    const declined = await this.transitionAward('scholarships.declineAward', {
+      organizationId: award.organizationId,
+      awardId: award._id,
+      toStatus: AwardStatus.DECLINED,
+      expectFrom: AwardStatus.PENDING_ACCEPTANCE,
+      actorId: callerId,
+      set: {
+        respondedAt: new Date(),
+        applicantNote: dto.reason ?? null,
+      },
+      historyReason: dto.reason,
+      reservation: {
+        from: ReservationStatus.PENDING,
+        to: ReservationStatus.CANCELLED,
+        reason: `Award declined by applicant: ${dto.reason ?? 'no reason given'}`,
+      },
     });
 
-    await award.save();
-
-    await this.releaseLinkedReservation(
-      award.reservationId,
-      ReservationStatus.PENDING,
-      ReservationStatus.CANCELLED,
-      callerId,
-      `Award declined by applicant: ${dto.reason ?? 'no reason given'}`,
-    );
-
     this.logger.log(`Award ${awardId} declined by applicant ${callerId}`);
-    return toAwardResult(award);
+    return toAwardResult(declined);
   }
 
   // ── Rescind ────────────────────────────────────────────────────────────────
@@ -622,30 +812,27 @@ export class ScholarshipAwardService {
 
     this.assertTransitionAllowed(award.status, AwardStatus.RESCINDED);
 
-    const now = new Date();
-    award.status = AwardStatus.RESCINDED;
-    award.rescindedAt = now;
-    award.rescindedBy = actorId;
-    award.rescissionReason = dto.reason;
-    award.statusHistory.push({
-      status: AwardStatus.RESCINDED,
-      changedBy: actorId,
-      changedAt: now,
-      reason: dto.reason,
+    const rescinded = await this.transitionAward('scholarships.rescindAward', {
+      organizationId,
+      awardId: award._id,
+      toStatus: AwardStatus.RESCINDED,
+      expectFrom: AwardStatus.ACCEPTED,
+      actorId,
+      set: {
+        rescindedAt: new Date(),
+        rescindedBy: actorId,
+        rescissionReason: dto.reason,
+      },
+      historyReason: dto.reason,
+      reservation: {
+        from: ReservationStatus.CONFIRMED,
+        to: ReservationStatus.RELEASED,
+        reason: `Award rescinded: ${dto.reason}`,
+      },
     });
 
-    await award.save();
-
-    await this.releaseConfirmedReservation(
-      award.reservationId,
-      actorId,
-      `Award rescinded: ${dto.reason}`,
-    );
-
-    this.logger.log(
-      `Award ${awardId} rescinded by ${actorId}: ${dto.reason}`,
-    );
-    return toAwardResult(award);
+    this.logger.log(`Award ${awardId} rescinded by ${actorId}: ${dto.reason}`);
+    return toAwardResult(rescinded);
   }
 
   // ── Read ───────────────────────────────────────────────────────────────────
@@ -731,7 +918,13 @@ export class ScholarshipAwardService {
   async listAwards(
     programId: string,
     query: ListAwardsQueryDto,
-  ): Promise<{ data: AwardResult[]; total: number; page: number; limit: number; totalPages: number }> {
+  ): Promise<{
+    data: AwardResult[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
     const filter: Record<string, unknown> = {
       organizationId: query.organizationId,
       programId: new Types.ObjectId(programId),
@@ -802,9 +995,15 @@ export class ScholarshipAwardService {
    * Core expiry logic shared by both cron jobs.
    *
    * 1. Bulk-find all PENDING_ACCEPTANCE awards past their deadline.
-   * 2. For each, attempt a conditional update (status guard ensures exactly-once).
-   * 3. Release the linked reservation on success.
-   * 4. Log the count of transitioned awards.
+   * 2. Re-read the candidate and transition it through `transitionAward`, which
+   *    re-checks the status inside the transaction (exactly-once), moves the
+   *    linked reservation, adjusts the ledger and stages the outbox row.
+   * 3. Log the count of transitioned awards.
+   *
+   * The per-award transaction matters here more than elsewhere: this job is the
+   * one place where an award and its reservation are mutated without a human in
+   * the loop, so a crash between the two writes would have left a silently
+   * expired award still holding budget, with nothing in the logs saying so.
    */
   private async runExpiryJob(jobLabel: string): Promise<number> {
     const now = new Date();
@@ -816,45 +1015,47 @@ export class ScholarshipAwardService {
         status: AwardStatus.PENDING_ACCEPTANCE,
         acceptanceDeadline: { $lte: now },
       })
-      .select('_id reservationId organizationId')
+      .select('_id organizationId')
       .exec();
 
     for (const candidate of candidates) {
-      // Conditional update: only succeeds if still PENDING_ACCEPTANCE.
-      const updated = await this.awardModel
-        .findOneAndUpdate(
-          {
-            _id: candidate._id,
-            status: AwardStatus.PENDING_ACCEPTANCE,
+      // Re-read so the status guard, the reservation CAS and the ledger move
+      // are all evaluated inside one transaction snapshot.
+      const award = await this.awardModel.findById(candidate._id).exec();
+      if (!award || award.status !== AwardStatus.PENDING_ACCEPTANCE) {
+        continue; // Already transitioned by a concurrent run.
+      }
+
+      try {
+        await this.transitionAward(`scholarships.expireAward:${jobLabel}`, {
+          organizationId: candidate.organizationId,
+          awardId: candidate._id,
+          toStatus: AwardStatus.OFFER_EXPIRED,
+          expectFrom: AwardStatus.PENDING_ACCEPTANCE,
+          actorId: 'system',
+          historyReason: 'Acceptance deadline elapsed.',
+          reservation: {
+            from: ReservationStatus.PENDING,
+            to: ReservationStatus.EXPIRED,
+            reason: 'Offer acceptance deadline elapsed — award expired.',
           },
-          {
-            $set: { status: AwardStatus.OFFER_EXPIRED },
-          },
-          { new: true },
-        )
-        .exec();
-
-      if (!updated) continue; // Already transitioned by a concurrent run.
-
-      // Append the history entry to the already-fetched document and save.
-      updated.statusHistory.push({
-        status: AwardStatus.OFFER_EXPIRED,
-        changedBy: 'system',
-        changedAt: now,
-        reason: 'Acceptance deadline elapsed.',
-      });
-      await updated.save();
-
-      // Release the linked reservation.
-      await this.releaseLinkedReservation(
-        candidate.reservationId,
-        ReservationStatus.PENDING,
-        ReservationStatus.EXPIRED,
-        'system',
-        'Offer acceptance deadline elapsed — award expired.',
-      );
-
-      expired++;
+        });
+        expired++;
+      } catch (err) {
+        // One award's conflict must not abandon the rest of the batch. A lost
+        // race is the expected outcome when two instances run this sweep, and
+        // `transitionAward` throws on it by design: a compare-and-set that lost
+        // is a fact about the award, not a fault in the job. The transaction has
+        // already rolled back, so this award is simply not ours to expire.
+        //
+        // A genuine failure (ledger write, outbox stage) is logged loudly and
+        // left for the next sweep — the award stays PENDING_ACCEPTANCE, so it is
+        // picked up again rather than silently skipped.
+        this.logger.warn(
+          `[${jobLabel}] Could not expire award ${candidate._id.toString()}: ` +
+            `${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
     }
 
     if (expired > 0 || candidates.length > 0) {

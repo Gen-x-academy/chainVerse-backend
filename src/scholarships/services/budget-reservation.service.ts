@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { Model, Types } from 'mongoose';
+import { ClientSession, Model, Types } from 'mongoose';
 import {
   BudgetLedger,
   BudgetLedgerDocument,
@@ -28,12 +28,29 @@ import {
   ValidationDomainException,
 } from '../../common/errors/domain.exception';
 import { ErrorCode } from '../../common/errors/error-codes.enum';
+import { DomainEvents } from '../../events/event-names';
+import { OutboxService } from '../../scholarship-outbox/services/outbox.service';
+import {
+  ScholarshipTransactionRunner,
+  withSession,
+} from '../../scholarship-outbox/services/scholarship-transaction.runner';
+import { OutboxAggregateType } from '../../scholarship-outbox/schemas/outbox-event.schema';
+
+/** True for the duplicate-key errors the active-reservation index produces. */
+function isDuplicateKeyError(error: unknown): boolean {
+  const code = (error as { code?: number } | null)?.code;
+  const codeName = (error as { codeName?: string } | null)?.codeName;
+  return (
+    code === 11000 ||
+    codeName === 'DuplicateKey' ||
+    (error instanceof Error && /E11000/.test(error.message))
+  );
+}
 
 // ── Serialization helpers ─────────────────────────────────────────────────────
 
 function toLedgerResult(doc: BudgetLedgerDocument): BudgetLedgerResult {
-  const available =
-    doc.totalBudget - doc.reservedAmount - doc.disbursedAmount;
+  const available = doc.totalBudget - doc.reservedAmount - doc.disbursedAmount;
   return {
     ledgerId: doc._id.toString(),
     organizationId: doc.organizationId,
@@ -76,22 +93,37 @@ function toReservationResult(
  * Manages the per-program budget ledger and per-application reservations for
  * the scholarship awards workflow.
  *
- * Atomicity guarantee:
- *   Budget mutations use MongoDB's conditional `findOneAndUpdate` with
- *   arithmetic operators (`$inc`) so the read-check-write is a single
- *   round-trip.  No multi-document transactions are required because each
- *   ledger document is self-contained and the constraint is expressed in the
- *   update filter itself.
+ * Atomicity guarantee (#1255):
+ *   Every mutation here touches **two** collections — the reservation document
+ *   and the ledger's `reservedAmount`/`disbursedAmount` — so each one runs
+ *   inside a single Mongo transaction via `ScholarshipTransactionRunner` and
+ *   stages its outbox row in that same transaction.
  *
- * Exactly-once release guarantee:
- *   Every status transition uses a `findOneAndUpdate` that includes the
- *   current expected status in the filter predicate.  Concurrent requests for
- *   the same reservation race: the first wins (matches a document and updates
- *   it), the second finds no matching document and the service detects the
- *   state change via a follow-up read, returning a meaningful error.
+ *   This replaced a read-then-write sequence whose crash window was
+ *   unrecoverable: the ledger `$inc` was applied *before* the reservation insert,
+ *   so a crash in between left `reservedAmount` inflated with no reservation to
+ *   justify or release it. The expiry job could not repair it, because it only
+ *   iterates reservations that exist. The same shape existed in reverse on every
+ *   release, where the reservation had already moved on and the ledger decrement
+ *   was the write that could be lost.
+ *
+ * Exactly-once guarantee:
+ *   Two independent mechanisms, deliberately layered:
+ *     1. Every status transition is a compare-and-set whose filter carries the
+ *        expected current status, so only one caller can move a reservation.
+ *     2. The `uniq_active_reservation_per_application` partial unique index makes
+ *        the "at most one active reservation per application" invariant a
+ *        property of the database rather than of a preceding read. Under
+ *        concurrency the index is what actually prevents a double reservation.
+ *
+ * Idempotency:
+ *   Retrying any method converges on the existing reservation rather than
+ *   double-counting, because the CAS matches zero documents on the second
+ *   attempt and the follow-up read turns that into a precise error or a no-op.
  *
  * Tenant isolation:
- *   All public methods require `organizationId`; every query includes it.
+ *   All public methods require `organizationId`; every query includes it,
+ *   including the ledger reads used to classify a failed constraint.
  */
 @Injectable()
 export class BudgetReservationService {
@@ -102,6 +134,8 @@ export class BudgetReservationService {
     private readonly ledgerModel: Model<BudgetLedgerDocument>,
     @InjectModel(BudgetReservation.name)
     private readonly reservationModel: Model<BudgetReservationDocument>,
+    private readonly transactions: ScholarshipTransactionRunner,
+    private readonly outbox: OutboxService,
   ) {}
 
   // ── Private helpers ────────────────────────────────────────────────────────
@@ -113,10 +147,15 @@ export class BudgetReservationService {
   private async resolveLedger(
     organizationId: string,
     programId: string,
+    session: ClientSession | null = null,
   ): Promise<BudgetLedgerDocument> {
-    const ledger = await this.ledgerModel
-      .findOne({ programId: new Types.ObjectId(programId), organizationId })
-      .exec();
+    const ledger = await withSession(
+      this.ledgerModel.findOne({
+        programId: new Types.ObjectId(programId),
+        organizationId,
+      }),
+      session,
+    ).exec();
     if (!ledger) {
       throw new ResourceNotFoundException(
         `Budget ledger not found for program ${programId}.`,
@@ -132,14 +171,18 @@ export class BudgetReservationService {
   private async findActiveReservation(
     organizationId: string,
     applicationId: string,
+    session: ClientSession | null = null,
   ): Promise<BudgetReservationDocument | null> {
-    return this.reservationModel
-      .findOne({
+    return withSession(
+      this.reservationModel.findOne({
         applicationId: new Types.ObjectId(applicationId),
         organizationId,
-        status: { $in: [ReservationStatus.PENDING, ReservationStatus.CONFIRMED] },
-      })
-      .exec();
+        status: {
+          $in: [ReservationStatus.PENDING, ReservationStatus.CONFIRMED],
+        },
+      }),
+      session,
+    ).exec();
   }
 
   /**
@@ -277,19 +320,28 @@ export class BudgetReservationService {
   // ── Reservation lifecycle ──────────────────────────────────────────────────
 
   /**
-   * Atomically creates a PENDING reservation and increments
-   * `BudgetLedger.reservedAmount`.
+   * Creates a PENDING reservation and increments `BudgetLedger.reservedAmount`
+   * as **one atomic unit**.
    *
-   * The budget constraint is enforced via a single conditional
-   * `findOneAndUpdate`:
+   * The budget constraint stays in the update filter, so it is still enforced by
+   * the server rather than by a prior read:
    *
    * ```
    * filter: { programId, organizationId, reservedAmount + disbursedAmount + amount <= totalBudget }
    * update: { $inc: { reservedAmount: +amount } }
    * ```
    *
-   * If the update matches 0 documents (constraint violated), the service
-   * throws {@link BIZ_BUDGET_INSUFFICIENT} without creating the reservation.
+   * What changed is that the reservation insert, that `$inc` and the outbox row
+   * now share one transaction, so there is no longer an ordering in which the
+   * ledger has been debited with nothing to show for it.
+   *
+   * The "no active reservation for this application" rule is now enforced twice,
+   * and the second check is the one that holds under concurrency:
+   *   - the pre-flight read, which gives a precise, actionable 409 for the
+   *     ordinary single-caller case;
+   *   - `uniq_active_reservation_per_application`, which is what actually
+   *     resolves the race. When it fires, the transaction has already aborted,
+   *     so the losing caller sees a clean 409 with no ledger mutation to undo.
    *
    * @param organizationId  Tenant scope.
    * @param programId       The scholarship program.
@@ -304,7 +356,8 @@ export class BudgetReservationService {
     dto: CreateReservationDto,
     actorId: string,
   ): Promise<BudgetReservationResult> {
-    // 1. Validate expiry is in the future.
+    // 1. Validate expiry is in the future. Rejected before the transaction opens
+    //    because no state is involved.
     const expiresAt = new Date(dto.expiresAt);
     if (expiresAt <= new Date()) {
       throw new ValidationDomainException(
@@ -313,94 +366,275 @@ export class BudgetReservationService {
       );
     }
 
-    // 2. Guard: no active reservation for this application.
-    const existing = await this.findActiveReservation(
-      organizationId,
-      applicationId,
-    );
-    if (existing) {
-      throw new ResourceConflictException(
-        `An active reservation (${existing.status}) already exists for ` +
-          `application ${applicationId}.`,
-        ErrorCode.BIZ_RESERVATION_ALREADY_EXISTS,
-      );
-    }
-
-    // 3. Atomically claim the budget slot.
-    //    The filter ensures: reservedAmount + disbursedAmount + dto.amount <= totalBudget
-    //    which is equivalent to:  reservedAmount <= totalBudget - disbursedAmount - amount
     const programObjectId = new Types.ObjectId(programId);
-    const updatedLedger = await this.ledgerModel
-      .findOneAndUpdate(
-        {
-          programId: programObjectId,
+    const currency = dto.currency.toUpperCase();
+
+    return this.transactions
+      .run('scholarships.createReservation', async (session) => {
+        // 2. Guard: no active reservation for this application.
+        const existing = await this.findActiveReservation(
           organizationId,
-          currency: dto.currency.toUpperCase(),
-          // Inline budget constraint — atomic, no separate read needed.
-          $expr: {
-            $lte: [
-              { $add: ['$reservedAmount', '$disbursedAmount', dto.amount] },
-              '$totalBudget',
+          applicationId,
+          session,
+        );
+        if (existing) {
+          throw new ResourceConflictException(
+            `An active reservation (${existing.status}) already exists for ` +
+              `application ${applicationId}.`,
+            ErrorCode.BIZ_RESERVATION_ALREADY_EXISTS,
+          );
+        }
+
+        // 3. Atomically claim the budget slot.
+        //    The filter ensures: reservedAmount + disbursedAmount + dto.amount <= totalBudget
+        const updatedLedger = await withSession(
+          this.ledgerModel.findOneAndUpdate(
+            {
+              programId: programObjectId,
+              organizationId,
+              currency,
+              // Inline budget constraint — atomic, no separate read needed.
+              $expr: {
+                $lte: [
+                  { $add: ['$reservedAmount', '$disbursedAmount', dto.amount] },
+                  '$totalBudget',
+                ],
+              },
+            },
+            { $inc: { reservedAmount: dto.amount } },
+            { new: true },
+          ),
+          session,
+        ).exec();
+
+        if (!updatedLedger) {
+          // Determine whether the ledger is missing or budget is exhausted.
+          // Read inside the transaction so the diagnosis reflects the same
+          // snapshot the failed update was evaluated against.
+          const ledger = await withSession(
+            this.ledgerModel.findOne({
+              programId: programObjectId,
+              organizationId,
+            }),
+            session,
+          ).exec();
+
+          if (!ledger) {
+            throw new ResourceNotFoundException(
+              `Budget ledger not found for program ${programId}.`,
+              ErrorCode.RES_BUDGET_LEDGER_NOT_FOUND,
+            );
+          }
+          if (ledger.currency !== currency) {
+            throw new ValidationDomainException(
+              `Currency mismatch: ledger uses ${ledger.currency}, reservation requested ${currency}.`,
+              ErrorCode.VAL_BUDGET_AMOUNT_INVALID,
+            );
+          }
+          throw new BusinessRuleException(
+            `Insufficient budget: requested ${dto.amount} ${currency} but only ` +
+              `${ledger.totalBudget - ledger.reservedAmount - ledger.disbursedAmount} available.`,
+            ErrorCode.BIZ_BUDGET_INSUFFICIENT,
+          );
+        }
+
+        // 4. Create the reservation document now that budget is secured.
+        let reservation: BudgetReservationDocument;
+        try {
+          [reservation] = await this.reservationModel.create(
+            [
+              {
+                organizationId,
+                programId: programObjectId,
+                applicationId: new Types.ObjectId(applicationId),
+                amount: dto.amount,
+                currency,
+                status: ReservationStatus.PENDING,
+                expiresAt,
+                resolvedAt: null,
+                resolvedBy: null,
+                reason: null,
+                createdBy: actorId,
+              },
             ],
+            session ? { session } : {},
+          );
+        } catch (error) {
+          // The partial unique index rejected a concurrent reservation for the
+          // same application. Because the whole unit of work is transactional,
+          // the ledger `$inc` above is rolled back with it — so reporting the
+          // conflict here is honest: nothing was reserved.
+          if (isDuplicateKeyError(error)) {
+            throw new ResourceConflictException(
+              `A reservation for application ${applicationId} was created concurrently; ` +
+                `only one active reservation per application is permitted.`,
+              ErrorCode.BIZ_RESERVATION_ALREADY_EXISTS,
+            );
+          }
+          throw error;
+        }
+
+        // 5. Stage the event in the same transaction, so a committed
+        //    reservation always has a durable record that it happened.
+        await this.outbox.stage(
+          {
+            organizationId,
+            aggregateType: OutboxAggregateType.BUDGET_RESERVATION,
+            aggregateId: reservation._id.toString(),
+            eventName: DomainEvents.SCHOLARSHIP_BUDGET_RESERVATION_CHANGED,
+            payload: {
+              reservationId: reservation._id.toString(),
+              organizationId,
+              programId,
+              applicationId,
+              amount: dto.amount,
+              currency,
+              status: ReservationStatus.PENDING,
+            },
+          },
+          session,
+        );
+
+        return reservation;
+      })
+      .then((reservation) => {
+        this.logger.log(
+          `Budget reservation created: application=${applicationId}, ` +
+            `amount=${dto.amount} ${currency}, expires=${dto.expiresAt} ` +
+            `by ${actorId}`,
+        );
+        return toReservationResult(reservation);
+      });
+  }
+
+  /**
+   * The single write path for every reservation status transition.
+   *
+   * `confirmReservation`, `cancelReservation`, `releaseReservation` and the
+   * expiry sweep all differ only in which statuses they accept and which way the
+   * ledger moves. Factoring that out keeps the transaction boundary in exactly
+   * one place — which is the point: four copies of "CAS the reservation, then
+   * adjust the ledger" is four chances to forget that the second write must
+   * share the first write's session.
+   *
+   * Within one transaction, in order:
+   *   1. compare-and-set the reservation from `fromStatus` to `toStatus`;
+   *   2. classify a lost race by re-reading, so the caller gets a precise 404 or
+   *      422 rather than a silent no-op;
+   *   3. apply the ledger movement;
+   *   4. stage the outbox row.
+   *
+   * @returns the transitioned reservation, or `null` when another caller had
+   *   already moved it out of `fromStatus` — the caller decides whether that is
+   *   an idempotent success or a conflict.
+   */
+  private async settleReservation(
+    label: string,
+    params: {
+      organizationId: string;
+      programId: Types.ObjectId;
+      applicationId: Types.ObjectId;
+      /** Matches the reservation by id when set, otherwise by application+program. */
+      reservationId?: Types.ObjectId;
+      fromStatus: ReservationStatus;
+      toStatus: ReservationStatus;
+      actorId: string;
+      reason: string | null;
+      /** Ledger `$inc` computed from the amount the reservation actually held. */
+      ledgerInc: (amount: number) => Record<string, number>;
+      /** Skip the 404/classify path for the expiry sweep, which drives by id. */
+      quietIfMissing?: boolean;
+    },
+  ): Promise<BudgetReservationDocument | null> {
+    const {
+      organizationId,
+      programId,
+      applicationId,
+      reservationId,
+      fromStatus,
+      toStatus,
+      actorId,
+      reason,
+      ledgerInc,
+      quietIfMissing,
+    } = params;
+
+    return this.transactions.run(label, async (session) => {
+      const identity = reservationId
+        ? { _id: reservationId }
+        : { applicationId, programId };
+
+      const updated = await withSession(
+        this.reservationModel.findOneAndUpdate(
+          { ...identity, organizationId, status: fromStatus },
+          {
+            $set: {
+              status: toStatus,
+              resolvedAt: new Date(),
+              resolvedBy: actorId,
+              reason,
+            },
+          },
+          { new: true },
+        ),
+        session,
+      ).exec();
+
+      if (!updated) {
+        if (quietIfMissing) return null;
+
+        // Re-read to surface a meaningful error.
+        const doc = await withSession(
+          this.reservationModel.findOne({ ...identity, organizationId }),
+          session,
+        ).exec();
+        if (!doc) {
+          throw new ResourceNotFoundException(
+            `No reservation found for application ${applicationId.toString()}.`,
+            ErrorCode.RES_BUDGET_RESERVATION_NOT_FOUND,
+          );
+        }
+        this.assertTransitionAllowed(doc.status, toStatus);
+        return null;
+      }
+
+      // The ledger moves in the same transaction as the reservation, so the two
+      // can never disagree about whether this amount is still held.
+      await withSession(
+        this.ledgerModel.updateOne(
+          { programId: updated.programId, organizationId },
+          { $inc: ledgerInc(updated.amount) },
+        ),
+        session,
+      ).exec();
+
+      await this.outbox.stage(
+        {
+          organizationId,
+          aggregateType: OutboxAggregateType.BUDGET_RESERVATION,
+          aggregateId: updated._id.toString(),
+          eventName: DomainEvents.SCHOLARSHIP_BUDGET_RESERVATION_CHANGED,
+          payload: {
+            reservationId: updated._id.toString(),
+            organizationId,
+            programId: updated.programId.toString(),
+            applicationId: updated.applicationId.toString(),
+            amount: updated.amount,
+            currency: updated.currency,
+            status: toStatus,
           },
         },
-        { $inc: { reservedAmount: dto.amount } },
-        { new: true },
-      )
-      .exec();
-
-    if (!updatedLedger) {
-      // Determine whether the ledger is missing or budget is exhausted.
-      const ledger = await this.ledgerModel
-        .findOne({ programId: programObjectId, organizationId })
-        .exec();
-
-      if (!ledger) {
-        throw new ResourceNotFoundException(
-          `Budget ledger not found for program ${programId}.`,
-          ErrorCode.RES_BUDGET_LEDGER_NOT_FOUND,
-        );
-      }
-      if (ledger.currency !== dto.currency.toUpperCase()) {
-        throw new ValidationDomainException(
-          `Currency mismatch: ledger uses ${ledger.currency}, reservation requested ${dto.currency.toUpperCase()}.`,
-          ErrorCode.VAL_BUDGET_AMOUNT_INVALID,
-        );
-      }
-      throw new BusinessRuleException(
-        `Insufficient budget: requested ${dto.amount} ${dto.currency} but only ` +
-          `${ledger.totalBudget - ledger.reservedAmount - ledger.disbursedAmount} available.`,
-        ErrorCode.BIZ_BUDGET_INSUFFICIENT,
+        session,
       );
-    }
 
-    // 4. Create the reservation document now that budget is secured.
-    const reservation = await this.reservationModel.create({
-      organizationId,
-      programId: programObjectId,
-      applicationId: new Types.ObjectId(applicationId),
-      amount: dto.amount,
-      currency: dto.currency.toUpperCase(),
-      status: ReservationStatus.PENDING,
-      expiresAt,
-      resolvedAt: null,
-      resolvedBy: null,
-      reason: null,
-      createdBy: actorId,
+      return updated;
     });
-
-    this.logger.log(
-      `Budget reservation created: application=${applicationId}, ` +
-        `amount=${dto.amount} ${dto.currency}, expires=${dto.expiresAt} ` +
-        `by ${actorId}`,
-    );
-    return toReservationResult(reservation);
   }
 
   /**
    * Confirms a PENDING reservation (applicant has accepted the award).
    *
-   * Atomically:
+   * In one transaction:
    *   - Transitions reservation PENDING → CONFIRMED.
    *   - Decrements `BudgetLedger.reservedAmount`.
    *   - Increments `BudgetLedger.disbursedAmount`.
@@ -418,55 +652,22 @@ export class BudgetReservationService {
     dto: ConfirmReservationDto,
     actorId: string,
   ): Promise<BudgetReservationResult> {
-    const now = new Date();
-
-    // Conditional update: only succeeds if the reservation is still PENDING.
-    const updated = await this.reservationModel
-      .findOneAndUpdate(
-        {
-          applicationId: new Types.ObjectId(applicationId),
-          organizationId,
-          programId: new Types.ObjectId(programId),
-          status: ReservationStatus.PENDING,
-        },
-        {
-          $set: {
-            status: ReservationStatus.CONFIRMED,
-            resolvedAt: now,
-            resolvedBy: actorId,
-            reason: dto.note ?? null,
-          },
-        },
-        { new: true },
-      )
-      .exec();
-
-    if (!updated) {
-      // Re-read to surface a meaningful error.
-      const doc = await this.reservationModel
-        .findOne({
-          applicationId: new Types.ObjectId(applicationId),
-          organizationId,
-          programId: new Types.ObjectId(programId),
-        })
-        .exec();
-
-      if (!doc) {
-        throw new ResourceNotFoundException(
-          `No reservation found for application ${applicationId}.`,
-          ErrorCode.RES_BUDGET_RESERVATION_NOT_FOUND,
-        );
-      }
-      this.assertTransitionAllowed(doc.status, ReservationStatus.CONFIRMED);
-    }
-
-    // Move amount from reserved → disbursed on the ledger.
-    await this.ledgerModel
-      .updateOne(
-        { programId: new Types.ObjectId(programId), organizationId },
-        { $inc: { reservedAmount: -updated!.amount, disbursedAmount: updated!.amount } },
-      )
-      .exec();
+    const updated = await this.settleReservation(
+      'scholarships.confirmReservation',
+      {
+        organizationId,
+        programId: new Types.ObjectId(programId),
+        applicationId: new Types.ObjectId(applicationId),
+        fromStatus: ReservationStatus.PENDING,
+        toStatus: ReservationStatus.CONFIRMED,
+        actorId,
+        reason: dto.note ?? null,
+        ledgerInc: (amount) => ({
+          reservedAmount: -amount,
+          disbursedAmount: amount,
+        }),
+      },
+    );
 
     this.logger.log(
       `Reservation confirmed for application ${applicationId} by ${actorId}`,
@@ -477,7 +678,7 @@ export class BudgetReservationService {
   /**
    * Cancels a PENDING reservation (admin decision; award not yet accepted).
    *
-   * Atomically:
+   * In one transaction:
    *   - Transitions reservation PENDING → CANCELLED.
    *   - Decrements `BudgetLedger.reservedAmount`.
    *
@@ -494,52 +695,19 @@ export class BudgetReservationService {
     dto: CancelReservationDto,
     actorId: string,
   ): Promise<BudgetReservationResult> {
-    const now = new Date();
-
-    const updated = await this.reservationModel
-      .findOneAndUpdate(
-        {
-          applicationId: new Types.ObjectId(applicationId),
-          organizationId,
-          programId: new Types.ObjectId(programId),
-          status: ReservationStatus.PENDING,
-        },
-        {
-          $set: {
-            status: ReservationStatus.CANCELLED,
-            resolvedAt: now,
-            resolvedBy: actorId,
-            reason: dto.reason,
-          },
-        },
-        { new: true },
-      )
-      .exec();
-
-    if (!updated) {
-      const doc = await this.reservationModel
-        .findOne({
-          applicationId: new Types.ObjectId(applicationId),
-          organizationId,
-          programId: new Types.ObjectId(programId),
-        })
-        .exec();
-
-      if (!doc) {
-        throw new ResourceNotFoundException(
-          `No reservation found for application ${applicationId}.`,
-          ErrorCode.RES_BUDGET_RESERVATION_NOT_FOUND,
-        );
-      }
-      this.assertTransitionAllowed(doc.status, ReservationStatus.CANCELLED);
-    }
-
-    await this.ledgerModel
-      .updateOne(
-        { programId: new Types.ObjectId(programId), organizationId },
-        { $inc: { reservedAmount: -updated!.amount } },
-      )
-      .exec();
+    const updated = await this.settleReservation(
+      'scholarships.cancelReservation',
+      {
+        organizationId,
+        programId: new Types.ObjectId(programId),
+        applicationId: new Types.ObjectId(applicationId),
+        fromStatus: ReservationStatus.PENDING,
+        toStatus: ReservationStatus.CANCELLED,
+        actorId,
+        reason: dto.reason,
+        ledgerInc: (amount) => ({ reservedAmount: -amount }),
+      },
+    );
 
     this.logger.log(
       `Reservation cancelled for application ${applicationId} by ${actorId}: ` +
@@ -551,7 +719,7 @@ export class BudgetReservationService {
   /**
    * Releases a CONFIRMED reservation (award rescinded after acceptance).
    *
-   * Atomically:
+   * In one transaction:
    *   - Transitions reservation CONFIRMED → RELEASED.
    *   - Decrements `BudgetLedger.disbursedAmount`.
    *     (The capacity is restored to `availableBudget`.)
@@ -569,52 +737,19 @@ export class BudgetReservationService {
     dto: ReleaseReservationDto,
     actorId: string,
   ): Promise<BudgetReservationResult> {
-    const now = new Date();
-
-    const updated = await this.reservationModel
-      .findOneAndUpdate(
-        {
-          applicationId: new Types.ObjectId(applicationId),
-          organizationId,
-          programId: new Types.ObjectId(programId),
-          status: ReservationStatus.CONFIRMED,
-        },
-        {
-          $set: {
-            status: ReservationStatus.RELEASED,
-            resolvedAt: now,
-            resolvedBy: actorId,
-            reason: dto.reason,
-          },
-        },
-        { new: true },
-      )
-      .exec();
-
-    if (!updated) {
-      const doc = await this.reservationModel
-        .findOne({
-          applicationId: new Types.ObjectId(applicationId),
-          organizationId,
-          programId: new Types.ObjectId(programId),
-        })
-        .exec();
-
-      if (!doc) {
-        throw new ResourceNotFoundException(
-          `No reservation found for application ${applicationId}.`,
-          ErrorCode.RES_BUDGET_RESERVATION_NOT_FOUND,
-        );
-      }
-      this.assertTransitionAllowed(doc.status, ReservationStatus.RELEASED);
-    }
-
-    await this.ledgerModel
-      .updateOne(
-        { programId: new Types.ObjectId(programId), organizationId },
-        { $inc: { disbursedAmount: -updated!.amount } },
-      )
-      .exec();
+    const updated = await this.settleReservation(
+      'scholarships.releaseReservation',
+      {
+        organizationId,
+        programId: new Types.ObjectId(programId),
+        applicationId: new Types.ObjectId(applicationId),
+        fromStatus: ReservationStatus.CONFIRMED,
+        toStatus: ReservationStatus.RELEASED,
+        actorId,
+        reason: dto.reason,
+        ledgerInc: (amount) => ({ disbursedAmount: -amount }),
+      },
+    );
 
     this.logger.log(
       `Reservation released for application ${applicationId} by ${actorId}: ` +
@@ -643,7 +778,9 @@ export class BudgetReservationService {
         applicationId: new Types.ObjectId(applicationId),
         organizationId,
         programId: new Types.ObjectId(programId),
-        status: { $in: [ReservationStatus.PENDING, ReservationStatus.CONFIRMED] },
+        status: {
+          $in: [ReservationStatus.PENDING, ReservationStatus.CONFIRMED],
+        },
       })
       .exec();
 
@@ -721,12 +858,15 @@ export class BudgetReservationService {
   /**
    * Core expiry logic shared by both cron methods.
    *
-   * Finds all PENDING reservations with `expiresAt <= now`, transitions each
-   * to EXPIRED, and returns the budget to available capacity on the ledger.
+   * Finds all PENDING reservations with `expiresAt <= now`, transitions each to
+   * EXPIRED and returns the budget to available capacity — one transaction per
+   * reservation, not one for the whole sweep, so a single bad document cannot
+   * roll back an hour's worth of correct expiries.
    *
-   * Uses `findOneAndUpdate` per document (not a bulk update) so that the
-   * conditional status check (`status = PENDING`) is applied atomically per
-   * document, preventing double-expiry if two cron instances overlap.
+   * Each unit is the shared `settleReservation` path, so the CAS, the ledger
+   * movement and the outbox row commit together. Two overlapping cron instances
+   * therefore cannot both decrement the ledger for the same reservation: the
+   * loser's CAS matches nothing and its transaction is a no-op.
    */
   private async runExpiryJob(label: string): Promise<number> {
     const now = new Date();
@@ -737,7 +877,7 @@ export class BudgetReservationService {
         status: ReservationStatus.PENDING,
         expiresAt: { $lte: now },
       })
-      .select('_id organizationId programId amount')
+      .select('_id organizationId programId applicationId amount')
       .lean()
       .exec();
 
@@ -747,39 +887,24 @@ export class BudgetReservationService {
 
     let expired = 0;
     for (const candidate of candidates) {
-      // Conditional single-document transition — idempotent.
-      const updated = await this.reservationModel
-        .findOneAndUpdate(
-          { _id: candidate._id, status: ReservationStatus.PENDING },
-          {
-            $set: {
-              status: ReservationStatus.EXPIRED,
-              resolvedAt: now,
-              resolvedBy: 'system:expiry-job',
-              reason: 'Reservation expired — applicant did not accept within TTL.',
-            },
-          },
-          { new: false }, // return old doc to confirm it was PENDING
-        )
-        .exec();
-
-      if (!updated) {
-        // Another process (or a prior run) already transitioned this one.
-        continue;
-      }
-
-      // Restore the held amount to available budget.
-      await this.ledgerModel
-        .updateOne(
-          {
-            programId: candidate.programId,
-            organizationId: candidate.organizationId,
-          },
-          { $inc: { reservedAmount: -candidate.amount } },
-        )
-        .exec();
-
-      expired++;
+      const updated = await this.settleReservation(
+        `scholarships.expireReservation:${label}`,
+        {
+          organizationId: candidate.organizationId,
+          programId: candidate.programId,
+          applicationId: candidate.applicationId,
+          reservationId: candidate._id,
+          fromStatus: ReservationStatus.PENDING,
+          toStatus: ReservationStatus.EXPIRED,
+          actorId: 'system:expiry-job',
+          reason: 'Reservation expired — applicant did not accept within TTL.',
+          ledgerInc: (amount) => ({ reservedAmount: -amount }),
+          // Another process (or a prior run) already transitioned this one;
+          // that is the normal case for an overlapping sweep, not an error.
+          quietIfMissing: true,
+        },
+      );
+      if (updated) expired++;
     }
 
     if (expired > 0) {

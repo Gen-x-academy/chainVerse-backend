@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { ClientSession, Model, Types } from 'mongoose';
 import { AuditService } from '../../common/audit/audit.service';
 import { AuditAction } from '../../common/audit/audit-action.enum';
 import {
@@ -16,7 +15,12 @@ import {
 } from '../../common/errors/domain.exception';
 import { ErrorCode } from '../../common/errors/error-codes.enum';
 import { DomainEvents } from '../../events/event-names';
-import { ScholarshipPaymentEligiblePayload } from '../../events/payloads/scholarship-payment-eligible.payload';
+import { OutboxService } from '../../scholarship-outbox/services/outbox.service';
+import { OutboxAggregateType } from '../../scholarship-outbox/schemas/outbox-event.schema';
+import {
+  ScholarshipTransactionRunner,
+  withSession,
+} from '../../scholarship-outbox/services/scholarship-transaction.runner';
 import {
   AssignVerifierDto,
   RecordVerificationDecisionDto,
@@ -66,6 +70,15 @@ export interface DecisionResult {
  *  - nobody can assign themselves as a verifier;
  *  - a verifier cannot decide evidence they submitted;
  *  - a verifier must be an active member of the award's organization.
+ *
+ * Atomicity (#1255): `decide` moves three collections — milestone progress, the
+ * decision record and (on approval) payment eligibility — and publishes an event
+ * that creates a disbursement intent in a different context. Those writes used to
+ * be sequenced with a hand-written compensation step, which is exactly the shape
+ * of write that is lost to a crash: the milestone could be left `APPROVED` with
+ * no decision row and no eligibility, which no later pass could distinguish from
+ * "never approved". They are now one transaction, and the eligibility event is
+ * staged in that transaction rather than emitted from it.
  */
 @Injectable()
 export class MilestoneVerificationService {
@@ -84,7 +97,8 @@ export class MilestoneVerificationService {
     private readonly schedules: MilestoneScheduleService,
     private readonly evidence: MilestoneEvidenceService,
     private readonly auditService: AuditService,
-    private readonly eventEmitter: EventEmitter2,
+    private readonly transactions: ScholarshipTransactionRunner,
+    private readonly outbox: OutboxService,
   ) {}
 
   // ── Assignments ─────────────────────────────────────────────────────────
@@ -270,69 +284,92 @@ export class MilestoneVerificationService {
       );
     }
 
-    // Claim the milestone with a compare-and-set. Only the request that moves
-    // it out of `evidence_submitted` *for this evidence version* proceeds, so
-    // concurrent or repeated decisions cannot both succeed.
+    // Everything from the claim onwards is one transaction. Before #1255 the
+    // claim committed, then the decision insert was attempted, and a failure in
+    // between was compensated by hand — which is the write a crash loses. The
+    // claim and the decision now commit or abort together, so "approved with no
+    // decision row" is not a state the database can be left in.
     const decisionId = new Types.ObjectId();
     const nextStatus = PROGRESS_STATUS_BY_DECISION[dto.decision];
-    const claimed = await this.progressModel
-      .findOneAndUpdate(
-        {
-          awardId,
-          milestoneKey,
-          status: MilestoneProgressStatus.EVIDENCE_SUBMITTED,
-          latestEvidenceId: evidence.id,
-        },
-        {
-          $set: {
-            status: nextStatus,
-            lastDecisionId: decisionId.toHexString(),
-            decidedAt: new Date(),
-          },
-        },
-        { new: true },
-      )
-      .exec();
-    if (!claimed) {
-      throw await this.explainUnclaimable(awardId, milestoneKey, evidence.id);
-    }
 
-    let decision: VerificationDecisionDocument;
-    try {
-      decision = await new this.decisionModel({
-        _id: decisionId,
-        organizationId,
-        awardId,
-        milestoneKey,
-        evidenceId: evidence.id,
-        evidenceVersion: evidence.version,
-        decision: dto.decision,
-        reasonCode: dto.reasonCode,
-        note: dto.note ?? null,
-        verifierId: actor.userId,
-        assignmentId: assignment.id,
-      }).save();
-    } catch (err) {
-      await this.progressModel
-        .updateOne(
-          { awardId, milestoneKey, lastDecisionId: decisionId.toHexString() },
-          {
-            $set: {
+    const { paymentEligibility, decision } = await this.transactions.run(
+      'scholarship.decideMilestone',
+      async (session) => {
+        // Compare-and-set: only the request that moves the milestone out of
+        // `evidence_submitted` *for this evidence version* proceeds, so
+        // concurrent or repeated decisions cannot both succeed.
+        const claimed = await withSession(
+          this.progressModel.findOneAndUpdate(
+            {
+              awardId,
+              milestoneKey,
               status: MilestoneProgressStatus.EVIDENCE_SUBMITTED,
-              lastDecisionId: null,
-              decidedAt: null,
+              latestEvidenceId: evidence.id,
             },
-          },
-        )
-        .exec();
-      if (isDuplicateKeyError(err)) {
-        throw new ResourceConflictException(
-          'This evidence version has already been decided',
-          ErrorCode.BIZ_SCHOLARSHIP_ALREADY_DECIDED,
-        );
-      }
-      throw err;
-    }
+            {
+              $set: {
+                status: nextStatus,
+                lastDecisionId: decisionId.toHexString(),
+                decidedAt: new Date(),
+              },
+            },
+            { new: true },
+          ),
+          session,
+        ).exec();
+
+        if (!claimed) {
+          throw await this.explainUnclaimable(
+            awardId,
+            milestoneKey,
+            evidence.id,
+          );
+        }
+
+        let decision: VerificationDecisionDocument;
+        try {
+          decision = await new this.decisionModel({
+            _id: decisionId,
+            organizationId,
+            awardId,
+            milestoneKey,
+            evidenceId: evidence.id,
+            evidenceVersion: evidence.version,
+            decision: dto.decision,
+            reasonCode: dto.reasonCode,
+            note: dto.note ?? null,
+            verifierId: actor.userId,
+            assignmentId: assignment.id,
+          }).save(session ? { session } : {});
+        } catch (err) {
+          if (isDuplicateKeyError(err)) {
+            throw new ResourceConflictException(
+              'This evidence version has already been decided',
+              ErrorCode.BIZ_SCHOLARSHIP_ALREADY_DECIDED,
+            );
+          }
+          // No manual rollback here: aborting the transaction reverts the claim
+          // above along with the failed insert.
+          throw err;
+        }
+
+        // On approval, the payment eligibility is created in the same
+        // transaction, so a payable milestone always has the decision that made
+        // it payable.
+        const paymentEligibility =
+          dto.decision === VerificationDecisionType.APPROVE
+            ? (
+                await this.ensurePaymentEligibility(
+                  claimed,
+                  actor.audit,
+                  session,
+                )
+              ).eligibility
+            : null;
+
+        return { claimed, decision, paymentEligibility };
+      },
+    );
 
     await this.auditService.record({
       action: AuditAction.SCHOLARSHIP_VERIFICATION_DECIDED,
@@ -353,31 +390,48 @@ export class MilestoneVerificationService {
       reason: dto.reasonCode,
     });
 
-    const paymentEligibility =
-      dto.decision === VerificationDecisionType.APPROVE
-        ? await this.ensurePaymentEligibility(claimed, actor.audit)
-        : null;
-
-    return { decision, progressStatus: nextStatus, paymentEligibility };
+    return {
+      decision,
+      progressStatus: nextStatus,
+      paymentEligibility,
+    };
   }
 
   /**
    * Creates the payment eligibility for an approved milestone if it does not
-   * exist yet, and emits the eligibility event only when this call created it.
+   * exist yet, and stages the eligibility event only when this call created it.
+   *
+   * `created` matters: the event is what causes another context to create a
+   * disbursement intent, and that intent is keyed deterministically on
+   * `(awardId, milestoneKey)`, so a duplicate event is harmless — but emitting
+   * one for an eligibility that already existed would mean two callers both
+   * believed they had caused the payment. Returning the flag keeps "who
+   * published this" an answer the caller can see.
+   *
+   * The event is **staged into the outbox** rather than emitted here, and staged
+   * under `session` so it commits with the eligibility. Emitting from inside the
+   * transaction was the original bug: the listener ran before the transaction
+   * committed, so on a later abort the consumer had acted on a fact that did not
+   * exist.
+   *
    * Safe to call any number of times — used by `decide` and by the
    * reconciliation job to repair an approval whose eligibility write failed.
+   *
+   * @param session Transaction to join, or `null` for a standalone repair.
    */
   async ensurePaymentEligibility(
     progress: MilestoneProgress,
     audit: AuditContext = systemAuditContext('scholarship-reconciliation'),
-  ): Promise<PaymentEligibilityDocument> {
-    const existing = await this.eligibilityModel
-      .findOne({
+    session: ClientSession | null = null,
+  ): Promise<{ eligibility: PaymentEligibilityDocument; created: boolean }> {
+    const existing = await withSession(
+      this.eligibilityModel.findOne({
         awardId: progress.awardId,
         milestoneKey: progress.milestoneKey,
-      })
-      .exec();
-    if (existing) return existing;
+      }),
+      session,
+    ).exec();
+    if (existing) return { eligibility: existing, created: false };
 
     const award = await this.access.requireAward(
       progress.organizationId,
@@ -410,18 +464,45 @@ export class MilestoneVerificationService {
         currency: award.currency,
         recipientId: award.recipientId,
         recipientWallet: award.recipientWallet,
-      }).save();
+      }).save(session ? { session } : {});
     } catch (err) {
       if (!isDuplicateKeyError(err)) throw err;
-      // Someone else created it first; they own the event.
-      return (await this.eligibilityModel
-        .findOne({
-          awardId: progress.awardId,
-          milestoneKey: progress.milestoneKey,
-        })
-        .exec())!;
+      // Someone else created it first inside a concurrent transaction; they own
+      // the event.
+      return {
+        eligibility: (await withSession(
+          this.eligibilityModel.findOne({
+            awardId: progress.awardId,
+            milestoneKey: progress.milestoneKey,
+          }),
+          session,
+        ).exec())!,
+        created: false,
+      };
     }
 
+    await this.outbox.stage(
+      {
+        organizationId: eligibility.organizationId,
+        aggregateType: OutboxAggregateType.MILESTONE_APPROVAL,
+        aggregateId: eligibility.id,
+        eventName: DomainEvents.SCHOLARSHIP_PAYMENT_ELIGIBLE,
+        payload: {
+          eligibilityId: eligibility.id,
+          organizationId: eligibility.organizationId,
+          awardId: eligibility.awardId,
+          milestoneKey: eligibility.milestoneKey,
+          amountMinor: eligibility.amountMinor,
+          currency: eligibility.currency,
+        },
+        correlationId: progress.lastDecisionId,
+      },
+      session,
+    );
+
+    // Audit after the transaction commits: an audit row for a rolled-back
+    // approval is worse than a missing one, because it claims something happened
+    // that did not.
     await this.auditService.record({
       action: AuditAction.SCHOLARSHIP_PAYMENT_ELIGIBLE,
       context: audit,
@@ -434,17 +515,7 @@ export class MilestoneVerificationService {
       },
     });
 
-    const payload = Object.assign(new ScholarshipPaymentEligiblePayload(), {
-      eligibilityId: eligibility.id,
-      organizationId: eligibility.organizationId,
-      awardId: eligibility.awardId,
-      milestoneKey: eligibility.milestoneKey,
-      amountMinor: eligibility.amountMinor,
-      currency: eligibility.currency,
-    });
-    this.eventEmitter.emit(DomainEvents.SCHOLARSHIP_PAYMENT_ELIGIBLE, payload);
-
-    return eligibility;
+    return { eligibility, created: true };
   }
 
   /** Approved milestones that have no eligibility record (crash repair). */

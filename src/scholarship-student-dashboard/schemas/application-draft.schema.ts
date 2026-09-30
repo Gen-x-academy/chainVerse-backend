@@ -23,7 +23,12 @@ export class ApplicationDraft {
   @Prop({ required: true, index: true })
   organizationId: string;
 
-  @Prop({ required: true, type: Types.ObjectId, ref: 'ScholarshipProgram', index: true })
+  @Prop({
+    required: true,
+    type: Types.ObjectId,
+    ref: 'ScholarshipProgram',
+    index: true,
+  })
   programId: Types.ObjectId;
 
   @Prop({ required: true, index: true })
@@ -49,7 +54,7 @@ export class ApplicationDraft {
   submitted: boolean;
 
   /** Timestamp when the draft was submitted (transitioned to a real application). */
-  @Prop({ default: null })
+  @Prop({ type: Date, default: null })
   submittedAt: Date | null;
 
   createdAt?: Date;
@@ -59,5 +64,8 @@ export class ApplicationDraft {
 export const ApplicationDraftSchema =
   SchemaFactory.createForClass(ApplicationDraft);
 
-ApplicationDraftSchema.index({ programId: 1, applicantId: 1 }, { unique: true });
+ApplicationDraftSchema.index(
+  { programId: 1, applicantId: 1 },
+  { unique: true },
+);
 ApplicationDraftSchema.index({ applicantId: 1, submitted: 1 });

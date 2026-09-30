@@ -105,6 +105,9 @@ import { ReviewInfoRequestService } from './services/review-info-request.service
 import { BudgetReservationService } from './services/budget-reservation.service';
 // Personalized matching (#1176)
 import { ScholarshipMatchingService } from './matching/services/scholarship-matching.service';
+// Cross-module atomicity + transactional outbox (#1255)
+import { BudgetLedgerReconciler } from './services/budget-ledger-reconciler.service';
+import { ScholarshipOutboxModule } from '../scholarship-outbox/scholarship-outbox.module';
 
 // ── Controllers ───────────────────────────────────────────────────────────────
 import { ScholarshipProgramsController } from './controllers/scholarship-programs.controller';
@@ -158,18 +161,26 @@ import { ScholarshipMatchingController } from './matching/controllers/scholarshi
  *  - Reviewer info requests (#1146)
  *  - Budget reservations (#1149)
  *  - Personalized matching with fairness guarantees (#1176)
+ *  - Transactional award/reservation writes + budget ledger reconciliation
+ *    (#1255), which arrive with the `ScholarshipOutboxModule` kernel
  */
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: ScholarshipProgram.name, schema: ScholarshipProgramSchema },
       { name: ProgramTermsVersion.name, schema: ProgramTermsVersionSchema },
-      { name: ScholarshipApplication.name, schema: ScholarshipApplicationSchema },
+      {
+        name: ScholarshipApplication.name,
+        schema: ScholarshipApplicationSchema,
+      },
       { name: WithdrawalPolicy.name, schema: WithdrawalPolicySchema },
       { name: EligibilityRule.name, schema: EligibilityRuleSchema },
       { name: ProgramPrerequisite.name, schema: ProgramPrerequisiteSchema },
       { name: ProgramExclusion.name, schema: ProgramExclusionSchema },
-      { name: EligibilityAttestation.name, schema: EligibilityAttestationSchema },
+      {
+        name: EligibilityAttestation.name,
+        schema: EligibilityAttestationSchema,
+      },
       { name: ApplicationForm.name, schema: ApplicationFormSchema },
       // Registered so OrganizationRolesGuard can resolve tenant memberships.
       { name: OrganizationMember.name, schema: OrganizationMemberSchema },
@@ -189,10 +200,19 @@ import { ScholarshipMatchingController } from './matching/controllers/scholarshi
       { name: BudgetLedger.name, schema: BudgetLedgerSchema },
       { name: BudgetReservation.name, schema: BudgetReservationSchema },
       // Personalized matching (#1176)
-      { name: ScholarshipInterestProfile.name, schema: ScholarshipInterestProfileSchema },
-      { name: ScholarshipMatchDismissal.name, schema: ScholarshipMatchDismissalSchema },
+      {
+        name: ScholarshipInterestProfile.name,
+        schema: ScholarshipInterestProfileSchema,
+      },
+      {
+        name: ScholarshipMatchDismissal.name,
+        schema: ScholarshipMatchDismissalSchema,
+      },
     ]),
     PaginationModule,
+    // Supplies ScholarshipTransactionRunner + OutboxService. A shared kernel, not
+    // a bounded context — see scholarship-outbox.module.ts.
+    ScholarshipOutboxModule,
   ],
   controllers: [
     ScholarshipProgramsController,
@@ -240,6 +260,7 @@ import { ScholarshipMatchingController } from './matching/controllers/scholarshi
     // Personalized matching (#1176)
     ScholarshipMatchingService,
     OrganizationRolesGuard,
+    BudgetLedgerReconciler,
   ],
   exports: [
     ScholarshipProgramsService,

@@ -406,4 +406,25 @@ export enum ErrorCode {
   SYS_INTERNAL_ERROR = 'SYS_INTERNAL_ERROR',
   SYS_SERVICE_UNAVAILABLE = 'SYS_SERVICE_UNAVAILABLE',
   SYS_RATE_LIMIT_EXCEEDED = 'SYS_RATE_LIMIT_EXCEEDED',
+
+  // ── Transactional outbox / cross-module atomicity (#1255) ───────────────
+  /**
+   * A staged outbox event named an event with no declared payload allowlist, or
+   * carried a field outside its allowlist. The outbox collection is not
+   * tenant-partitioned, so an undeclared field is a privacy defect and fails the
+   * request rather than being written and dropped downstream.
+   */
+  BIZ_OUTBOX_EVENT_NOT_ALLOWLISTED = 'BIZ_OUTBOX_EVENT_NOT_ALLOWLISTED',
+  /**
+   * `BudgetLedger.reservedAmount`/`disbursedAmount` no longer equal the sum of
+   * the program's reservations. Reconciliation has logged this and scheduled a
+   * repair; the invariant itself is authoritative and the drift is the fault.
+   */
+  BIZ_BUDGET_LEDGER_DRIFT = 'BIZ_BUDGET_LEDGER_DRIFT',
+  /**
+   * A `PaymentEligibility` exists whose verification decision is missing or not
+   * an approval. Only reachable through a degraded (non-transactional) write or
+   * manual data change; reconciliation is the repair path.
+   */
+  BIZ_PAYMENT_ELIGIBILITY_ORPHANED = 'BIZ_PAYMENT_ELIGIBILITY_ORPHANED',
 }

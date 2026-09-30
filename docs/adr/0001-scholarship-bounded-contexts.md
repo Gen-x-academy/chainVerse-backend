@@ -115,9 +115,30 @@ scholarship ───────────────► scholarship-finance
 scholarship-disbursement ──► scholarship-finance        (payment → ledger entry)
 ```
 
-Money flows **toward** `scholarship-finance`. Nothing in `scholarship-finance`
-imports from the other three. The finance module may emit domain events that the
-others consume, but it never calls back into them.
+Money flows **toward** `scholarship-finance`, which is therefore a leaf in this
+graph: nothing in `scholarship-finance` imports from the other three. The finance
+module may emit domain events that the others consume, but it never calls back
+into them.
+
+`scholarship-context-acyclicity.spec.ts` enforces this statically, and enforces
+the companion rule that the graph stays acyclic — a cycle, or a back-edge into
+finance, reintroduces exactly the ambiguity this ADR removes, and is invisible at
+runtime because Nest will wire a circular module graph as long as the classes
+resolve.
+
+### Shared kernels
+
+`src/scholarship-outbox/` (#1255) is **not** a fifth context. It owns no
+scholarship aggregate; it holds the transaction runner, the transactional outbox
+schema and relay that make award approval, reservation consumption, milestone
+approval and intent creation atomic across collections. Both `scholarships` and
+`scholarship` import it.
+
+The rule that keeps this from becoming a back-door into finance: a shared kernel
+may import shared infrastructure (`common/`, `events/`, Nest packages) and must
+not import any of the four contexts. The same spec asserts that, so the kernel
+cannot be used to reach `scholarship-finance` without some context declaring the
+dependency it actually has.
 
 ### What this costs
 

@@ -46,7 +46,25 @@ export const DomainEvents = {
   SCHOLARSHIP_RECOVERY_OPENED: 'scholarship-finance.recovery.opened',
 
   /** Fired by the integrity job when ledger balances or recoveries drift. */
-  SCHOLARSHIP_LEDGER_DRIFT_DETECTED: 'scholarship-finance.ledger.drift-detected',
+  SCHOLARSHIP_LEDGER_DRIFT_DETECTED:
+    'scholarship-finance.ledger.drift-detected',
+
+  /**
+   * Fired once per budget reservation transition (created, confirmed, released),
+   * staged in the same transaction as the ledger `$inc` (#1255). Replaces the
+   * silent two-write sequence that could inflate `reservedAmount` with no
+   * reservation justifying it.
+   */
+  SCHOLARSHIP_BUDGET_RESERVATION_CHANGED:
+    'scholarship.budget-reservation-changed',
+
+  /**
+   * Fired once per award status transition that moves budget (accepted, declined,
+   * rescinded, expired), staged in the same transaction as the reservation
+   * transition (#1255).
+   */
+  SCHOLARSHIP_AWARD_STATUS_CHANGED: 'scholarship.award-status-changed',
+
   /** Fired after a library item is checked out and a receipt is created. */
   LIBRARY_CHECKOUT_RECEIPT_CREATED: 'library.checkout.receipt_created',
 

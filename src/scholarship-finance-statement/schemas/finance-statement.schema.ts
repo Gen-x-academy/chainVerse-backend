@@ -105,7 +105,7 @@ export class FinanceStatement {
   organizationId: string;
 
   /** When set, the statement covers a single programme; otherwise all programmes. */
-  @Prop({ default: null })
+  @Prop({ type: String, default: null })
   programId: string | null;
 
   /** Inclusive start of the statement period (UTC). */
@@ -149,7 +149,7 @@ export class FinanceStatement {
   reconciled: boolean;
 
   /** Populated when `reconciled = false` with the discrepancy amount. */
-  @Prop({ default: null })
+  @Prop({ type: String, default: null })
   reconciliationNote: string | null;
 
   /** Ordered line items (populated only when status = READY). */
@@ -161,11 +161,11 @@ export class FinanceStatement {
   requestedBy: string;
 
   /** Timestamp when the statement job completed (READY or FAILED). */
-  @Prop({ default: null })
+  @Prop({ type: Date, default: null })
   completedAt: Date | null;
 
   /** Error message when status = FAILED. */
-  @Prop({ default: null, trim: true })
+  @Prop({ type: String, default: null, trim: true })
   errorMessage: string | null;
 
   /**
@@ -173,7 +173,7 @@ export class FinanceStatement {
    * Set to `completedAt + retentionDays` when the job finishes.
    * A scheduled job sets status = EXPIRED and clears `lineItems` after this date.
    */
-  @Prop({ default: null, index: true })
+  @Prop({ type: Date, default: null, index: true })
   expiresAt: Date | null;
 
   createdAt?: Date;
@@ -184,4 +184,8 @@ export const FinanceStatementSchema =
   SchemaFactory.createForClass(FinanceStatement);
 
 FinanceStatementSchema.index({ organizationId: 1, status: 1, createdAt: -1 });
-FinanceStatementSchema.index({ organizationId: 1, periodStart: 1, periodEnd: 1 });
+FinanceStatementSchema.index({
+  organizationId: 1,
+  periodStart: 1,
+  periodEnd: 1,
+});

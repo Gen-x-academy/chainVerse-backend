@@ -105,7 +105,7 @@ export class ProgramFormField {
    * Maximum number of words permitted for this field's answer.
    * `null` means no limit beyond the system default (DEFAULT_ANSWER_WORD_LIMIT).
    */
-  @Prop({ min: 1, default: null })
+  @Prop({ type: Number, min: 1, default: null })
   wordLimit: number | null;
 
   /** When true the applicant must supply a non-empty answer. */
@@ -151,14 +151,14 @@ export class ScholarshipProgram {
    * Timestamp of the most recent status change.
    * Null for programs that have never had their status changed after creation.
    */
-  @Prop({ default: null })
+  @Prop({ type: Date, default: null })
   statusChangedAt: Date | null;
 
   /**
    * User id (JWT `sub`) of the actor who last changed the status.
    * Null for programs that have never had their status changed.
    */
-  @Prop({ default: null })
+  @Prop({ type: String, default: null })
   statusChangedBy: string | null;
 
   /**
@@ -193,7 +193,7 @@ export class ScholarshipProgram {
   awardValue: number;
 
   /** Currency of `awardValue`, or null when no terms are published. */
-  @Prop({ default: null })
+  @Prop({ type: String, default: null })
   awardCurrency: string | null;
 
   /**
@@ -201,7 +201,7 @@ export class ScholarshipProgram {
    * Sourced from the first present of `closesAt`, `applicationDeadline`,
    * `dueAt`, `deadline`.
    */
-  @Prop({ default: null, index: true })
+  @Prop({ type: Date, default: null, index: true })
   applicationDeadline: Date | null;
 
   /**
@@ -235,5 +235,9 @@ ScholarshipProgramSchema.index({ organizationId: 1, title: 1 });
 // Catalog search (#1175): the two compound indexes that cover the filtered
 // listing. `{status, awardValue}` serves the award-range filter and
 // `{organizationId, applicationDeadline}` serves "closing soon" queries.
-ScholarshipProgramSchema.index({ organizationId: 1, status: 1, awardValue: -1 });
+ScholarshipProgramSchema.index({
+  organizationId: 1,
+  status: 1,
+  awardValue: -1,
+});
 ScholarshipProgramSchema.index({ organizationId: 1, applicationDeadline: 1 });
