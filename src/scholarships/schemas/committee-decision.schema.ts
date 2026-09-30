@@ -291,14 +291,14 @@ export class CommitteeDecision {
    * Server timestamp when the outcome was first resolved (quorum reached or
    * first override).  Null while still PENDING.
    */
-  @Prop({ default: null })
+  @Prop({ type: Date, default: null })
   resolvedAt: Date | null;
 
   /**
    * JWT `sub` of the member whose vote triggered quorum resolution.
    * Null while PENDING or when outcome was set by override only.
    */
-  @Prop({ default: null })
+  @Prop({ type: String, default: null })
   resolvedBy: string | null;
 
   /**

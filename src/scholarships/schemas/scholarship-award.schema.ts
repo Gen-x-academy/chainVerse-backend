@@ -118,11 +118,11 @@ export class AwardMilestone {
   amount: number;
 
   /** Optional start of the milestone period. */
-  @Prop({ default: null })
+  @Prop({ type: Date, default: null })
   startsAt: Date | null;
 
   /** Optional end of the milestone period.  Must be after `startsAt` if set. */
-  @Prop({ default: null })
+  @Prop({ type: Date, default: null })
   endsAt: Date | null;
 }
 
@@ -312,7 +312,7 @@ export class ScholarshipAward {
    * Timestamp when the applicant accepted or declined.
    * Null until the award reaches ACCEPTED or DECLINED.
    */
-  @Prop({ default: null })
+  @Prop({ type: Date, default: null })
   respondedAt: Date | null;
 
   /**
@@ -321,22 +321,22 @@ export class ScholarshipAward {
    *
    * Privacy: May contain applicant PII; scoped to the tenant.
    */
-  @Prop({ trim: true, maxlength: 1000, default: null })
+  @Prop({ type: String, trim: true, maxlength: 1000, default: null })
   applicantNote: string | null;
 
   /**
    * Timestamp when an ACCEPTED award was rescinded by the organization.
    * Null unless status = RESCINDED.
    */
-  @Prop({ default: null })
+  @Prop({ type: Date, default: null })
   rescindedAt: Date | null;
 
   /** JWT `sub` of the staff member who rescinded the award. */
-  @Prop({ default: null })
+  @Prop({ type: String, default: null })
   rescindedBy: string | null;
 
   /** Mandatory reason recorded when the award is rescinded. */
-  @Prop({ trim: true, maxlength: 1000, default: null })
+  @Prop({ type: String, trim: true, maxlength: 1000, default: null })
   rescissionReason: string | null;
 
   // ── Audit ──────────────────────────────────────────────────────────────────
@@ -382,4 +382,36 @@ ScholarshipAwardSchema.index({ organizationId: 1, programId: 1, status: 1 });
 ScholarshipAwardSchema.index(
   { status: 1, acceptanceDeadline: 1 },
   { partialFilterExpression: { status: AwardStatus.PENDING_ACCEPTANCE } },
+);
+
+/**
+ * Unique active-award constraint: at most one PENDING_ACCEPTANCE or ACCEPTED
+ * award per application.
+ *
+ * The service doc comment for `ScholarshipAwardService` has claimed since #1151
+ * that `applicationId` carries a unique index. It does not — it carries
+ * `{ index: true }`, which is not unique. The check was therefore a
+ * read-then-write that two concurrent committee actions could both pass, after
+ * which both awards existed and both could hold budget (#1255).
+ *
+ * A **partial** unique index is required rather than a plain one because
+ * terminal awards (DECLINED / OFFER_EXPIRED / RESCINDED) must be retained for
+ * audit and are legitimately repeatable — an application may be re-awarded after
+ * a decline. Restricting uniqueness to the active statuses means history is kept
+ * and duplicates are still impossible.
+ *
+ * Migration:
+ *   New index; build it before deploying the transactional `createAward` path.
+ *   Preflight and remediation are documented in
+ *   `docs/scholarships/atomic-award-outbox.md`.
+ */
+ScholarshipAwardSchema.index(
+  { applicationId: 1 },
+  {
+    unique: true,
+    name: 'uniq_active_award_per_application',
+    partialFilterExpression: {
+      status: { $in: Array.from(ACTIVE_AWARD_STATUSES) },
+    },
+  },
 );

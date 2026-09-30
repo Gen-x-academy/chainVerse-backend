@@ -137,7 +137,8 @@ export class AppealEvidence {
   attachedAt: Date;
 }
 
-export const AppealEvidenceSchema = SchemaFactory.createForClass(AppealEvidence);
+export const AppealEvidenceSchema =
+  SchemaFactory.createForClass(AppealEvidence);
 
 /**
  * Append-only audit log entry for the appeal document.
@@ -317,11 +318,11 @@ export class ApplicationAppeal {
    * appeal.  Must not be in `excludedReviewerIds`.
    * Null until `status` transitions to UNDER_REVIEW.
    */
-  @Prop({ default: null })
+  @Prop({ type: String, default: null })
   assignedReviewerId: string | null;
 
   /** Timestamp when the appeal was assigned (status → UNDER_REVIEW). */
-  @Prop({ default: null })
+  @Prop({ type: Date, default: null })
   assignedAt: Date | null;
 
   /**
@@ -331,7 +332,7 @@ export class ApplicationAppeal {
    *   Staff-only field — must NEVER be returned to the applicant.
    *   Only OWNER / ADMIN may read this field.
    */
-  @Prop({ trim: true, maxlength: 5000, default: null })
+  @Prop({ type: String, trim: true, maxlength: 5000, default: null })
   reviewNotes: string | null;
 
   // ── Resolution ─────────────────────────────────────────────────────────────
@@ -341,11 +342,11 @@ export class ApplicationAppeal {
    * (UPHELD, DISMISSED, WITHDRAWN, or EXPIRED).
    * Null while still active.
    */
-  @Prop({ default: null })
+  @Prop({ type: Date, default: null })
   resolvedAt: Date | null;
 
   /** JWT `sub` of the actor who resolved the appeal.  Null while active. */
-  @Prop({ default: null })
+  @Prop({ type: String, default: null })
   resolvedBy: string | null;
 
   /**
@@ -355,17 +356,17 @@ export class ApplicationAppeal {
    * Privacy: may contain limited context about reviewer deliberation.
    * Keep concise; detailed notes go in `reviewNotes`.
    */
-  @Prop({ trim: true, maxlength: 2000, default: null })
+  @Prop({ type: String, trim: true, maxlength: 2000, default: null })
   resolutionReason: string | null;
 
   // ── Withdrawal ─────────────────────────────────────────────────────────────
 
   /** Optional reason provided by the applicant when withdrawing the appeal. */
-  @Prop({ trim: true, maxlength: 500, default: null })
+  @Prop({ type: String, trim: true, maxlength: 500, default: null })
   withdrawalReason: string | null;
 
   /** Timestamp when the applicant withdrew the appeal. */
-  @Prop({ default: null })
+  @Prop({ type: Date, default: null })
   withdrawnAt: Date | null;
 
   // ── Audit trail ────────────────────────────────────────────────────────────

@@ -135,11 +135,21 @@ export class ScholarshipReview {
   organizationId: string;
 
   /** The application being evaluated. */
-  @Prop({ required: true, type: Types.ObjectId, ref: 'ScholarshipApplication', index: true })
+  @Prop({
+    required: true,
+    type: Types.ObjectId,
+    ref: 'ScholarshipApplication',
+    index: true,
+  })
   applicationId: Types.ObjectId;
 
   /** The scholarship program this application belongs to (denormalized for query efficiency). */
-  @Prop({ required: true, type: Types.ObjectId, ref: 'ScholarshipProgram', index: true })
+  @Prop({
+    required: true,
+    type: Types.ObjectId,
+    ref: 'ScholarshipProgram',
+    index: true,
+  })
   programId: Types.ObjectId;
 
   /** JWT `sub` of the staff member performing the review. */
@@ -174,7 +184,7 @@ export class ScholarshipReview {
    * Stored at submission time for auditability; recomputed on every write
    * so it is always consistent with the stored criteria values.
    */
-  @Prop({ min: 0, max: 1, default: null })
+  @Prop({ type: Number, min: 0, max: 1, default: null })
   normalizedScore: number | null;
 
   /** Optional overall comment from the reviewer (not per-criterion). */

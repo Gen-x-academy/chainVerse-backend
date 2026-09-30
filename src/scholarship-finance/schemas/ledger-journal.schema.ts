@@ -38,7 +38,7 @@ export class LedgerJournal {
   @Prop({ required: true, unique: true })
   idempotencyKey: string;
 
-  @Prop({ required: true, enum: Object.values(LedgerSourceType) })
+  @Prop({ required: true, type: String, enum: Object.values(LedgerSourceType) })
   sourceType: LedgerSourceType;
 
   @Prop({ required: true })
