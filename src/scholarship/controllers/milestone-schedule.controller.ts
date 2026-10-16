@@ -15,6 +15,10 @@ import {
   OrgScope,
 } from '../../common/decorators/org-roles.decorator';
 import { OrganizationRole } from '../../common/enums/organization-role.enum';
+import {
+  ORG_SCOPE_FROM_PATH,
+  OrganizationIdParam,
+} from '../../common/decorators/organization-id-param.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-object-id.pipe';
 import {
   DecideScheduleAmendmentDto,
@@ -27,9 +31,9 @@ import { MilestoneScheduleService } from '../services/milestone-schedule.service
 
 @ApiBearerAuth('access-token')
 @ApiTags('Scholarship Milestones')
-@Controller('organizations/:orgId/scholarships/awards/:awardId/schedules')
+@Controller('organizations/:organizationId/scholarships/awards/:awardId/schedules')
 @UseGuards(JwtAuthGuard, OrganizationRolesGuard)
-@OrgScope({ source: 'param', key: 'orgId' })
+@OrgScope(ORG_SCOPE_FROM_PATH)
 export class MilestoneScheduleController {
   constructor(private readonly schedules: MilestoneScheduleService) {}
 
@@ -41,7 +45,7 @@ export class MilestoneScheduleController {
     OrganizationRole.INSTRUCTOR,
   )
   list(
-    @Param('orgId', new ParseObjectIdPipe()) orgId: string,
+    @OrganizationIdParam() orgId: string,
     @Param('awardId', new ParseObjectIdPipe()) awardId: string,
   ) {
     return this.schedules.list(orgId, awardId);
@@ -52,7 +56,7 @@ export class MilestoneScheduleController {
     summary: 'Get the binding schedule (recipient or organization member)',
   })
   findActive(
-    @Param('orgId', new ParseObjectIdPipe()) orgId: string,
+    @OrganizationIdParam() orgId: string,
     @Param('awardId', new ParseObjectIdPipe()) awardId: string,
     @Actor() actor: ScholarshipActor,
   ) {
@@ -63,7 +67,7 @@ export class MilestoneScheduleController {
   @ApiOperation({ summary: 'Create a draft schedule (org owner/admin)' })
   @OrgRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
   createDraft(
-    @Param('orgId', new ParseObjectIdPipe()) orgId: string,
+    @OrganizationIdParam() orgId: string,
     @Param('awardId', new ParseObjectIdPipe()) awardId: string,
     @Body() dto: MilestoneScheduleDto,
     @Actor() actor: ScholarshipActor,
@@ -75,7 +79,7 @@ export class MilestoneScheduleController {
   @ApiOperation({ summary: 'Replace the milestones of a draft schedule' })
   @OrgRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
   updateDraft(
-    @Param('orgId', new ParseObjectIdPipe()) orgId: string,
+    @OrganizationIdParam() orgId: string,
     @Param('awardId', new ParseObjectIdPipe()) awardId: string,
     @Param('scheduleId', new ParseObjectIdPipe()) scheduleId: string,
     @Body() dto: MilestoneScheduleDto,
@@ -88,7 +92,7 @@ export class MilestoneScheduleController {
   @ApiOperation({ summary: 'Activate a draft; it becomes immutable' })
   @OrgRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
   activate(
-    @Param('orgId', new ParseObjectIdPipe()) orgId: string,
+    @OrganizationIdParam() orgId: string,
     @Param('awardId', new ParseObjectIdPipe()) awardId: string,
     @Param('scheduleId', new ParseObjectIdPipe()) scheduleId: string,
     @Actor() actor: ScholarshipActor,
@@ -102,7 +106,7 @@ export class MilestoneScheduleController {
   })
   @OrgRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
   proposeAmendment(
-    @Param('orgId', new ParseObjectIdPipe()) orgId: string,
+    @OrganizationIdParam() orgId: string,
     @Param('awardId', new ParseObjectIdPipe()) awardId: string,
     @Param('scheduleId', new ParseObjectIdPipe()) scheduleId: string,
     @Body() dto: ProposeScheduleAmendmentDto,
@@ -124,7 +128,7 @@ export class MilestoneScheduleController {
   })
   @OrgRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
   decideAmendment(
-    @Param('orgId', new ParseObjectIdPipe()) orgId: string,
+    @OrganizationIdParam() orgId: string,
     @Param('awardId', new ParseObjectIdPipe()) awardId: string,
     @Param('amendmentId', new ParseObjectIdPipe()) amendmentId: string,
     @Body() dto: DecideScheduleAmendmentDto,

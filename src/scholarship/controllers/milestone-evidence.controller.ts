@@ -16,6 +16,9 @@ import {
 } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import {
+  OrganizationIdParam,
+} from '../../common/decorators/organization-id-param.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-object-id.pipe';
 import { SubmitMilestoneEvidenceDto } from '../dto/submit-milestone-evidence.dto';
 import { Actor } from '../scholarship-actor';
@@ -30,7 +33,7 @@ import { MilestoneEvidenceService } from '../services/milestone-evidence.service
  */
 @ApiBearerAuth('access-token')
 @ApiTags('Scholarship Milestones')
-@Controller('organizations/:orgId/scholarships/awards/:awardId')
+@Controller('organizations/:organizationId/scholarships/awards/:awardId')
 @UseGuards(JwtAuthGuard)
 export class MilestoneEvidenceController {
   constructor(private readonly evidence: MilestoneEvidenceService) {}
@@ -46,7 +49,7 @@ export class MilestoneEvidenceController {
     description: 'Duplicate; existing version returned',
   })
   async submit(
-    @Param('orgId', new ParseObjectIdPipe()) orgId: string,
+    @OrganizationIdParam() orgId: string,
     @Param('awardId', new ParseObjectIdPipe()) awardId: string,
     @Param('milestoneKey') milestoneKey: string,
     @Body() dto: SubmitMilestoneEvidenceDto,
@@ -67,7 +70,7 @@ export class MilestoneEvidenceController {
   @Get('milestones/:milestoneKey/evidence')
   @ApiOperation({ summary: 'List evidence versions (metadata only)' })
   list(
-    @Param('orgId', new ParseObjectIdPipe()) orgId: string,
+    @OrganizationIdParam() orgId: string,
     @Param('awardId', new ParseObjectIdPipe()) awardId: string,
     @Param('milestoneKey') milestoneKey: string,
     @Actor() actor: ScholarshipActor,
@@ -80,7 +83,7 @@ export class MilestoneEvidenceController {
     summary: 'Decrypt one evidence version (audited read)',
   })
   reveal(
-    @Param('orgId', new ParseObjectIdPipe()) orgId: string,
+    @OrganizationIdParam() orgId: string,
     @Param('awardId', new ParseObjectIdPipe()) awardId: string,
     @Param('evidenceId', new ParseObjectIdPipe()) evidenceId: string,
     @Actor() actor: ScholarshipActor,

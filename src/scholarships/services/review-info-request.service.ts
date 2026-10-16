@@ -4,6 +4,7 @@ import { Model, Types } from 'mongoose';
 import {
   ReviewInfoRequest,
   ReviewInfoRequestDocument,
+  InfoRequestResponse,
   InfoRequestStatus,
 } from '../schemas/review-info-request.schema';
 import {
@@ -69,6 +70,68 @@ function toResult(doc: ReviewInfoRequestDocument): InfoRequestResult {
     expiredAt: doc.expiredAt?.toISOString(),
     createdAt: doc.createdAt!.toISOString(),
     updatedAt: doc.updatedAt!.toISOString(),
+  };
+}
+
+// ── Response builder ──────────────────────────────────────────────────────────
+
+/** Limits mirrored from the `InfoRequestResponse` schema and its DTO. */
+const MAX_ANSWER_LENGTH = 5000;
+const MAX_NOTE_LENGTH = 2000;
+
+/**
+ * Builds the typed response sub-document that is appended to a request, checking
+ * every field first. Nothing is persisted here: a malformed response throws before
+ * the caller touches the document, so a bad submission can never leave a
+ * half-written version behind.
+ */
+function buildInfoRequestResponse(
+  version: number,
+  submittedBy: string,
+  submittedAt: Date,
+  dto: SubmitInfoResponseDto,
+): InfoRequestResponse {
+  if (!Number.isInteger(version) || version < 1) {
+    throw new ValidationDomainException(
+      'Response version must be a positive integer.',
+    );
+  }
+  if (!submittedBy) {
+    throw new ValidationDomainException('A response must record who submitted it.');
+  }
+  if (dto.note !== undefined && dto.note.length > MAX_NOTE_LENGTH) {
+    throw new ValidationDomainException(
+      `note must not exceed ${MAX_NOTE_LENGTH} characters.`,
+    );
+  }
+
+  const answers = dto.answers.map((answer) => {
+    if (!Types.ObjectId.isValid(answer.questionId)) {
+      throw new ValidationDomainException(
+        `answers contains malformed questionId '${answer.questionId}'.`,
+        ErrorCode.VAL_INFO_REQUEST_UNKNOWN_QUESTION,
+      );
+    }
+    if (
+      typeof answer.value !== 'string' ||
+      answer.value.trim().length === 0 ||
+      answer.value.length > MAX_ANSWER_LENGTH
+    ) {
+      throw new ValidationDomainException(
+        `Each answer must be text of 1 to ${MAX_ANSWER_LENGTH} characters.`,
+        ErrorCode.VAL_INVALID_INPUT,
+      );
+    }
+    return { questionId: new Types.ObjectId(answer.questionId), value: answer.value };
+  });
+
+  return {
+    _id: new Types.ObjectId(),
+    version,
+    answers,
+    note: dto.note,
+    submittedBy,
+    submittedAt,
   };
 }
 
@@ -334,18 +397,14 @@ export class ReviewInfoRequestService {
     }
 
     const nextVersion = req.responses.length + 1;
-    const now = new Date();
 
-    const newResponse = {
-      version: nextVersion,
-      answers: dto.answers.map((a) => ({
-        questionId: new Types.ObjectId(a.questionId),
-        value: a.value,
-      })),
-      note: dto.note,
-      submittedBy: applicantId,
-      submittedAt: now,
-    };
+    // Built and checked before the document is changed in any way.
+    const newResponse = buildInfoRequestResponse(
+      nextVersion,
+      applicantId,
+      new Date(),
+      dto,
+    );
 
     // Append the new response version and update status if needed.
     const updatedStatus =
@@ -353,7 +412,7 @@ export class ReviewInfoRequestService {
         ? InfoRequestStatus.RESPONDED
         : req.status;
 
-    req.responses.push(newResponse as any);
+    req.responses.push(newResponse);
     req.status = updatedStatus;
     const saved = await req.save();
 
