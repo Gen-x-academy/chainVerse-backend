@@ -41,12 +41,17 @@ export class Student {
   @Prop({ default: 'student' })
   role: string;
 
+  @Prop({ type: Number, default: 0 })
+  loginAttempts: number;
+
+  @Prop({ type: Date, default: null })
+  lockedUntil: Date | null;
+
   createdAt?: Date;
   updatedAt?: Date;
 }
 
 export const StudentSchema = SchemaFactory.createForClass(Student);
 
-// Explicit indexes for query performance (unique constraint alone is not enough)
-StudentSchema.index({ email: 1 });
+StudentSchema.index({ email: 1 }, { unique: true });
 StudentSchema.index({ emailVerified: 1 });

@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { isValidObjectId, Model } from 'mongoose';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Enrollment, EnrollmentDocument } from './schemas/enrollment.schema';
 import { Course, CourseDocument } from '../admin-course/schemas/course.schema';
@@ -14,6 +14,7 @@ import {
   CartItemDocument,
 } from '../student-cart/schemas/cart-item.schema';
 import { DomainEvents } from '../events/event-names';
+import { StellarService } from '../stellar/stellar.service';
 
 @Injectable()
 export class StudentEnrollmentService {
@@ -25,6 +26,7 @@ export class StudentEnrollmentService {
     @InjectModel(CartItem.name)
     private readonly cartItemModel: Model<CartItemDocument>,
     private readonly eventEmitter: EventEmitter2,
+    private readonly stellarService: StellarService,
   ) {}
 
   async enrollFree(studentId: string, courseId: string): Promise<Enrollment> {
@@ -61,10 +63,9 @@ export class StudentEnrollmentService {
 
     const savedEnrollment = await enrollment.save();
 
-    // Update course's enrolled students and total enrollments
+    // Update course total enrollments counter
     await this.courseModel
       .findByIdAndUpdate(courseId, {
-        $addToSet: { enrolledStudents: studentId },
         $inc: { totalEnrollments: 1 },
       })
       .exec();
@@ -83,19 +84,32 @@ export class StudentEnrollmentService {
   async checkoutCart(
     studentId: string,
     paymentMethod?: string,
+    transactionHash?: string,
   ): Promise<{ enrolled: string[]; failed: string[]; totalAmount: number }> {
     const cartItems = await this.cartItemModel.find({ studentId }).exec();
     if (cartItems.length === 0) {
       throw new BadRequestException('Cart is empty');
     }
 
+    const courseIds = cartItems
+      .filter((i) => isValidObjectId(i.courseId))
+      .map((i) => i.courseId);
+    const courses = await this.courseModel
+      .find({ _id: { $in: courseIds } })
+      .exec();
+    const courseMap = new Map(courses.map((c) => [c._id.toString(), c]));
     const enrolled: string[] = [];
     const failed: string[] = [];
     let totalAmount = 0;
 
     for (const item of cartItems) {
       try {
-        const course = await this.courseModel.findById(item.courseId).exec();
+        if (!isValidObjectId(item.courseId)) {
+          failed.push(item.courseId);
+          continue;
+        }
+
+        const course = courseMap.get(item.courseId);
         if (!course) {
           failed.push(item.courseId);
           continue;
@@ -112,9 +126,33 @@ export class StudentEnrollmentService {
           .findOne({ studentId, courseId: item.courseId })
           .exec();
         if (existing) {
-          // If already enrolled, just skip and remove from cart
           await this.cartItemModel.findByIdAndDelete(item._id).exec();
           continue;
+        }
+
+        if (course.price > 0) {
+          if (!transactionHash) {
+            throw new BadRequestException(
+              'Transaction hash is required for paid course enrollment.',
+            );
+          }
+
+          const platformAddress = process.env.PLATFORM_STELLAR_ADDRESS;
+          if (!platformAddress) {
+            throw new BadRequestException(
+              'Platform Stellar address is not configured.',
+            );
+          }
+
+          const payment = await this.stellarService.verifyPayment({
+            transactionHash,
+            expectedAmount: course.price,
+            expectedDestination: platformAddress,
+          });
+
+          if (!payment.verified) {
+            throw new BadRequestException('Payment not confirmed on-chain');
+          }
         }
 
         const enrollment = new this.enrollmentModel({
@@ -124,14 +162,14 @@ export class StudentEnrollmentService {
           amountPaid: course.price,
           status: 'completed',
           paymentMethod,
+          transactionHash: transactionHash,
         });
 
         await enrollment.save();
 
-        // Update course's enrolled students and total enrollments
+        // Update course total enrollments counter
         await this.courseModel
           .findByIdAndUpdate(item.courseId, {
-            $addToSet: { enrolledStudents: studentId },
             $inc: { totalEnrollments: 1 },
           })
           .exec();
@@ -164,23 +202,33 @@ export class StudentEnrollmentService {
         id: string;
         title: string;
         description: string;
-        thumbnailUrl: string;
+        thumbnailUrl: string | null;
         tutorName: string;
         progress?: number;
       };
     }>
   > {
     const enrollments = await this.enrollmentModel.find({ studentId }).exec();
+    if (enrollments.length === 0) return [];
 
-    const coursesWithEnrollment = await Promise.all(
-      enrollments.map(async (enrollment) => {
-        const course = await this.courseModel
-          .findById(enrollment.courseId)
-          .exec();
-        if (!course) {
-          return null;
-        }
-        return {
+    const courseIds = enrollments.map((e) => e.courseId);
+    const courses = await this.courseModel
+      .find({ _id: { $in: courseIds } })
+      .exec();
+    const courseMap = new Map(courses.map((c) => [c.id, c]));
+
+    return enrollments.reduce(
+      (acc, enrollment) => {
+        const course = courseMap.get(enrollment.courseId);
+        if (!course) return acc;
+        const totalLessons = enrollment.lessons?.length ?? 0;
+        const completedLessons =
+          enrollment.lessons?.filter((l) => l.completed).length ?? 0;
+        const progress =
+          totalLessons > 0
+            ? Math.round((completedLessons / totalLessons) * 100)
+            : 0;
+        acc.push({
           enrollment,
           course: {
             id: course.id,
@@ -188,23 +236,23 @@ export class StudentEnrollmentService {
             description: course.description,
             thumbnailUrl: course.thumbnailUrl,
             tutorName: course.tutorName,
-            progress: 0, // TODO: Implement progress tracking
+            progress,
           },
+        });
+        return acc;
+      },
+      [] as Array<{
+        enrollment: EnrollmentDocument;
+        course: {
+          id: string;
+          title: string;
+          description: string;
+          thumbnailUrl: string | null;
+          tutorName: string;
+          progress?: number;
         };
-      }),
+      }>,
     );
-
-    return coursesWithEnrollment.filter((c) => c !== null) as Array<{
-      enrollment: EnrollmentDocument;
-      course: {
-        id: string;
-        title: string;
-        description: string;
-        thumbnailUrl: string;
-        tutorName: string;
-        progress?: number;
-      };
-    }>;
   }
 
   async isEnrolled(studentId: string, courseId: string): Promise<boolean> {
@@ -239,5 +287,53 @@ export class StudentEnrollmentService {
 
   async getStudentEnrollmentCount(studentId: string): Promise<number> {
     return this.enrollmentModel.countDocuments({ studentId }).exec();
+  }
+
+  async updateProgress(
+    studentId: string,
+    courseId: string,
+    lessonIndex: number,
+    completed: boolean,
+  ) {
+    const enrollment = await this.enrollmentModel
+      .findOne({ studentId, courseId })
+      .exec();
+
+    if (!enrollment) {
+      throw new NotFoundException('Enrollment not found');
+    }
+
+    const existingLesson = enrollment.lessons?.find(
+      (l) => l.lessonIndex === lessonIndex,
+    );
+
+    if (existingLesson) {
+      existingLesson.completed = completed;
+      existingLesson.completedAt = completed ? new Date() : null;
+    } else {
+      enrollment.lessons.push({
+        lessonIndex,
+        completed,
+        completedAt: completed ? new Date() : null,
+      });
+    }
+
+    await enrollment.save();
+
+    const totalLessons = enrollment.lessons.length;
+    const completedLessons = enrollment.lessons.filter(
+      (l) => l.completed,
+    ).length;
+    const progress =
+      totalLessons > 0
+        ? Math.round((completedLessons / totalLessons) * 100)
+        : 0;
+
+    return {
+      enrollment,
+      progress,
+      completedLessons,
+      totalLessons,
+    };
   }
 }

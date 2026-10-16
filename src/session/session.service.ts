@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateSessionDto } from './dto/create-session.dto';
@@ -20,26 +20,45 @@ export class SessionService {
     return this.sessionModel.find().exec();
   }
 
-  async findByUserId(userId: string): Promise<Session[]> {
-    return this.sessionModel.find({ userId }).exec();
+  async findActiveByUserId(userId: string): Promise<Session[]> {
+    return this.sessionModel
+      .find({ userId, isActive: true })
+      .select('-token') // Exclude token from responses
+      .exec();
   }
 
-  async findOne(id: string): Promise<SessionDocument> {
+  async findOne(id: string, userId: string): Promise<SessionDocument> {
     const session = await this.sessionModel.findById(id).exec();
     if (!session) {
       throw new NotFoundException('Session not found');
     }
+    if (session.userId !== userId) {
+      throw new ForbiddenException('You do not have access to this session');
+    }
     return session;
   }
 
-  async invalidate(id: string): Promise<Session> {
-    const session = await this.sessionModel
-      .findByIdAndUpdate(id, { isActive: false }, { new: true })
-      .exec();
+  async invalidate(id: string, userId: string): Promise<Session> {
+    const session = await this.sessionModel.findById(id).exec();
     if (!session) {
       throw new NotFoundException('Session not found');
     }
-    return session;
+    if (session.userId !== userId) {
+      throw new ForbiddenException('You do not have access to this session');
+    }
+    const updatedSession = await this.sessionModel
+      .findByIdAndUpdate(id, { isActive: false }, { new: true })
+      .select('-token')
+      .exec();
+    return updatedSession;
+  }
+
+  async invalidateAllExceptCurrent(userId: string, currentSessionId: string): Promise<{ modifiedCount: number }> {
+    const result = await this.sessionModel.updateMany(
+      { userId, isActive: true, _id: { $ne: currentSessionId } },
+      { isActive: false }
+    ).exec();
+    return { modifiedCount: result.modifiedCount };
   }
 
   async remove(id: string): Promise<{ id: string; deleted: boolean }> {

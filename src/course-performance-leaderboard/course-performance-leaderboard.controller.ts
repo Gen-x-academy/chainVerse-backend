@@ -1,4 +1,5 @@
 import { ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 import {
   Body,
   Controller,
@@ -12,33 +13,35 @@ import {
 } from '@nestjs/common';
 import { CacheInterceptor, CacheKey, CacheTTL } from '@nestjs/cache-manager';
 import { CoursePerformanceLeaderboardService } from './course-performance-leaderboard.service';
-import { LEADERBOARD_CACHE_KEY } from './course-performance-leaderboard.service';
 import { CreateCoursePerformanceLeaderboardDto } from './dto/create-course-performance-leaderboard.dto';
 import { UpdateCoursePerformanceLeaderboardDto } from './dto/update-course-performance-leaderboard.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
+import { Public } from '../common/decorators/public.decorator';
 
 @ApiBearerAuth('access-token')
 @Controller('courses/performance-leaderboard')
 export class CoursePerformanceLeaderboardController {
   constructor(private readonly service: CoursePerformanceLeaderboardService) {}
 
+  @Public()
   @Get()
   @UseInterceptors(CacheInterceptor)
-  @CacheKey(LEADERBOARD_CACHE_KEY)
+  @CacheKey('leaderboard')
   @CacheTTL(300000)
   @ApiOperation({ summary: 'Get leaderboard (cached, 5 min TTL)' })
   findAll() {
     return this.service.findAll();
   }
 
+  @Public()
   @Get(':id')
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(300000)
   @ApiOperation({ summary: 'Get single leaderboard entry (cached, 5 min TTL)' })
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
@@ -53,7 +56,7 @@ export class CoursePerformanceLeaderboardController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   update(
-    @Param('id') id: string,
+    @Param('id', new ParseObjectIdPipe()) id: string,
     @Body() payload: UpdateCoursePerformanceLeaderboardDto,
   ) {
     return this.service.update(id, payload);
@@ -62,7 +65,7 @@ export class CoursePerformanceLeaderboardController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.remove(id);
   }
 }

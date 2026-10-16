@@ -120,6 +120,9 @@ describe('CourseCategorizationFilteringController', () => {
     it('propagates NotFoundException for unknown id', async () => {
       mockService.remove.mockRejectedValue(new NotFoundException());
       await expect(controller.remove('ghost')).rejects.toThrow(NotFoundException);
+      await expect(controller.remove('ghost')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

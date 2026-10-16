@@ -36,7 +36,7 @@ describe('PrivacyPolicyManagementService', () => {
     });
 
     it('returns all items after creation', async () => {
-      await service.create({ title: 'Policy v1' } as any);
+      await service.create({ title: 'Policy v1' });
       expect(service.findAll()).toHaveLength(1);
     });
   });
@@ -47,7 +47,7 @@ describe('PrivacyPolicyManagementService', () => {
 
   describe('findOne', () => {
     it('returns the policy item when found', async () => {
-      const item = await service.create({ title: 'Policy' } as any);
+      const item = await service.create({ title: 'Policy' });
       expect(service.findOne(item.id)).toMatchObject({ id: item.id });
     });
 
@@ -62,13 +62,13 @@ describe('PrivacyPolicyManagementService', () => {
 
   describe('create', () => {
     it('assigns unique ids', async () => {
-      const a = await service.create({ title: 'A' } as any);
-      const b = await service.create({ title: 'B' } as any);
+      const a = await service.create({ title: 'A' });
+      const b = await service.create({ title: 'B' });
       expect(a.id).not.toBe(b.id);
     });
 
     it('invalidates the privacy policy list cache', async () => {
-      await service.create({ title: 'P' } as any);
+      await service.create({ title: 'P' });
       expect(mockCache.del).toHaveBeenCalledWith(PRIVACY_POLICY_CACHE_KEY);
     });
   });
@@ -79,17 +79,19 @@ describe('PrivacyPolicyManagementService', () => {
 
   describe('update', () => {
     it('merges the payload into the existing item', async () => {
-      const item = await service.create({ title: 'Old' } as any);
-      const updated = await service.update(item.id, { title: 'New' } as any);
+      const item = await service.create({ title: 'Old' });
+      const updated = await service.update(item.id, { title: 'New' });
       expect((updated as any).title).toBe('New');
     });
 
     it('throws NotFoundException for an unknown id', async () => {
-      await expect(service.update('ghost', {})).rejects.toThrow(NotFoundException);
+      await expect(service.update('ghost', {})).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('invalidates list and item cache keys', async () => {
-      const item = await service.create({ title: 'T' } as any);
+      const item = await service.create({ title: 'T' });
       mockCache.del.mockReset();
       await service.update(item.id, {});
       expect(mockCache.del).toHaveBeenCalledWith(PRIVACY_POLICY_CACHE_KEY);
@@ -105,13 +107,13 @@ describe('PrivacyPolicyManagementService', () => {
 
   describe('remove', () => {
     it('removes the item', async () => {
-      const item = await service.create({ title: 'T' } as any);
+      const item = await service.create({ title: 'T' });
       await service.remove(item.id);
       expect(service.findAll()).toHaveLength(0);
     });
 
     it('returns { id, deleted: true }', async () => {
-      const item = await service.create({ title: 'T' } as any);
+      const item = await service.create({ title: 'T' });
       const result = await service.remove(item.id);
       expect(result).toEqual({ id: item.id, deleted: true });
     });
@@ -121,7 +123,7 @@ describe('PrivacyPolicyManagementService', () => {
     });
 
     it('invalidates list and item cache keys', async () => {
-      const item = await service.create({ title: 'T' } as any);
+      const item = await service.create({ title: 'T' });
       mockCache.del.mockReset();
       await service.remove(item.id);
       expect(mockCache.del).toHaveBeenCalledWith(PRIVACY_POLICY_CACHE_KEY);

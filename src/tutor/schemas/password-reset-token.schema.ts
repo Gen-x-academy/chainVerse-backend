@@ -27,7 +27,8 @@ export class PasswordResetToken {
   userAgent?: string | null;
 }
 
-export const PasswordResetTokenSchema = SchemaFactory.createForClass(PasswordResetToken);
+export const PasswordResetTokenSchema =
+  SchemaFactory.createForClass(PasswordResetToken);
 
 // Index for efficient lookups
 PasswordResetTokenSchema.index({ tokenHash: 1 });
