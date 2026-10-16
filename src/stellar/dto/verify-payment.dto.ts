@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class VerifyPaymentDto {
   @ApiProperty({ description: 'Stellar transaction hash to verify' })
@@ -12,8 +12,13 @@ export class VerifyPaymentDto {
   @IsNotEmpty()
   expectedAmount: string;
 
-  @ApiProperty({ description: 'Course ID for the payment' })
+  @ApiPropertyOptional({ description: 'Course ID for the payment' })
   @IsString()
-  @IsNotEmpty()
-  courseId: string;
+  @IsOptional()
+  courseId?: string;
+
+  @ApiPropertyOptional({ description: 'Expected destination public key' })
+  @IsString()
+  @IsOptional()
+  expectedDestination?: string;
 }

@@ -18,6 +18,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 @Controller('contact-messages')
 export class ContactMessageController {
@@ -47,13 +48,14 @@ export class ContactMessageController {
 
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
+  @Roles(Role.ADMIN, Role.MODERATOR)
   @Patch(':id')
   update(
     @Param('id', new ParseObjectIdPipe()) id: string,
     @Body() payload: UpdateContactMessageDto,
+    @CurrentUser('sub') userId: string,
   ) {
-    return this.service.update(id, payload);
+    return this.service.update(id, payload, userId);
   }
 
   @ApiBearerAuth('access-token')

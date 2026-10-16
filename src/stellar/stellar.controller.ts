@@ -1,5 +1,18 @@
-import { Body, Controller, Get, HttpCode, Param, Post } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Validate } from 'class-validator';
 import { IsStellarPublicKey } from '../common/validators/is-stellar-public-key.validator';
@@ -7,24 +20,28 @@ import { StellarService } from './stellar.service';
 import { VerifyPaymentDto } from './dto/verify-payment.dto';
 import { CreateAccountResponseDto } from './dto/create-account-response.dto';
 import { Public } from '../common/decorators/public.decorator';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 
 export class WalletPublicKeyDto {
   @Validate(IsStellarPublicKey)
   publicKey: string;
 }
 
-@Public()
 @ApiTags('Stellar')
+@ApiBearerAuth('access-token')
 @Controller('stellar')
 export class StellarController {
   constructor(private readonly stellarService: StellarService) {}
 
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Verify a Stellar payment transaction' })
   @Post('verify-payment')
   async verifyPayment(@Body() body: VerifyPaymentDto) {
     return this.stellarService.verifyPayment(body);
   }
 
+  // Balances are public on-chain data, so this read-only lookup stays open.
+  @Public()
   @ApiOperation({
     summary: 'Get CHV token and XLM balance for a Stellar public key',
   })
@@ -33,6 +50,7 @@ export class StellarController {
     return this.stellarService.getBalance(publicKey);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @ApiOperation({
     summary: 'Create a funded Stellar testnet account (testnet only)',

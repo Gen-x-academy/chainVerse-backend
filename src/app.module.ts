@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppLoggerModule } from './logger/logger.module';
 import { JwtModule } from '@nestjs/jwt';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -19,9 +20,11 @@ import { MetricsModule } from './metrics/metrics.module';
 import { TracingModule } from './tracing/tracing.module';
 import { EmailModule } from './email/email.module';
 import { StellarModule } from './stellar/stellar.module';
+import { MentorshipConfigModule } from './mentorship-config/mentorship-config.module';
 import { AppCacheModule } from './cache/app-cache.module';
 import { SessionModule } from './session/session.module';
 import { SessionService } from './session/session.service';
+import { StreakModule } from './session/streak.module';
 
 // Auth modules
 import { StudentAuthModule } from './student-auth/student-auth.module';
@@ -50,6 +53,12 @@ import { CourseAnalyticsModule } from './course-analytics/course-analytics.modul
 import { StudentSavedCoursesModule } from './student-saved-courses/student-saved-courses.module';
 import { StudentCartModule } from './student-cart/student-cart.module';
 import { StudentEnrollmentModule } from './student-enrollment/student-enrollment.module';
+// Scholarship finance
+import { ScholarshipFinanceModule } from './scholarship-finance/scholarship-finance.module';
+// Platform extras imported by student flows
+import { EventsModule } from './events/events.module';
+import { ScholarshipOutboxModule } from './scholarship-outbox/scholarship-outbox.module';
+import { LibraryCirculationModule } from './library-circulation/library-circulation.module';
 import { StudentAccountSettingsModule } from './student-account-settings/student-account-settings.module';
 import { StudentCertificateNameChangeRequestModule } from './student-certificate-name-change-request/student-certificate-name-change-request.module';
 import { StudentReportsAnalyticsModule } from './student-reports-analytics/student-reports-analytics.module';
@@ -58,7 +67,7 @@ import { StudentReportsAnalyticsModule } from './student-reports-analytics/stude
 import { AdminFinancialAidManagementModule } from './admin-financial-aid-management/admin-financial-aid-management.module';
 import { AdminModeratorAccountSettingsModule } from './admin-moderator-account-settings/admin-moderator-account-settings.module';
 
-// Platform feature modules
+// Platform / feature modules
 import { HealthModule } from './health/health.module';
 import { NotificationModule } from './notification/notification.module';
 import { FinancialAidModule } from './financial-aid/financial-aid.module';
@@ -72,16 +81,22 @@ import { CertificateSocialSharingModule } from './certificate-social-sharing/cer
 import { CertificationModule } from './certification/certification.module';
 import { ContactMessageModule } from './contact-message/contact-message.module';
 import { FaqManagementModule } from './faq-management/faq-management.module';
+import { PrivacyPolicyManagementModule } from './privacy-policy-management/privacy-policy-management.module';
 import { TermsConditionsManagementModule } from './terms-conditions-management/terms-conditions-management.module';
 import { AboutManagementModule } from './about-management/about-management.module';
+import { MentorshipModule } from './mentorship/mentorship.module';
 import { PrivateTutoringBookingsModule } from './private-tutoring-bookings/private-tutoring-bookings.module';
 import { RemovalRequestModule } from './removal-request/removal-request.module';
 import { ReportAbuseModule } from './report-abuse/report-abuse.module';
 import { ReportsModule } from './reports/reports.module';
+import { MentorshipLifecycleModule } from './mentorship/lifecycle/mentorship-lifecycle.module';
 import { IdempotencyModule } from './idempotency/idempotency.module';
 import { MentorshipModule } from './mentorship/mentorship.module';
 import { PrivacyPolicyManagementModule } from './privacy-policy-management/privacy-policy-management.module';
 import { VerificationModule } from './verification/verification.module';
+import { EventsModule } from './events/events.module';
+import { LibraryCirculationModule } from './library-circulation/library-circulation.module';
+import { ELibraryModule } from './e-library/e-library.module';
 
 @Module({
   imports: [
@@ -91,6 +106,7 @@ import { VerificationModule } from './verification/verification.module';
       validationSchema: envValidationSchema,
     }),
     EventEmitterModule.forRoot(),
+    ScheduleModule.forRoot(),
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => {
@@ -131,7 +147,9 @@ import { VerificationModule } from './verification/verification.module';
     TracingModule,
     EmailModule,
     StellarModule,
+    MentorshipConfigModule,
     SessionModule,
+    StreakModule,
     // Auth
     StudentAuthModule,
     AdminAuthModule,
@@ -156,6 +174,12 @@ import { VerificationModule } from './verification/verification.module';
     StudentSavedCoursesModule,
     StudentCartModule,
     StudentEnrollmentModule,
+    EventsModule,
+    LibraryCirculationModule,
+    // Scholarship finance
+    ScholarshipFinanceModule,
+    // E-Library + student reporting
+    ELibraryModule,
     StudentAccountSettingsModule,
     StudentCertificateNameChangeRequestModule,
     StudentReportsAnalyticsModule,
@@ -179,16 +203,31 @@ import { VerificationModule } from './verification/verification.module';
     PrivacyPolicyManagementModule,
     TermsConditionsManagementModule,
     AboutManagementModule,
+    MentorshipModule,
     PrivateTutoringBookingsModule,
     MentorshipModule,
     RemovalRequestModule,
     ReportAbuseModule,
-    FinancialAidModule,
     ReportsModule,
-    ReportsModule,
-    StellarModule,
+    MentorshipLifecycleModule,
     IdempotencyModule,
     VerificationModule,
+    EventsModule,
+    LibraryCirculationModule,
+    ELibraryModule,
+    // Scholarship domain
+    ScholarshipsModule,
+    ScholarshipModule,
+    ScholarshipDisbursementModule,
+    ScholarshipFinanceModule,
+    ScholarshipOutboxModule,
+    // Scholarship dashboards
+    ScholarshipStudentDashboardModule,
+    ScholarshipSponsorDashboardModule,
+    ScholarshipReviewerDashboardModule,
+    ScholarshipFinanceStatementModule,
+    ScholarshipDisbursementModule,
+    ScholarshipModule,
   ],
   controllers: [AppController],
   providers: [

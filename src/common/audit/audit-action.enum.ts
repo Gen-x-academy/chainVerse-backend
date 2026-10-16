@@ -33,6 +33,39 @@ export enum AuditAction {
   ORGANIZATION_MEMBER_ADDED = 'organization_member.added',
   ORGANIZATION_MEMBER_ROLE_CHANGED = 'organization_member.role_changed',
   ORGANIZATION_MEMBER_REMOVED = 'organization_member.removed',
+  ORGANIZATION_INVITATION_CREATED = 'organization_invitation.created',
+  ORGANIZATION_INVITATION_ACCEPTED = 'organization_invitation.accepted',
+  ORGANIZATION_INVITATION_REVOKED = 'organization_invitation.revoked',
+
+  // Scholarship disbursements (src/scholarship-disbursement)
+  SCHOLARSHIP_ASSET_PROPOSED = 'scholarship_asset.proposed',
+  SCHOLARSHIP_ASSET_APPROVED = 'scholarship_asset.approved',
+  SCHOLARSHIP_ASSET_DISABLED = 'scholarship_asset.disabled',
+  PAYOUT_WALLET_VERIFIED = 'payout_wallet.verified',
+  PAYOUT_WALLET_CHANGED = 'payout_wallet.changed',
+  SCHOLARSHIP_PAYMENT_SCHEDULED = 'scholarship_payment.scheduled',
+  SCHOLARSHIP_PAYMENT_CANCELLED = 'scholarship_payment.cancelled',
+  SCHOLARSHIP_PAYMENT_HOLD_RELEASED = 'scholarship_payment.hold_released',
+  SCHOLARSHIP_PAYMENT_RETRIED = 'scholarship_payment.retried',
+  SCHOLARSHIP_PAYMENT_FINALIZED = 'scholarship_payment.finalized',
+  SCHOLARSHIP_PAYMENT_REVERSED = 'scholarship_payment.reversed',
+  SCHOLARSHIP_DISBURSEMENT_RUN = 'scholarship_disbursement.run',
+  // Scholarships: awards, milestones, verification, disbursements (src/scholarship)
+  SCHOLARSHIP_AWARD_CREATED = 'scholarship_award.created',
+  SCHOLARSHIP_SCHEDULE_CREATED = 'scholarship_schedule.created',
+  SCHOLARSHIP_SCHEDULE_UPDATED = 'scholarship_schedule.updated',
+  SCHOLARSHIP_SCHEDULE_ACTIVATED = 'scholarship_schedule.activated',
+  SCHOLARSHIP_SCHEDULE_AMENDMENT_PROPOSED = 'scholarship_schedule.amendment_proposed',
+  SCHOLARSHIP_SCHEDULE_AMENDMENT_APPROVED = 'scholarship_schedule.amendment_approved',
+  SCHOLARSHIP_SCHEDULE_AMENDMENT_REJECTED = 'scholarship_schedule.amendment_rejected',
+  SCHOLARSHIP_EVIDENCE_SUBMITTED = 'scholarship_evidence.submitted',
+  SCHOLARSHIP_EVIDENCE_ACCESSED = 'scholarship_evidence.accessed',
+  SCHOLARSHIP_VERIFIER_ASSIGNED = 'scholarship_verifier.assigned',
+  SCHOLARSHIP_VERIFIER_REVOKED = 'scholarship_verifier.revoked',
+  SCHOLARSHIP_VERIFICATION_DECIDED = 'scholarship_verification.decided',
+  SCHOLARSHIP_PAYMENT_ELIGIBLE = 'scholarship_payment.eligible',
+  SCHOLARSHIP_DISBURSEMENT_INTENT_CREATED = 'scholarship_disbursement_intent.created',
+  SCHOLARSHIP_DISBURSEMENT_INTENT_TRANSITIONED = 'scholarship_disbursement_intent.transitioned',
 
   // Mentorship applications (src/mentorship)
   MENTORSHIP_PROGRAM_CREATED = 'mentorship_program.created',
@@ -46,6 +79,20 @@ export enum AuditAction {
   FILE_UPLOAD_RELEASED = 'file_upload.released',
   FILE_UPLOAD_REJECTED = 'file_upload.rejected',
   FILE_UPLOAD_DELETED = 'file_upload.deleted',
+
+  // Library configuration (src/library)
+  LIBRARY_CONFIG_UPDATED = 'library_config.updated',
+
+  // Library patron notes (src/library)
+  PATRON_NOTE_CREATED = 'patron_note.created',
+  PATRON_NOTE_UPDATED = 'patron_note.updated',
+  PATRON_NOTE_DELETED = 'patron_note.deleted',
+
+  // Book review / content reports (src/library)
+  BOOK_REVIEW_CREATED = 'book_review.created',
+  BOOK_REVIEW_DELETED = 'book_review.deleted',
+  CONTENT_REPORT_CREATED = 'content_report.created',
+  CONTENT_REPORT_RESOLVED = 'content_report.resolved',
 }
 
 /**
