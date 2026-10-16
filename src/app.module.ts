@@ -79,6 +79,7 @@ import { RemovalRequestModule } from './removal-request/removal-request.module';
 import { ReportAbuseModule } from './report-abuse/report-abuse.module';
 import { ReportsModule } from './reports/reports.module';
 import { IdempotencyModule } from './idempotency/idempotency.module';
+import { MentorshipModule } from './mentorship/mentorship.module';
 import { PrivacyPolicyManagementModule } from './privacy-policy-management/privacy-policy-management.module';
 import { VerificationModule } from './verification/verification.module';
 
@@ -179,6 +180,7 @@ import { VerificationModule } from './verification/verification.module';
     TermsConditionsManagementModule,
     AboutManagementModule,
     PrivateTutoringBookingsModule,
+    MentorshipModule,
     RemovalRequestModule,
     ReportAbuseModule,
     FinancialAidModule,

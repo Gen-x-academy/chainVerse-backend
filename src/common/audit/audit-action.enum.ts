@@ -34,6 +34,12 @@ export enum AuditAction {
   ORGANIZATION_MEMBER_ROLE_CHANGED = 'organization_member.role_changed',
   ORGANIZATION_MEMBER_REMOVED = 'organization_member.removed',
 
+  // Mentorship applications (src/mentorship)
+  MENTORSHIP_PROGRAM_CREATED = 'mentorship_program.created',
+  MENTORSHIP_APPLICATION_DECIDED = 'mentorship_application.decided',
+  MENTORSHIP_APPLICATION_WITHDRAWN = 'mentorship_application.withdrawn',
+  MENTORSHIP_APPLICATION_REAPPLIED = 'mentorship_application.reapplied',
+
   // Upload lifecycle (src/worker)
   FILE_UPLOAD_QUARANTINED = 'file_upload.quarantined',
   FILE_UPLOAD_SCANNED = 'file_upload.scanned',
