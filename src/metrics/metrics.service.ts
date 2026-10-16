@@ -36,12 +36,28 @@ export class MetricsService {
   private readonly startedAt = Date.now();
   private readonly counters = new Map<string, Counter>();
   private readonly histograms = new Map<string, Histogram>();
+  /** Domain counters keyed by `name{label="value",...}`. */
+  private readonly domainCounters = new Map<string, { name: string; labels: Record<string, string>; value: number }>();
 
   /** Called by MetricsInterceptor after every request. */
   record(metric: RequestMetric): void {
     const label = `${metric.method} ${metric.path}`;
     this.incrementCounter(label, metric.statusCode);
     this.observeLatency(label, metric.durationMs);
+  }
+
+  /**
+   * Increments a domain-level counter (e.g. `mentorship_review_actions_total`).
+   * Label values must be low-cardinality (actions, outcomes) – never user ids.
+   */
+  increment(name: string, labels: Record<string, string> = {}, by = 1): void {
+    const key = `${name}${this.formatLabels(labels)}`;
+    const existing = this.domainCounters.get(key);
+    if (existing) {
+      existing.value += by;
+    } else {
+      this.domainCounters.set(key, { name, labels: { ...labels }, value: by });
+    }
   }
 
   /** Returns a snapshot of all collected metrics. */
@@ -72,6 +88,9 @@ export class MetricsService {
       uptimeSeconds: Math.floor((Date.now() - this.startedAt) / 1000),
       collectedAt: new Date().toISOString(),
       routes,
+      counters: Object.fromEntries(
+        [...this.domainCounters.entries()].map(([key, c]) => [key, c.value]),
+      ),
     };
   }
 
@@ -114,10 +133,25 @@ export class MetricsService {
       }
     }
 
+    const seen = new Set<string>();
+    for (const [key, counter] of this.domainCounters.entries()) {
+      if (!seen.has(counter.name)) {
+        seen.add(counter.name);
+        lines.push(`# TYPE ${counter.name} counter`);
+      }
+      lines.push(`${key} ${counter.value}`);
+    }
+
     return lines.join('\n');
   }
 
   // ── Private helpers ─────────────────────────────────────────────────────────
+
+  private formatLabels(labels: Record<string, string>): string {
+    const entries = Object.entries(labels).sort(([a], [b]) => a.localeCompare(b));
+    if (entries.length === 0) return '';
+    return `{${entries.map(([k, v]) => `${k}="${String(v).replace(/"/g, '\\"')}"`).join(',')}}`;
+  }
 
   private incrementCounter(label: string, statusCode: number): void {
     if (!this.counters.has(label)) {

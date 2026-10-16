@@ -76,6 +76,8 @@ src/
 └── common/               # Shared utilities & helpers
 ```
 
+> The tree above is the target layout. For what actually exists in `src/` today (which folder owns which feature, which modules are wired, and known duplicates), see **[docs/module-map.md](docs/module-map.md)**.
+
 ### 📦 Module Structure
 
 Each module follows a consistent internal structure:
@@ -170,6 +172,15 @@ Supported roles:
 * Student application workflow
 * Admin review system
 * Approval/rejection lifecycle
+
+---
+
+### 🤝 Mentorship Applications
+
+* Versioned, configurable application forms with conditional questions (MENTOR-032)
+* Eligibility preflight that matches submission enforcement (MENTOR-033)
+* Scoped reviewer queues with assignment, priority, conflict-of-interest and workload (MENTOR-034)
+* See [docs/mentorship/applications.md](docs/mentorship/applications.md)
 
 ---
 

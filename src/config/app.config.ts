@@ -30,6 +30,11 @@ export interface AppConfig {
     skipFailed: boolean;
     keyPrefix: string;
   };
+  mentorship: {
+    enabled: boolean;
+    reviewSweepIntervalMs: number;
+    defaultReviewSlaDays: number;
+  };
 }
 
 export default (): AppConfig => ({
@@ -80,5 +85,16 @@ export default (): AppConfig => ({
     skipSuccess: process.env.RATE_LIMIT_SKIP_SUCCESS === 'true',
     skipFailed: process.env.RATE_LIMIT_SKIP_FAILED === 'true',
     keyPrefix: process.env.RATE_LIMIT_KEY_PREFIX ?? 'rl:',
+  },
+  mentorship: {
+    enabled: process.env.MENTORSHIP_ENABLED !== 'false',
+    reviewSweepIntervalMs: parseInt(
+      process.env.MENTORSHIP_REVIEW_SWEEP_INTERVAL_MS ?? '60000',
+      10,
+    ),
+    defaultReviewSlaDays: parseInt(
+      process.env.MENTORSHIP_DEFAULT_REVIEW_SLA_DAYS ?? '7',
+      10,
+    ),
   },
 });

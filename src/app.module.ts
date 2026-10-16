@@ -24,6 +24,9 @@ import { StudentCartModule } from './student-cart/student-cart.module';
 import { StudentEnrollmentModule } from './student-enrollment/student-enrollment.module';
 import { CourseAnalyticsModule } from './course-analytics/course-analytics.module';
 
+// Mentorship
+import { MentorshipModule } from './mentorship/mentorship.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -60,6 +63,8 @@ import { CourseAnalyticsModule } from './course-analytics/course-analytics.modul
     StudentEnrollmentModule,
     // Analytics
     CourseAnalyticsModule,
+    // Mentorship (MENTOR-032/033/034)
+    MentorshipModule,
   ],
   controllers: [AppController],
   providers: [
