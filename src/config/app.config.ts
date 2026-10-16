@@ -58,6 +58,15 @@ export interface AppConfig {
       timeoutMs: number;
     };
   };
+  /** Mentor matching: proposals, approvals and coordinator assistance. */
+  mentorship: {
+    /** Participant roles whose approval activates an engagement. */
+    requiredApprovals: string[];
+    defaultProposalTtlHours: number;
+    maxProposalTtlHours: number;
+    /** Cron cadence for expiring proposals and reconciling capacity. */
+    sweepCron: string;
+  };
 }
 
 export default (): AppConfig => ({
@@ -148,5 +157,22 @@ export default (): AppConfig => ({
       port: parseInt(process.env.MALWARE_SCAN_PORT ?? '3310', 10),
       timeoutMs: parseInt(process.env.MALWARE_SCAN_TIMEOUT_MS ?? '30000', 10),
     },
+  },
+  mentorship: {
+    requiredApprovals: (
+      process.env.MENTORSHIP_REQUIRED_APPROVALS ?? 'mentor,mentee'
+    )
+      .split(',')
+      .map((role) => role.trim())
+      .filter(Boolean),
+    defaultProposalTtlHours: parseInt(
+      process.env.MENTORSHIP_PROPOSAL_TTL_HOURS ?? '72',
+      10,
+    ),
+    maxProposalTtlHours: parseInt(
+      process.env.MENTORSHIP_PROPOSAL_MAX_TTL_HOURS ?? '720',
+      10,
+    ),
+    sweepCron: process.env.MENTORSHIP_SWEEP_CRON ?? '0 */5 * * * *',
   },
 });

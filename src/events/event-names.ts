@@ -18,6 +18,18 @@ export const DomainEvents = {
 
   /** Fired after a certificate (NFT achievement) is issued to a student. */
   CERTIFICATE_ISSUED: 'certificate.issued',
+
+  /** Fired when a mentor match proposal is created (participant or coordinator). */
+  MENTORSHIP_PROPOSAL_CREATED: 'mentorship.proposal-created',
+
+  /** Fired when a coordinator changes a pending proposal; participants must re-approve. */
+  MENTORSHIP_PROPOSAL_ADJUSTED: 'mentorship.proposal-adjusted',
+
+  /** Fired when a proposal is rejected, withdrawn, expired or superseded. */
+  MENTORSHIP_PROPOSAL_CLOSED: 'mentorship.proposal-closed',
+
+  /** Fired once all required approvals activate an engagement. */
+  MENTORSHIP_ENGAGEMENT_ACTIVATED: 'mentorship.engagement-activated',
 } as const;
 
 export type DomainEventName = (typeof DomainEvents)[keyof typeof DomainEvents];

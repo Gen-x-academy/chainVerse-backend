@@ -90,6 +90,18 @@ export const envValidationSchema = Joi.object({
   MALWARE_SCAN_HOST: Joi.string().default('127.0.0.1'),
   MALWARE_SCAN_PORT: Joi.number().port().default(3310),
   MALWARE_SCAN_TIMEOUT_MS: Joi.number().integer().positive().default(30000),
+
+  // ─── Mentorship matching ────────────────────────────────────────────────────
+  // Comma-separated participant roles that must approve before activation.
+  MENTORSHIP_REQUIRED_APPROVALS: Joi.string()
+    .pattern(/^(mentor|mentee)(,(mentor|mentee))*$/)
+    .default('mentor,mentee'),
+  MENTORSHIP_PROPOSAL_TTL_HOURS: Joi.number().integer().positive().default(72),
+  MENTORSHIP_PROPOSAL_MAX_TTL_HOURS: Joi.number()
+    .integer()
+    .positive()
+    .default(720),
+  MENTORSHIP_SWEEP_CRON: Joi.string().default('0 */5 * * * *'),
 });
 
 /**
