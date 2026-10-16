@@ -89,6 +89,7 @@ import { PrivacyPolicyManagementModule } from './privacy-policy-management/priva
 import { VerificationModule } from './verification/verification.module';
 import { ELibraryModule } from './e-library/e-library.module';
 import { ScholarshipsModule } from './scholarships/scholarships.module';
+import { DigitalRenditionsModule } from './digital-renditions/digital-renditions.module';
 
 @Module({
   imports: [
@@ -198,6 +199,7 @@ import { ScholarshipsModule } from './scholarships/scholarships.module';
     IdempotencyModule,
     VerificationModule,
     ScholarshipsModule,
+    DigitalRenditionsModule,
   ],
   controllers: [AppController],
   providers: [
