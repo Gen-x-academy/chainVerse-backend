@@ -82,6 +82,7 @@ import { FaqManagementModule } from './faq-management/faq-management.module';
 import { PrivacyPolicyManagementModule } from './privacy-policy-management/privacy-policy-management.module';
 import { TermsConditionsManagementModule } from './terms-conditions-management/terms-conditions-management.module';
 import { AboutManagementModule } from './about-management/about-management.module';
+import { MentorshipModule } from './mentorship/mentorship.module';
 import { PrivateTutoringBookingsModule } from './private-tutoring-bookings/private-tutoring-bookings.module';
 import { RemovalRequestModule } from './removal-request/removal-request.module';
 import { ReportAbuseModule } from './report-abuse/report-abuse.module';
@@ -196,6 +197,7 @@ import { ELibraryModule } from './e-library/e-library.module';
     PrivacyPolicyManagementModule,
     TermsConditionsManagementModule,
     AboutManagementModule,
+    MentorshipModule,
     PrivateTutoringBookingsModule,
     RemovalRequestModule,
     ReportAbuseModule,
