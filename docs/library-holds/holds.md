@@ -3,8 +3,23 @@
 Title-level hold placement, FIFO/priority queueing, physical pickup windows,
 and cancellation for the e-library. Implements #1025–#1028.
 
-Module: `src/library-holds/` (`LibraryHoldsModule`). Registered in
-`src/app.module.ts`.
+Module: `src/library-holds/` (`LibraryHoldsModule`). **Not registered in
+`src/app.module.ts`** — see "Registration status" below.
+
+## Registration status
+
+`LibraryHoldsModule` is intentionally not imported by `AppModule` yet. It
+overlaps with the existing `ELibraryModule` holds feature
+(`src/e-library/holds.controller.ts`, mounted at `library/holds`):
+
+- `DELETE library/holds/:id` (e-library) and `DELETE library/holds/:holdId`
+  (this module) resolve to the same route.
+- Both modules implement hold placement and cancellation for the same
+  e-library domain, with separate data models.
+
+Importing it would silently shadow or be shadowed by the e-library routes, so
+the two implementations need to be reconciled (pick one model, or move this one
+under a distinct prefix) before registering it.
 
 ## Domain model
 

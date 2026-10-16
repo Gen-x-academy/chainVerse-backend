@@ -26,3 +26,10 @@ All learning events are stored in the `learningevents` collection in the databas
 ## Privacy
 
 The analytics ingestion system is designed to be privacy-conscious. All personally identifiable information (PII) is removed from the event payload before it is stored in the database.
+
+## Abuse protection
+
+`POST /analytics-ingestion` is public, so it is protected on two fronts:
+
+- **Rate limit.** Each client IP may send **60 events per minute**. The limit is set on the route for every named throttler (`guest`, `auth`, `premium`, `admin`); a client that exceeds it receives `429 Too Many Requests`.
+- **Validation.** The body is checked by the global `ValidationPipe`, which rejects unknown top-level fields. `eventId` (max 128 characters) and `eventName` (max 100 characters, letters, digits and `. _ : -` only) must be non-empty strings, `schemaVersion` must be an integer from 1 to 1000, and `payload` must be an object no larger than **10,000 bytes** as JSON. Anything else returns `400 Bad Request`.
