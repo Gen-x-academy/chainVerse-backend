@@ -160,6 +160,50 @@ export const envValidationSchema = Joi.object({
     .integer()
     .positive()
     .default(300000),
+  // ─── Mentorship capability (MENTOR-002) ───────────────────────────────────
+  // Safe defaults: the capability and its payments are OFF until enabled.
+  MENTORSHIP_ENABLED: Joi.boolean().default(false),
+  MENTORSHIP_PAYMENTS_ENABLED: Joi.boolean().default(false),
+  MENTORSHIP_MAX_ACTIVE_MENTEES_PER_MENTOR: Joi.number()
+    .integer()
+    .min(1)
+    .max(100)
+    .default(10),
+  MENTORSHIP_MAX_ACTIVE_ENGAGEMENTS_PER_MENTEE: Joi.number()
+    .integer()
+    .min(1)
+    .max(20)
+    .default(3),
+  // Comma-separated asset codes, e.g. "USDC,XLM".
+  MENTORSHIP_SUPPORTED_CURRENCIES: Joi.string()
+    .pattern(/^[A-Z0-9]{2,12}(,[A-Z0-9]{2,12})*$/)
+    .default('USDC,XLM'),
+  MENTORSHIP_SESSION_MIN_MINUTES: Joi.number()
+    .integer()
+    .min(5)
+    .max(240)
+    .default(15),
+  MENTORSHIP_SESSION_MAX_MINUTES: Joi.number()
+    .integer()
+    .min(Joi.ref('MENTORSHIP_SESSION_MIN_MINUTES'))
+    .max(480)
+    .default(120),
+  MENTORSHIP_FREE_CANCELLATION_HOURS: Joi.number()
+    .integer()
+    .min(0)
+    .max(168)
+    .default(24),
+  MENTORSHIP_EVIDENCE_MAX_FILES: Joi.number()
+    .integer()
+    .min(1)
+    .max(20)
+    .default(5),
+  MENTORSHIP_EVIDENCE_MAX_MB: Joi.number().integer().min(1).max(50).default(10),
+  MENTORSHIP_EVIDENCE_RETENTION_DAYS: Joi.number()
+    .integer()
+    .min(30)
+    .max(3650)
+    .default(365),
 });
 
 /**

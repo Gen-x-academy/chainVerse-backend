@@ -20,6 +20,7 @@ import { MetricsModule } from './metrics/metrics.module';
 import { TracingModule } from './tracing/tracing.module';
 import { EmailModule } from './email/email.module';
 import { StellarModule } from './stellar/stellar.module';
+import { MentorshipConfigModule } from './mentorship-config/mentorship-config.module';
 import { AppCacheModule } from './cache/app-cache.module';
 import { SessionModule } from './session/session.module';
 import { SessionService } from './session/session.service';
@@ -144,6 +145,7 @@ import { ELibraryModule } from './e-library/e-library.module';
     TracingModule,
     EmailModule,
     StellarModule,
+    MentorshipConfigModule,
     SessionModule,
     StreakModule,
     // Auth
