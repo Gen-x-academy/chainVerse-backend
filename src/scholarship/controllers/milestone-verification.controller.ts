@@ -15,6 +15,10 @@ import {
   OrgScope,
 } from '../../common/decorators/org-roles.decorator';
 import { OrganizationRole } from '../../common/enums/organization-role.enum';
+import {
+  ORG_SCOPE_FROM_PATH,
+  OrganizationIdParam,
+} from '../../common/decorators/organization-id-param.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-object-id.pipe';
 import {
   AssignVerifierDto,
@@ -26,9 +30,9 @@ import { MilestoneVerificationService } from '../services/milestone-verification
 
 @ApiBearerAuth('access-token')
 @ApiTags('Scholarship Milestones')
-@Controller('organizations/:orgId/scholarships/awards/:awardId')
+@Controller('organizations/:organizationId/scholarships/awards/:awardId')
 @UseGuards(JwtAuthGuard, OrganizationRolesGuard)
-@OrgScope({ source: 'param', key: 'orgId' })
+@OrgScope(ORG_SCOPE_FROM_PATH)
 export class MilestoneVerificationController {
   constructor(private readonly verification: MilestoneVerificationService) {}
 
@@ -36,7 +40,7 @@ export class MilestoneVerificationController {
   @ApiOperation({ summary: 'Assign a verifier to an award (org owner/admin)' })
   @OrgRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
   assign(
-    @Param('orgId', new ParseObjectIdPipe()) orgId: string,
+    @OrganizationIdParam() orgId: string,
     @Param('awardId', new ParseObjectIdPipe()) awardId: string,
     @Body() dto: AssignVerifierDto,
     @Actor() actor: ScholarshipActor,
@@ -48,7 +52,7 @@ export class MilestoneVerificationController {
   @ApiOperation({ summary: 'List verifier assignments (org owner/admin)' })
   @OrgRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
   listAssignments(
-    @Param('orgId', new ParseObjectIdPipe()) orgId: string,
+    @OrganizationIdParam() orgId: string,
     @Param('awardId', new ParseObjectIdPipe()) awardId: string,
   ) {
     return this.verification.listAssignments(orgId, awardId);
@@ -58,7 +62,7 @@ export class MilestoneVerificationController {
   @ApiOperation({ summary: 'Revoke a verifier assignment (org owner/admin)' })
   @OrgRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
   revoke(
-    @Param('orgId', new ParseObjectIdPipe()) orgId: string,
+    @OrganizationIdParam() orgId: string,
     @Param('awardId', new ParseObjectIdPipe()) awardId: string,
     @Param('assignmentId', new ParseObjectIdPipe()) assignmentId: string,
     @Actor() actor: ScholarshipActor,
@@ -78,7 +82,7 @@ export class MilestoneVerificationController {
     OrganizationRole.MEMBER,
   )
   decide(
-    @Param('orgId', new ParseObjectIdPipe()) orgId: string,
+    @OrganizationIdParam() orgId: string,
     @Param('awardId', new ParseObjectIdPipe()) awardId: string,
     @Param('evidenceId', new ParseObjectIdPipe()) evidenceId: string,
     @Body() dto: RecordVerificationDecisionDto,
@@ -93,7 +97,7 @@ export class MilestoneVerificationController {
       'Decision history for a milestone (recipient, org owner/admin, or assigned verifier)',
   })
   listDecisions(
-    @Param('orgId', new ParseObjectIdPipe()) orgId: string,
+    @OrganizationIdParam() orgId: string,
     @Param('awardId', new ParseObjectIdPipe()) awardId: string,
     @Param('milestoneKey') milestoneKey: string,
     @Actor() actor: ScholarshipActor,
