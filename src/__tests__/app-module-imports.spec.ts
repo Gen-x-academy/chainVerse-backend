@@ -169,6 +169,7 @@ describe('AppModule composition', () => {
       'ScholarshipModule',
       'ScholarshipDisbursementModule',
       'ScholarshipFinanceModule',
+      'ScholarshipOutboxModule',
       'CourseAnalyticsModule',
     ]) {
       expect({

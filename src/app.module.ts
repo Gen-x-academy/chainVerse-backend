@@ -56,6 +56,7 @@ import { StudentEnrollmentModule } from './student-enrollment/student-enrollment
 import { ScholarshipFinanceModule } from './scholarship-finance/scholarship-finance.module';
 // Platform extras imported by student flows
 import { EventsModule } from './events/events.module';
+import { ScholarshipOutboxModule } from './scholarship-outbox/scholarship-outbox.module';
 import { LibraryCirculationModule } from './library-circulation/library-circulation.module';
 import { StudentAccountSettingsModule } from './student-account-settings/student-account-settings.module';
 import { StudentCertificateNameChangeRequestModule } from './student-certificate-name-change-request/student-certificate-name-change-request.module';
@@ -214,6 +215,7 @@ import { ELibraryModule } from './e-library/e-library.module';
     ScholarshipModule,
     ScholarshipDisbursementModule,
     ScholarshipFinanceModule,
+    ScholarshipOutboxModule,
     // Scholarship dashboards
     ScholarshipStudentDashboardModule,
     ScholarshipSponsorDashboardModule,
