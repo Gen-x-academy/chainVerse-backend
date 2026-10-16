@@ -86,6 +86,7 @@ import { PrivateTutoringBookingsModule } from './private-tutoring-bookings/priva
 import { RemovalRequestModule } from './removal-request/removal-request.module';
 import { ReportAbuseModule } from './report-abuse/report-abuse.module';
 import { ReportsModule } from './reports/reports.module';
+import { MentorshipLifecycleModule } from './mentorship/lifecycle/mentorship-lifecycle.module';
 import { IdempotencyModule } from './idempotency/idempotency.module';
 import { VerificationModule } from './verification/verification.module';
 import { EventsModule } from './events/events.module';
@@ -200,6 +201,7 @@ import { ELibraryModule } from './e-library/e-library.module';
     RemovalRequestModule,
     ReportAbuseModule,
     ReportsModule,
+    MentorshipLifecycleModule,
     IdempotencyModule,
     VerificationModule,
     EventsModule,
