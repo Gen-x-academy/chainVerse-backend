@@ -427,6 +427,12 @@ export enum ErrorCode {
    * manual data change; reconciliation is the repair path.
    */
   BIZ_PAYMENT_ELIGIBILITY_ORPHANED = 'BIZ_PAYMENT_ELIGIBILITY_ORPHANED',
+  /** A mentor availability change failed validation (dates, capacity). */
+  VAL_MENTOR_AVAILABILITY_INVALID = 'VAL_MENTOR_AVAILABILITY_INVALID',
+  /** An idempotency key was reused for a different availability change. */
+  BIZ_MENTOR_AVAILABILITY_CONFLICT = 'BIZ_MENTOR_AVAILABILITY_CONFLICT',
+  /** The mentor's current availability status does not allow applications. */
+  BIZ_MENTOR_NOT_ACCEPTING = 'BIZ_MENTOR_NOT_ACCEPTING',
 
   // ── Mentorship lifecycle (MENTOR-004) ────────────────────────────────────
   /** The requested state change is not an allowed transition from the current state. */
