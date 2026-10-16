@@ -10,6 +10,9 @@ export const DomainEvents = {
   /** Fired after a student is enrolled in a course. */
   STUDENT_ENROLLED: 'student.enrolled',
 
+  /** Fired when a student requests a verification email resend (distinct from initial registration). */
+  VERIFICATION_EMAIL_RESENT: 'student.verification-email-resent',
+
   /** Fired after an admin/moderator approves a financial-aid application. */
   FINANCIAL_AID_APPROVED: 'financial-aid.approved',
 
@@ -33,6 +36,57 @@ export const DomainEvents = {
 
   /** Fired by the review sweeper when an application passes its review due date. */
   MENTORSHIP_REVIEW_OVERDUE: 'mentorship.review.overdue',
+  /** Fired when a recipient's verified payout address changes (payments go on hold). */
+  SCHOLARSHIP_PAYOUT_WALLET_CHANGED: 'scholarship.payout-wallet-changed',
+
+  /** Fired once when a scholarship payment reaches its terminal on-chain outcome. */
+  SCHOLARSHIP_PAYMENT_SETTLED: 'scholarship.payment-settled',
+  /**
+   * Fired at most once per award milestone, when a verifier approval makes the
+   * installment payable. Consumed by the disbursement-intent listener.
+   */
+  SCHOLARSHIP_PAYMENT_ELIGIBLE: 'scholarship.payment-eligible',
+
+  /** Fired when a new disbursement intent is created (never on a replay). */
+  SCHOLARSHIP_DISBURSEMENT_INTENT_CREATED:
+    'scholarship.disbursement-intent-created',
+  /** Fired after a sponsor deposit is credited to a scholarship fund. */
+  SCHOLARSHIP_DEPOSIT_CREDITED: 'scholarship-finance.deposit.credited',
+
+  /** Fired after a refund / returned payment is completed. */
+  SCHOLARSHIP_REFUND_COMPLETED: 'scholarship-finance.refund.completed',
+
+  /**
+   * Fired when a recovery claim is approved. Listeners must deliver the
+   * recovery notice to the recipient — collection is never automatic.
+   */
+  SCHOLARSHIP_RECOVERY_OPENED: 'scholarship-finance.recovery.opened',
+
+  /** Fired by the integrity job when ledger balances or recoveries drift. */
+  SCHOLARSHIP_LEDGER_DRIFT_DETECTED:
+    'scholarship-finance.ledger.drift-detected',
+
+  /**
+   * Fired once per budget reservation transition (created, confirmed, released),
+   * staged in the same transaction as the ledger `$inc` (#1255). Replaces the
+   * silent two-write sequence that could inflate `reservedAmount` with no
+   * reservation justifying it.
+   */
+  SCHOLARSHIP_BUDGET_RESERVATION_CHANGED:
+    'scholarship.budget-reservation-changed',
+
+  /**
+   * Fired once per award status transition that moves budget (accepted, declined,
+   * rescinded, expired), staged in the same transaction as the reservation
+   * transition (#1255).
+   */
+  SCHOLARSHIP_AWARD_STATUS_CHANGED: 'scholarship.award-status-changed',
+
+  /** Fired after a library item is checked out and a receipt is created. */
+  LIBRARY_CHECKOUT_RECEIPT_CREATED: 'library.checkout.receipt_created',
+
+  /** Fired after a library item is returned and a receipt is created. */
+  LIBRARY_RETURN_RECEIPT_CREATED: 'library.return.receipt_created',
 } as const;
 
 export type DomainEventName = (typeof DomainEvents)[keyof typeof DomainEvents];

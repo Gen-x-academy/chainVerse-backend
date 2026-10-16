@@ -86,7 +86,9 @@ describe('CoursePerformanceLeaderboardService', () => {
     });
 
     it('throws NotFoundException for an unknown id', async () => {
-      await expect(service.update('ghost', {})).rejects.toThrow(NotFoundException);
+      await expect(service.update('ghost', {})).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('invalidates list and item cache keys', async () => {

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { FinancialAidApplication } from '../domain/financial-aid-application.entity';
 import { FinancialAidApplicationRepository } from '../domain/financial-aid-application.repository';
@@ -14,6 +14,14 @@ export class ApplyForFinancialAidUseCase {
   constructor(private readonly repository: FinancialAidApplicationRepository) {}
 
   async execute(dto: CreateFinancialAidDto): Promise<FinancialAidApplication> {
+    const existing = await this.repository.findByStudentAndCourse(
+      dto.studentId,
+      dto.courseId,
+    );
+    if (existing) {
+      throw new ConflictException('Application already submitted');
+    }
+
     const application = FinancialAidApplication.create({
       id: crypto.randomUUID(),
       studentId: dto.studentId,

@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { IdempotencyKey, IdempotencyKeySchema } from './schemas/idempotency-key.schema';
+import {
+  IdempotencyKey,
+  IdempotencyKeySchema,
+} from './schemas/idempotency-key.schema';
 import { IdempotencyService } from './idempotency.service';
 import { IdempotencyInterceptor } from './idempotency.interceptor';
 

@@ -3,7 +3,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { FinancialAidApplication } from '../domain/financial-aid-application.entity';
 import { FinancialAidApplicationRepository } from '../domain/financial-aid-application.repository';
-import { FinancialAid, FinancialAidDocument } from '../schemas/financial-aid.schema';
+import {
+  FinancialAid,
+  FinancialAidDocument,
+} from '../schemas/financial-aid.schema';
 
 /**
  * MongoDB/Mongoose implementation of the repository contract.
@@ -26,7 +29,9 @@ export class MongooseFinancialAidApplicationRepository extends FinancialAidAppli
     super();
   }
 
-  async save(application: FinancialAidApplication): Promise<FinancialAidApplication> {
+  async save(
+    application: FinancialAidApplication,
+  ): Promise<FinancialAidApplication> {
     const existing = await this.model.findById(application.id).exec();
 
     if (existing) {
@@ -60,6 +65,14 @@ export class MongooseFinancialAidApplicationRepository extends FinancialAidAppli
   async findByStudentId(studentId: string): Promise<FinancialAidApplication[]> {
     const docs = await this.model.find({ studentId }).exec();
     return docs.map((d) => this.toEntity(d));
+  }
+
+  async findByStudentAndCourse(
+    studentId: string,
+    courseId: string,
+  ): Promise<FinancialAidApplication | null> {
+    const doc = await this.model.findOne({ studentId, courseId }).exec();
+    return doc ? this.toEntity(doc) : null;
   }
 
   async delete(id: string): Promise<void> {

@@ -1,4 +1,5 @@
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 import {
   Body,
   Controller,
@@ -36,13 +37,33 @@ export class PointsController {
     return this.service.getUserPoints(req.user.id);
   }
 
+  @Get('balance/me')
+  getMyBalance(@Req() req: { user: { id: string } }) {
+    return this.service.getUserBalance(req.user.id);
+  }
+
+  @Get('ledger/me')
+  getMyLedger(@Req() req: { user: { id: string } }) {
+    return this.service.getUserLedgerEntries(req.user.id);
+  }
+
   @Get('user/:userId')
-  getUserPoints(@Param('userId') userId: string) {
+  getUserPoints(@Param('userId', new ParseObjectIdPipe()) userId: string) {
     return this.service.getUserPoints(userId);
   }
 
+  @Get('user/:userId/balance')
+  getUserBalance(@Param('userId', new ParseObjectIdPipe()) userId: string) {
+    return this.service.getUserBalance(userId);
+  }
+
+  @Get('user/:userId/ledger')
+  getUserLedger(@Param('userId', new ParseObjectIdPipe()) userId: string) {
+    return this.service.getUserLedgerEntries(userId);
+  }
+
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
@@ -56,14 +77,17 @@ export class PointsController {
   @Patch(':id')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
-  update(@Param('id') id: string, @Body() payload: UpdatePointsDto) {
+  update(
+    @Param('id', new ParseObjectIdPipe()) id: string,
+    @Body() payload: UpdatePointsDto,
+  ) {
     return this.service.update(id, payload);
   }
 
   @Delete(':id')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.remove(id);
   }
 }

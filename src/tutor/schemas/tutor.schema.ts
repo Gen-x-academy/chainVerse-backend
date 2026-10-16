@@ -36,29 +36,29 @@ export class Tutor {
   role: string;
 
   // Profile fields
-  @Prop({ default: null })
+  @Prop({ type: String, default: null })
   bio?: string | null;
 
-  @Prop({ default: null })
+  @Prop({ type: String, default: null })
   profileImageUrl?: string | null;
 
   @Prop({ type: [String], default: [] })
   specializations: string[];
 
-  @Prop({ default: null })
+  @Prop({ type: String, default: null })
   qualifications?: string | null;
 
   @Prop({ default: 0 })
   yearsOfExperience: number;
 
-  @Prop({ default: null })
+  @Prop({ type: String, default: null })
   linkedinUrl?: string | null;
 
-  @Prop({ default: null })
+  @Prop({ type: String, default: null })
   websiteUrl?: string | null;
 
   // Account status
-  @Prop({ default: 'pending' })
+  @Prop({ type: String, default: 'pending' })
   accountStatus: 'pending' | 'active' | 'suspended' | 'deactivated';
 
   @Prop({ type: Date, default: null })
@@ -86,6 +86,5 @@ export class Tutor {
 
 export const TutorSchema = SchemaFactory.createForClass(Tutor);
 
-// Index for efficient lookups
-TutorSchema.index({ email: 1 });
+TutorSchema.index({ email: 1 }, { unique: true });
 TutorSchema.index({ accountStatus: 1 });
