@@ -15,6 +15,9 @@ export const DomainEvents = {
 
   /** Fired after a certificate (NFT achievement) is issued to a student. */
   CERTIFICATE_ISSUED: 'certificate.issued',
+
+  /** Fired after a mentee submits a mentorship application (MENTOR-030). */
+  MENTORSHIP_APPLICATION_SUBMITTED: 'mentorship.application.submitted',
 } as const;
 
 export type DomainEventName = (typeof DomainEvents)[keyof typeof DomainEvents];

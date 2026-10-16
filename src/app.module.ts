@@ -23,6 +23,8 @@ import { StudentSavedCoursesModule } from './student-saved-courses/student-saved
 import { StudentCartModule } from './student-cart/student-cart.module';
 import { StudentEnrollmentModule } from './student-enrollment/student-enrollment.module';
 import { CourseAnalyticsModule } from './course-analytics/course-analytics.module';
+// Mentorship modules
+import { MentorshipApplicationsModule } from './mentorship-applications/mentorship-applications.module';
 
 @Module({
   imports: [
@@ -60,6 +62,8 @@ import { CourseAnalyticsModule } from './course-analytics/course-analytics.modul
     StudentEnrollmentModule,
     // Analytics
     CourseAnalyticsModule,
+    // Mentorship
+    MentorshipApplicationsModule,
   ],
   controllers: [AppController],
   providers: [
