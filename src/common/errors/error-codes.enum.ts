@@ -427,4 +427,12 @@ export enum ErrorCode {
    * manual data change; reconciliation is the repair path.
    */
   BIZ_PAYMENT_ELIGIBILITY_ORPHANED = 'BIZ_PAYMENT_ELIGIBILITY_ORPHANED',
+
+  // ── Mentorship profiles (MENTOR-008) ─────────────────────────────────────
+  /** The caller has no mentor profile yet. */
+  RES_MENTOR_PROFILE_NOT_FOUND = 'RES_MENTOR_PROFILE_NOT_FOUND',
+  /** Publishing needs a complete profile; the missing fields are listed. */
+  VAL_MENTOR_PROFILE_INCOMPLETE = 'VAL_MENTOR_PROFILE_INCOMPLETE',
+  /** The profile changed between read and write; retry with the latest. */
+  BIZ_MENTOR_PROFILE_CONFLICT = 'BIZ_MENTOR_PROFILE_CONFLICT',
 }
