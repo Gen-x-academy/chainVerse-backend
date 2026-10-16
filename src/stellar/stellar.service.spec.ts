@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
+import { getModelToken } from '@nestjs/mongoose';
 import { StellarService } from './stellar.service';
 import * as StellarSdk from '@stellar/stellar-sdk';
 
@@ -29,6 +30,10 @@ describe('StellarService', () => {
     operations: jest.Mock;
   };
   let configGet: jest.Mock;
+  let mockVerifiedPaymentModel: {
+    findOne: jest.Mock;
+    create: jest.Mock;
+  };
 
   beforeEach(async () => {
     configGet = jest.fn((key: string) => {
@@ -40,12 +45,25 @@ describe('StellarService', () => {
       return config[key];
     });
 
+    mockVerifiedPaymentModel = {
+      findOne: jest.fn().mockReturnValue({
+        lean: jest.fn().mockReturnValue({
+          exec: jest.fn().mockResolvedValue(null),
+        }),
+      }),
+      create: jest.fn().mockResolvedValue({}),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         StellarService,
         {
           provide: ConfigService,
           useValue: { get: configGet },
+        },
+        {
+          provide: getModelToken('VerifiedPayment'),
+          useValue: mockVerifiedPaymentModel,
         },
       ],
     }).compile();
@@ -183,16 +201,20 @@ describe('StellarService', () => {
     });
 
     it('returns { verified: true } when Horizon reports the transaction as successful', async () => {
-      mockServer.transactions().call.mockResolvedValue({ successful: true });
-
       const result = await service.verifyPayment({
         transactionHash: 'abc123',
         expectedAmount: '10',
-        expectedDestination: 'GDESTDESTDESTDESTDESTDESTDESTDESTDESTDEST',
         courseId: 'course-1',
       });
 
       expect(result.verified).toBe(true);
+      expect(mockVerifiedPaymentModel.create).toHaveBeenCalledTimes(1);
+      expect(mockVerifiedPaymentModel.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          transactionHash: 'abc123',
+          verified: true,
+        }),
+      );
     });
 
     it('returns { verified: false } for wrong amount', async () => {
@@ -209,7 +231,6 @@ describe('StellarService', () => {
         }),
       };
       mockServer.operations = jest.fn().mockReturnValue(opsBuilder);
-      mockServer.transactions().call.mockResolvedValue({ successful: true });
 
       const result = await service.verifyPayment({
         transactionHash: 'wrong-amount-hash',
@@ -219,6 +240,7 @@ describe('StellarService', () => {
       });
 
       expect(result.verified).toBe(false);
+      expect(mockVerifiedPaymentModel.create).toHaveBeenCalledTimes(1);
     });
 
     it('returns { verified: false } for wrong destination', async () => {
@@ -235,7 +257,6 @@ describe('StellarService', () => {
         }),
       };
       mockServer.operations = jest.fn().mockReturnValue(opsBuilder);
-      mockServer.transactions().call.mockResolvedValue({ successful: true });
 
       const result = await service.verifyPayment({
         transactionHash: 'missing-hash',
@@ -245,6 +266,7 @@ describe('StellarService', () => {
       });
 
       expect(result.verified).toBe(false);
+      expect(mockVerifiedPaymentModel.create).toHaveBeenCalledTimes(1);
     });
 
     it('returns { verified: true } for matching amount and destination', async () => {
@@ -261,7 +283,6 @@ describe('StellarService', () => {
         }),
       };
       mockServer.operations = jest.fn().mockReturnValue(opsBuilder);
-      mockServer.transactions().call.mockResolvedValue({ successful: true });
 
       const result = await service.verifyPayment({
         transactionHash: 'valid-hash',
@@ -271,6 +292,75 @@ describe('StellarService', () => {
       });
 
       expect(result.verified).toBe(true);
+      expect(mockVerifiedPaymentModel.create).toHaveBeenCalledTimes(1);
+    });
+
+    it('returns { verified: false } when Horizon throws an error', async () => {
+      mockServer.transactions = jest.fn().mockReturnValue({
+        transaction: jest.fn().mockReturnValue({
+          call: jest.fn().mockRejectedValue(new Error('not found')),
+        }),
+      });
+
+      const result = await service.verifyPayment({
+        transactionHash: 'error-hash',
+        expectedAmount: '10',
+        courseId: 'course-1',
+      });
+
+      expect(result.verified).toBe(false);
+      expect(mockVerifiedPaymentModel.create).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('verifyPayment – idempotency', () => {
+    it('returns the original result for a previously verified transaction without duplicate persistence', async () => {
+      const existingRecord = {
+        transactionHash: 'idempotent-hash',
+        verified: true,
+        createdAt: new Date('2026-01-15T10:00:00Z'),
+      };
+
+      mockVerifiedPaymentModel.findOne = jest.fn().mockReturnValue({
+        lean: jest.fn().mockReturnValue({
+          exec: jest.fn().mockResolvedValue(existingRecord),
+        }),
+      });
+
+      const result = await service.verifyPayment({
+        transactionHash: 'idempotent-hash',
+        expectedAmount: '50',
+        courseId: 'course-1',
+      });
+
+      expect(result.verified).toBe(true);
+      expect(result.transactionId).toBe('idempotent-hash');
+      expect(mockVerifiedPaymentModel.create).not.toHaveBeenCalled();
+      expect(mockServer.transactions).not.toHaveBeenCalled();
+    });
+
+    it('returns the original result for a previously failed transaction', async () => {
+      const existingRecord = {
+        transactionHash: 'failed-hash',
+        verified: false,
+        createdAt: new Date('2026-01-15T10:00:00Z'),
+      };
+
+      mockVerifiedPaymentModel.findOne = jest.fn().mockReturnValue({
+        lean: jest.fn().mockReturnValue({
+          exec: jest.fn().mockResolvedValue(existingRecord),
+        }),
+      });
+
+      const result = await service.verifyPayment({
+        transactionHash: 'failed-hash',
+        expectedAmount: '10',
+        courseId: 'course-1',
+      });
+
+      expect(result.verified).toBe(false);
+      expect(mockVerifiedPaymentModel.create).not.toHaveBeenCalled();
+      expect(mockServer.transactions).not.toHaveBeenCalled();
     });
   });
 });

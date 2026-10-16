@@ -4,8 +4,14 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { Horizon, Keypair, StrKey } from '@stellar/stellar-sdk';
 import { CreateAccountResponseDto } from './dto/create-account-response.dto';
+import {
+  VerifiedPayment,
+  VerifiedPaymentDocument,
+} from './schemas/verified-payment.schema';
 
 const FRIENDBOT_URL = 'https://friendbot.stellar.org';
 const MAINNET_ACCOUNT_GUIDE = {
@@ -23,7 +29,11 @@ const MAINNET_ACCOUNT_GUIDE = {
 export class StellarService {
   private readonly server: Horizon.Server;
 
-  constructor(private readonly config: ConfigService) {
+  constructor(
+    private readonly config: ConfigService,
+    @InjectModel(VerifiedPayment.name)
+    private readonly verifiedPaymentModel: Model<VerifiedPaymentDocument>,
+  ) {
     const horizonUrl =
       this.config.get<string>('STELLAR_HORIZON_URL') ??
       'https://horizon-testnet.stellar.org';
@@ -56,7 +66,22 @@ export class StellarService {
     expectedDestination?: string;
     courseId?: string;
   }): Promise<{ verified: boolean; transactionId: string; timestamp: string }> {
-    const { transactionHash, expectedAmount, expectedDestination } = input;
+    const { transactionHash, expectedAmount, expectedDestination, courseId } =
+      input;
+
+    const existing = await this.verifiedPaymentModel
+      .findOne({ transactionHash })
+      .lean()
+      .exec();
+
+    if (existing) {
+      return {
+        verified: existing.verified,
+        transactionId: existing.transactionHash,
+        timestamp:
+          existing.createdAt?.toISOString() ?? new Date().toISOString(),
+      };
+    }
 
     try {
       const tx = await this.server
@@ -65,11 +90,20 @@ export class StellarService {
         .call();
 
       if (!tx?.successful) {
-        return {
+        const result = {
           verified: false,
           transactionId: transactionHash,
           timestamp: new Date().toISOString(),
         };
+
+        await this.verifiedPaymentModel.create({
+          transactionHash,
+          verified: false,
+          ledgerSequence: tx?.ledger ?? undefined,
+          courseId,
+        });
+
+        return result;
       }
 
       const operations = await this.server
@@ -91,17 +125,61 @@ export class StellarService {
           )
         : undefined;
 
+      const verified = Boolean(paymentOp);
+
+      const ledgerSequence: number | undefined = tx.ledger as
+        | number
+        | undefined;
+      const ledgerCloseTime: string | undefined = tx.closed_at as
+        | string
+        | undefined;
+      const sourceAccount: string | undefined = tx.source_account;
+
+      await this.verifiedPaymentModel.create({
+        transactionHash,
+        verified,
+        ledgerSequence,
+        ledgerCloseTime,
+        sourceAccount,
+        destinationAccount:
+          paymentOp && 'to' in paymentOp
+            ? (paymentOp as { to?: string }).to
+            : undefined,
+        amount:
+          paymentOp && 'amount' in paymentOp
+            ? (paymentOp as { amount?: string }).amount
+            : undefined,
+        assetCode:
+          paymentOp && 'asset_code' in paymentOp
+            ? (paymentOp as { asset_code?: string }).asset_code
+            : undefined,
+        assetIssuer:
+          paymentOp && 'asset_issuer' in paymentOp
+            ? (paymentOp as { asset_issuer?: string }).asset_issuer
+            : undefined,
+        memo: tx.memo ?? undefined,
+        courseId,
+      });
+
       return {
-        verified: Boolean(paymentOp),
+        verified,
         transactionId: transactionHash,
         timestamp: new Date().toISOString(),
       };
     } catch {
-      return {
+      const result = {
         verified: false,
         transactionId: transactionHash,
         timestamp: new Date().toISOString(),
       };
+
+      await this.verifiedPaymentModel.create({
+        transactionHash,
+        verified: false,
+        courseId,
+      });
+
+      return result;
     }
   }
 
