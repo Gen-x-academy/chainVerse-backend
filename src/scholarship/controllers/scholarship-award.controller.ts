@@ -7,6 +7,10 @@ import {
   OrgScope,
 } from '../../common/decorators/org-roles.decorator';
 import { OrganizationRole } from '../../common/enums/organization-role.enum';
+import {
+  ORG_SCOPE_FROM_PATH,
+  OrganizationIdParam,
+} from '../../common/decorators/organization-id-param.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-object-id.pipe';
 import { CreateScholarshipAwardDto } from '../dto/create-scholarship-award.dto';
 import { Actor } from '../scholarship-actor';
@@ -15,9 +19,9 @@ import { ScholarshipAwardService } from '../services/scholarship-award.service';
 
 @ApiBearerAuth('access-token')
 @ApiTags('Scholarships')
-@Controller('organizations/:orgId/scholarships/awards')
+@Controller('organizations/:organizationId/scholarships/awards')
 @UseGuards(JwtAuthGuard, OrganizationRolesGuard)
-@OrgScope({ source: 'param', key: 'orgId' })
+@OrgScope(ORG_SCOPE_FROM_PATH)
 export class ScholarshipAwardController {
   constructor(private readonly awards: ScholarshipAwardService) {}
 
@@ -25,7 +29,7 @@ export class ScholarshipAwardController {
   @ApiOperation({ summary: 'Create a scholarship award (org owner/admin)' })
   @OrgRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
   create(
-    @Param('orgId', new ParseObjectIdPipe()) orgId: string,
+    @OrganizationIdParam() orgId: string,
     @Body() dto: CreateScholarshipAwardDto,
     @Actor() actor: ScholarshipActor,
   ) {
@@ -39,7 +43,7 @@ export class ScholarshipAwardController {
     OrganizationRole.ADMIN,
     OrganizationRole.INSTRUCTOR,
   )
-  list(@Param('orgId', new ParseObjectIdPipe()) orgId: string) {
+  list(@OrganizationIdParam() orgId: string) {
     return this.awards.findByOrganization(orgId);
   }
 
@@ -51,7 +55,7 @@ export class ScholarshipAwardController {
     OrganizationRole.INSTRUCTOR,
   )
   findOne(
-    @Param('orgId', new ParseObjectIdPipe()) orgId: string,
+    @OrganizationIdParam() orgId: string,
     @Param('awardId', new ParseObjectIdPipe()) awardId: string,
   ) {
     return this.awards.findOne(orgId, awardId);

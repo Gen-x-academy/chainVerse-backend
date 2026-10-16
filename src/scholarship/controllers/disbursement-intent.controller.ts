@@ -23,6 +23,10 @@ import {
   OrgScope,
 } from '../../common/decorators/org-roles.decorator';
 import { OrganizationRole } from '../../common/enums/organization-role.enum';
+import {
+  ORG_SCOPE_FROM_PATH,
+  OrganizationIdParam,
+} from '../../common/decorators/organization-id-param.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-object-id.pipe';
 import {
   CreateDisbursementIntentDto,
@@ -35,9 +39,9 @@ import { DisbursementIntentService } from '../services/disbursement-intent.servi
 
 @ApiBearerAuth('access-token')
 @ApiTags('Scholarship Disbursements')
-@Controller('organizations/:orgId/scholarships/disbursement-intents')
+@Controller('organizations/:organizationId/scholarships/disbursement-intents')
 @UseGuards(JwtAuthGuard, OrganizationRolesGuard)
-@OrgScope({ source: 'param', key: 'orgId' })
+@OrgScope(ORG_SCOPE_FROM_PATH)
 @OrgRoles(OrganizationRole.OWNER, OrganizationRole.ADMIN)
 export class DisbursementIntentController {
   constructor(private readonly intents: DisbursementIntentService) {}
@@ -50,7 +54,7 @@ export class DisbursementIntentController {
   @ApiResponse({ status: 201, description: 'Intent created' })
   @ApiResponse({ status: 200, description: 'Existing intent returned' })
   async create(
-    @Param('orgId', new ParseObjectIdPipe()) orgId: string,
+    @OrganizationIdParam() orgId: string,
     @Body() dto: CreateDisbursementIntentDto,
     @Actor() actor: ScholarshipActor,
     @Res({ passthrough: true }) res: Response,
@@ -68,7 +72,7 @@ export class DisbursementIntentController {
   @Get()
   @ApiOperation({ summary: 'List disbursement intents' })
   list(
-    @Param('orgId', new ParseObjectIdPipe()) orgId: string,
+    @OrganizationIdParam() orgId: string,
     @Query() query: ListDisbursementIntentsDto,
   ) {
     return this.intents.list(orgId, query);
@@ -77,7 +81,7 @@ export class DisbursementIntentController {
   @Get(':intentId')
   @ApiOperation({ summary: 'Get one disbursement intent' })
   findOne(
-    @Param('orgId', new ParseObjectIdPipe()) orgId: string,
+    @OrganizationIdParam() orgId: string,
     @Param('intentId', new ParseObjectIdPipe()) intentId: string,
   ) {
     return this.intents.findOne(orgId, intentId);
@@ -89,7 +93,7 @@ export class DisbursementIntentController {
       'Record external execution state (submitted/confirmed/failed/cancelled). Exact repeats are no-ops.',
   })
   transition(
-    @Param('orgId', new ParseObjectIdPipe()) orgId: string,
+    @OrganizationIdParam() orgId: string,
     @Param('intentId', new ParseObjectIdPipe()) intentId: string,
     @Body() dto: RecordIntentTransitionDto,
     @Actor() actor: ScholarshipActor,

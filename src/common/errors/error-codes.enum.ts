@@ -435,4 +435,11 @@ export enum ErrorCode {
   VAL_MENTORSHIP_REASON_REQUIRED = 'VAL_MENTORSHIP_REASON_REQUIRED',
   /** The lifecycle changed between read and write; reload and retry. */
   BIZ_MENTORSHIP_LIFECYCLE_CONFLICT = 'BIZ_MENTORSHIP_LIFECYCLE_CONFLICT',
+  // ── Mentorship profiles (MENTOR-008) ─────────────────────────────────────
+  /** The caller has no mentor profile yet. */
+  RES_MENTOR_PROFILE_NOT_FOUND = 'RES_MENTOR_PROFILE_NOT_FOUND',
+  /** Publishing needs a complete profile; the missing fields are listed. */
+  VAL_MENTOR_PROFILE_INCOMPLETE = 'VAL_MENTOR_PROFILE_INCOMPLETE',
+  /** The profile changed between read and write; retry with the latest. */
+  BIZ_MENTOR_PROFILE_CONFLICT = 'BIZ_MENTOR_PROFILE_CONFLICT',
 }
