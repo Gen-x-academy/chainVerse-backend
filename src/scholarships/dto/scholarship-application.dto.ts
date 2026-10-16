@@ -2,15 +2,19 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsArray,
   IsEnum,
+  IsInt,
   IsMongoId,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
+  Min,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { OrgScopedQueryDto } from './scholarship-program.dto';
 import { ScholarshipApplicationStatus } from '../schemas/scholarship-application.schema';
+import { SortOrder } from '../../common/dto/pagination.dto';
 import { AnswerDto } from './answer.dto';
 
 export class CreateScholarshipApplicationDto {
@@ -83,4 +87,72 @@ export class ScholarshipApplicationQueryDto extends OrgScopedQueryDto {
   @IsOptional()
   @IsEnum(ScholarshipApplicationStatus)
   status?: ScholarshipApplicationStatus;
+}
+
+/**
+ * Sort fields allowed on `GET scholarships/applications/me` (#1249).
+ *
+ * Whitelisted so a caller cannot sort by an arbitrary document field, and so
+ * the service can always append its own `_id` tie-breaker.
+ */
+export enum ApplicationHistorySortField {
+  CREATED_AT = 'createdAt',
+  UPDATED_AT = 'updatedAt',
+  STATUS = 'status',
+}
+
+/** Hard ceiling on `limit`; a student's history can span thousands of rows. */
+export const APPLICATION_HISTORY_MAX_LIMIT = 100;
+
+/**
+ * Query for the applicant's own application history (#1249).
+ *
+ * Ownership:
+ *   - The applicant is taken from the JWT (`@CurrentUser('sub')`), never from
+ *     the query string, so one student can never page another student's data.
+ *
+ * Operational impact:
+ *   - Responses are now paged.  Callers that read `length` of the body (it was
+ *     an array) must read `body.data.length` and `body.total` instead.
+ *   - `limit` is capped at 100; `page` and `limit` are both optional and
+ *     default to `page=1, limit=20`.
+ */
+export class ScholarshipApplicationHistoryQueryDto {
+  @ApiPropertyOptional({ default: 1, minimum: 1, description: '1-based page number.' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number = 1;
+
+  @ApiPropertyOptional({
+    default: 20,
+    minimum: 1,
+    maximum: APPLICATION_HISTORY_MAX_LIMIT,
+    description: `Items per page. Hard maximum ${APPLICATION_HISTORY_MAX_LIMIT}.`,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(APPLICATION_HISTORY_MAX_LIMIT)
+  limit?: number = 20;
+
+  @ApiPropertyOptional({
+    enum: ApplicationHistorySortField,
+    default: ApplicationHistorySortField.CREATED_AT,
+  })
+  @IsOptional()
+  @IsEnum(ApplicationHistorySortField)
+  sortBy?: ApplicationHistorySortField = ApplicationHistorySortField.CREATED_AT;
+
+  @ApiPropertyOptional({
+    enum: SortOrder,
+    default: SortOrder.DESC,
+    description:
+      'Direction of `sortBy`. `_id` always breaks ties in the same direction.',
+  })
+  @IsOptional()
+  @IsEnum(SortOrder)
+  sortOrder?: SortOrder = SortOrder.DESC;
 }

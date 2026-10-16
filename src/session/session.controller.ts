@@ -20,6 +20,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 
 @ApiTags('Session')
 @ApiBearerAuth('access-token')
+@Controller(['sessions', 'session', 'v1/session'])
 @Controller('sessions')
 @UseGuards(JwtAuthGuard)
 export class SessionController {

@@ -82,6 +82,25 @@ export enum ErrorCode {
   BIZ_FINANCIAL_AID_ALREADY_APPLIED = 'BIZ_FINANCIAL_AID_ALREADY_APPLIED',
   BIZ_SOFT_DELETED = 'BIZ_SOFT_DELETED',
   BIZ_DUPLICATE_REQUEST = 'BIZ_DUPLICATE_REQUEST',
+  BIZ_SCHOLARSHIP_SCHEDULE_INVALID = 'BIZ_SCHOLARSHIP_SCHEDULE_INVALID',
+  BIZ_SCHOLARSHIP_SCHEDULE_IMMUTABLE = 'BIZ_SCHOLARSHIP_SCHEDULE_IMMUTABLE',
+  BIZ_SCHOLARSHIP_AMENDMENT_INVALID = 'BIZ_SCHOLARSHIP_AMENDMENT_INVALID',
+  BIZ_SCHOLARSHIP_MILESTONE_NOT_ACTIVE = 'BIZ_SCHOLARSHIP_MILESTONE_NOT_ACTIVE',
+  BIZ_SCHOLARSHIP_EVIDENCE_KEY_REUSED = 'BIZ_SCHOLARSHIP_EVIDENCE_KEY_REUSED',
+  BIZ_SCHOLARSHIP_EVIDENCE_STALE = 'BIZ_SCHOLARSHIP_EVIDENCE_STALE',
+  BIZ_SCHOLARSHIP_VERIFIER_CONFLICT = 'BIZ_SCHOLARSHIP_VERIFIER_CONFLICT',
+  BIZ_SCHOLARSHIP_VERIFIER_NOT_ASSIGNED = 'BIZ_SCHOLARSHIP_VERIFIER_NOT_ASSIGNED',
+  BIZ_SCHOLARSHIP_REASON_CODE_MISMATCH = 'BIZ_SCHOLARSHIP_REASON_CODE_MISMATCH',
+  BIZ_SCHOLARSHIP_ALREADY_DECIDED = 'BIZ_SCHOLARSHIP_ALREADY_DECIDED',
+  BIZ_SCHOLARSHIP_INTENT_INTEGRITY = 'BIZ_SCHOLARSHIP_INTENT_INTEGRITY',
+  BIZ_SCHOLARSHIP_INTENT_TRANSITION = 'BIZ_SCHOLARSHIP_INTENT_TRANSITION',
+  BIZ_INVALID_STATE_TRANSITION = 'BIZ_INVALID_STATE_TRANSITION',
+  BIZ_SEPARATION_OF_DUTIES = 'BIZ_SEPARATION_OF_DUTIES',
+  BIZ_ASSET_MISMATCH = 'BIZ_ASSET_MISMATCH',
+  BIZ_DEPOSIT_ALREADY_RECORDED = 'BIZ_DEPOSIT_ALREADY_RECORDED',
+  BIZ_FEE_EXCEEDS_AMOUNT = 'BIZ_FEE_EXCEEDS_AMOUNT',
+  BIZ_AMOUNT_EXCEEDS_OUTSTANDING = 'BIZ_AMOUNT_EXCEEDS_OUTSTANDING',
+  BIZ_FUNDING_ROUND_CLOSED = 'BIZ_FUNDING_ROUND_CLOSED',
   BIZ_ITEM_UNAVAILABLE = 'BIZ_ITEM_UNAVAILABLE',
   BIZ_LOAN_ALREADY_RETURNED = 'BIZ_LOAN_ALREADY_RETURNED',
   BIZ_RENEWAL_LIMIT_EXCEEDED = 'BIZ_RENEWAL_LIMIT_EXCEEDED',
@@ -206,8 +225,227 @@ export enum ErrorCode {
   BIZ_FORM_NOT_PUBLISHED = 'BIZ_FORM_NOT_PUBLISHED',
   BIZ_FORM_VERSION_MISMATCH = 'BIZ_FORM_VERSION_MISMATCH',
 
+  // Scholarship disbursements (src/scholarship-disbursement)
+  BIZ_SCHOLARSHIP_ASSET_UNSUPPORTED = 'BIZ_SCHOLARSHIP_ASSET_UNSUPPORTED',
+  BIZ_SCHOLARSHIP_ASSET_NOT_ACTIVE = 'BIZ_SCHOLARSHIP_ASSET_NOT_ACTIVE',
+  BIZ_SCHOLARSHIP_ASSET_SELF_APPROVAL = 'BIZ_SCHOLARSHIP_ASSET_SELF_APPROVAL',
+  BIZ_SCHOLARSHIP_AMOUNT_INVALID = 'BIZ_SCHOLARSHIP_AMOUNT_INVALID',
+  BIZ_SCHOLARSHIP_RECIPIENT_NOT_MEMBER = 'BIZ_SCHOLARSHIP_RECIPIENT_NOT_MEMBER',
+  BIZ_SCHOLARSHIP_PAYMENT_STATE = 'BIZ_SCHOLARSHIP_PAYMENT_STATE',
+  BIZ_SCHOLARSHIP_REVERSAL_UNVERIFIED = 'BIZ_SCHOLARSHIP_REVERSAL_UNVERIFIED',
+  BIZ_WALLET_CHALLENGE_EXPIRED = 'BIZ_WALLET_CHALLENGE_EXPIRED',
+  BIZ_WALLET_CHALLENGE_USED = 'BIZ_WALLET_CHALLENGE_USED',
+  BIZ_WALLET_CHALLENGE_LOCKED = 'BIZ_WALLET_CHALLENGE_LOCKED',
+  BIZ_WALLET_SIGNATURE_INVALID = 'BIZ_WALLET_SIGNATURE_INVALID',
+  RES_SCHOLARSHIP_ASSET_NOT_FOUND = 'RES_SCHOLARSHIP_ASSET_NOT_FOUND',
+  RES_SCHOLARSHIP_PAYMENT_NOT_FOUND = 'RES_SCHOLARSHIP_PAYMENT_NOT_FOUND',
+  RES_PAYOUT_WALLET_NOT_FOUND = 'RES_PAYOUT_WALLET_NOT_FOUND',
+  RES_WALLET_CHALLENGE_NOT_FOUND = 'RES_WALLET_CHALLENGE_NOT_FOUND',
+  AUTH_AUTOMATION_TOKEN_INVALID = 'AUTH_AUTOMATION_TOKEN_INVALID',
+  // ── Scholarship finance ───────────────────────────────────────────────────
+  // NOTE: RES_SCHOLARSHIP_PROGRAM_NOT_FOUND and RES_LEDGER_ENTRY_NOT_FOUND were
+  // re-declared here after already being declared above, which is a TS2300
+  // "Duplicate identifier" error and fails the build of every module that
+  // imports ErrorCode.  The single canonical declarations are kept in place and
+  // referenced from here; do not re-add them. (#1246)
+  RES_PAYOUT_NOT_FOUND = 'RES_PAYOUT_NOT_FOUND',
+  RES_RECEIPT_NOT_FOUND = 'RES_RECEIPT_NOT_FOUND',
+  RES_RECONCILIATION_NOT_FOUND = 'RES_RECONCILIATION_NOT_FOUND',
+  BIZ_LEDGER_UNBALANCED = 'BIZ_LEDGER_UNBALANCED',
+  BIZ_LEDGER_REFERENCE_CONFLICT = 'BIZ_LEDGER_REFERENCE_CONFLICT',
+  BIZ_LEDGER_ENTRY_ALREADY_REVERSED = 'BIZ_LEDGER_ENTRY_ALREADY_REVERSED',
+  BIZ_LEDGER_BUSY = 'BIZ_LEDGER_BUSY',
+  BIZ_PROGRAM_INSOLVENT = 'BIZ_PROGRAM_INSOLVENT',
+  BIZ_RECONCILIATION_BLOCKED = 'BIZ_RECONCILIATION_BLOCKED',
+  BIZ_PAYOUT_INVALID_STATE = 'BIZ_PAYOUT_INVALID_STATE',
+  BIZ_PAYOUT_RETRY_NOT_ALLOWED = 'BIZ_PAYOUT_RETRY_NOT_ALLOWED',
+  BIZ_PAYOUT_ENVELOPE_REUSED = 'BIZ_PAYOUT_ENVELOPE_REUSED',
+  SYS_HORIZON_UNAVAILABLE = 'SYS_HORIZON_UNAVAILABLE',
+  // ── Scholarships: normalized aggregate review scores (#1147) ──────────────
+  /** Reviewer has already submitted a review for this application. */
+  BIZ_REVIEW_ALREADY_EXISTS = 'BIZ_REVIEW_ALREADY_EXISTS',
+  /** Application is not in a reviewable state (must be UNDER_REVIEW). */
+  BIZ_APPLICATION_NOT_UNDER_REVIEW = 'BIZ_APPLICATION_NOT_UNDER_REVIEW',
+  /** Review rubric criteria weights do not sum to 1.0 (within tolerance). */
+  VAL_RUBRIC_WEIGHTS_INVALID = 'VAL_RUBRIC_WEIGHTS_INVALID',
+  /** A rubric criterion score is outside the permitted [0, maxScore] range. */
+  VAL_RUBRIC_SCORE_OUT_OF_RANGE = 'VAL_RUBRIC_SCORE_OUT_OF_RANGE',
+  /** Rubric criteria array is empty — at least one criterion is required. */
+  VAL_RUBRIC_CRITERIA_EMPTY = 'VAL_RUBRIC_CRITERIA_EMPTY',
+  /** The requested review was not found. */
+  RES_SCHOLARSHIP_REVIEW_NOT_FOUND = 'RES_SCHOLARSHIP_REVIEW_NOT_FOUND',
+  /** Aggregate score cannot be computed — no completed reviews exist. */
+  BIZ_NO_COMPLETED_REVIEWS = 'BIZ_NO_COMPLETED_REVIEWS',
+
+  // ── Scholarships: reviewer info requests (#1146) ──────────────────────────
+  /** The info-request document was not found. */
+  RES_INFO_REQUEST_NOT_FOUND = 'RES_INFO_REQUEST_NOT_FOUND',
+  /** The applicant has already responded to this request (versioned responses). */
+  BIZ_INFO_REQUEST_ALREADY_RESPONDED = 'BIZ_INFO_REQUEST_ALREADY_RESPONDED',
+  /** The info-request is not in a state that allows the requested transition. */
+  BIZ_INFO_REQUEST_INVALID_STATE = 'BIZ_INFO_REQUEST_INVALID_STATE',
+  /** The response deadline for this info-request has passed. */
+  BIZ_INFO_REQUEST_DEADLINE_PASSED = 'BIZ_INFO_REQUEST_DEADLINE_PASSED',
+  /** The deadline supplied is not in the future. */
+  VAL_INFO_REQUEST_DEADLINE_PAST = 'VAL_INFO_REQUEST_DEADLINE_PAST',
+  /** The questions array is empty — at least one question is required. */
+  VAL_INFO_REQUEST_NO_QUESTIONS = 'VAL_INFO_REQUEST_NO_QUESTIONS',
+  /** A response answer references a question id that does not exist on this request. */
+  VAL_INFO_REQUEST_UNKNOWN_QUESTION = 'VAL_INFO_REQUEST_UNKNOWN_QUESTION',
+  /** A required question was not answered. */
+  VAL_INFO_REQUEST_REQUIRED_ANSWER_MISSING = 'VAL_INFO_REQUEST_REQUIRED_ANSWER_MISSING',
+  /** Only the reviewer who created the request may cancel it. */
+  BIZ_INFO_REQUEST_CANCEL_FORBIDDEN = 'BIZ_INFO_REQUEST_CANCEL_FORBIDDEN',
+
+  // ── Scholarships: budget reservations (#1149) ─────────────────────────────
+  /** The scholarship program budget ledger was not found. */
+  RES_BUDGET_LEDGER_NOT_FOUND = 'RES_BUDGET_LEDGER_NOT_FOUND',
+  /** A budget reservation with this id was not found. */
+  RES_BUDGET_RESERVATION_NOT_FOUND = 'RES_BUDGET_RESERVATION_NOT_FOUND',
+  /** A reservation already exists for this application; cannot create a second. */
+  BIZ_RESERVATION_ALREADY_EXISTS = 'BIZ_RESERVATION_ALREADY_EXISTS',
+  /** The reservation amount exceeds the program's available (unreserved) budget. */
+  BIZ_BUDGET_INSUFFICIENT = 'BIZ_BUDGET_INSUFFICIENT',
+  /** The reservation is not in a state that allows the requested transition. */
+  BIZ_RESERVATION_INVALID_STATE = 'BIZ_RESERVATION_INVALID_STATE',
+  /** The reservation has already been released and cannot be released again. */
+  BIZ_RESERVATION_ALREADY_RELEASED = 'BIZ_RESERVATION_ALREADY_RELEASED',
+  /** The reservation has already been confirmed and cannot be cancelled. */
+  BIZ_RESERVATION_ALREADY_CONFIRMED = 'BIZ_RESERVATION_ALREADY_CONFIRMED',
+  /** expiresAt must be a future date. */
+  VAL_RESERVATION_INVALID_EXPIRY = 'VAL_RESERVATION_INVALID_EXPIRY',
+  /** totalBudget must be ≥ 0. */
+  VAL_BUDGET_AMOUNT_INVALID = 'VAL_BUDGET_AMOUNT_INVALID',
+
+  // ── Scholarships: award records (#1151) ───────────────────────────────────
+  /** The scholarship award record was not found. */
+  RES_SCHOLARSHIP_AWARD_NOT_FOUND = 'RES_SCHOLARSHIP_AWARD_NOT_FOUND',
+  /** An active award already exists for this application; cannot create a second. */
+  BIZ_AWARD_ALREADY_EXISTS = 'BIZ_AWARD_ALREADY_EXISTS',
+  /**
+   * The applicant already holds a conflicting active award (PENDING_ACCEPTANCE
+   * or ACCEPTED) in another program within the same organization.
+   */
+  BIZ_AWARD_CONFLICT = 'BIZ_AWARD_CONFLICT',
+  /** The acceptance deadline supplied is not in the future. */
+  VAL_AWARD_ACCEPTANCE_DEADLINE_PAST = 'VAL_AWARD_ACCEPTANCE_DEADLINE_PAST',
+  /** The award is not in a state that allows the requested transition. */
+  BIZ_AWARD_INVALID_STATE = 'BIZ_AWARD_INVALID_STATE',
+  /** The acceptance deadline has already passed; the offer has expired. */
+  BIZ_AWARD_OFFER_EXPIRED = 'BIZ_AWARD_OFFER_EXPIRED',
+  /**
+   * The authenticated user is not the applicant on this award.
+   * Acceptance must be performed by the applicant themselves.
+   */
+  BIZ_AWARD_ACCEPTANCE_FORBIDDEN = 'BIZ_AWARD_ACCEPTANCE_FORBIDDEN',
+  /** At least one milestone start date is not before its end date. */
+  VAL_AWARD_MILESTONE_DATE_INVALID = 'VAL_AWARD_MILESTONE_DATE_INVALID',
+
+  // ── Scholarships: award agreement acceptance (#1152) ─────────────────────
+  /** The award agreement document was not found. */
+  RES_AWARD_AGREEMENT_NOT_FOUND = 'RES_AWARD_AGREEMENT_NOT_FOUND',
+  /**
+   * Agreement documents are immutable once created; they cannot be modified
+   * or deleted.  A new version must be created instead.
+   */
+  BIZ_AWARD_AGREEMENT_IMMUTABLE = 'BIZ_AWARD_AGREEMENT_IMMUTABLE',
+  /**
+   * The applicant has declined this award offer; no agreement may be recorded
+   * against a DECLINED or OFFER_EXPIRED award.
+   */
+  BIZ_AGREEMENT_DECLINED_OFFER = 'BIZ_AGREEMENT_DECLINED_OFFER',
+  /**
+   * The operation requires the award to be in ACCEPTED state (i.e. the
+   * agreement has already been signed), but it is not.
+   */
+  BIZ_AGREEMENT_NOT_ACCEPTED = 'BIZ_AGREEMENT_NOT_ACCEPTED',
+  /**
+   * One or more required declarations in the acceptance body were not
+   * acknowledged (value !== true).
+   */
+  VAL_AGREEMENT_DECLARATIONS_INCOMPLETE = 'VAL_AGREEMENT_DECLARATIONS_INCOMPLETE',
+  /**
+   * An agreement has already been recorded for this award; duplicate
+   * acceptance attempts are rejected to preserve immutability.
+   */
+  BIZ_AWARD_AGREEMENT_ALREADY_EXISTS = 'BIZ_AWARD_AGREEMENT_ALREADY_EXISTS',
+
+  // ── Scholarships: applicant appeals (#1150) ───────────────────────────────
+  /** The appeal document was not found. */
+  RES_APPEAL_NOT_FOUND = 'RES_APPEAL_NOT_FOUND',
+  /**
+   * An active appeal (PENDING or UNDER_REVIEW) already exists for this
+   * application; only one active appeal is permitted at a time.
+   */
+  BIZ_APPEAL_ALREADY_ACTIVE = 'BIZ_APPEAL_ALREADY_ACTIVE',
+  /**
+   * Appeals may only be filed against applications with status REJECTED or
+   * a CommitteeDecision outcome of REJECTED.
+   */
+  BIZ_APPEAL_NOT_ELIGIBLE = 'BIZ_APPEAL_NOT_ELIGIBLE',
+  /** The appeal is not in a state that permits the requested transition. */
+  BIZ_APPEAL_INVALID_STATE = 'BIZ_APPEAL_INVALID_STATE',
+  /**
+   * The proposed reviewer is in the excluded list (they were an original
+   * reviewer on the application) and cannot review the appeal.
+   */
+  BIZ_APPEAL_REVIEWER_EXCLUDED = 'BIZ_APPEAL_REVIEWER_EXCLUDED',
+  /**
+   * Only the applicant who filed the appeal may withdraw it.
+   */
+  BIZ_APPEAL_WITHDRAW_FORBIDDEN = 'BIZ_APPEAL_WITHDRAW_FORBIDDEN',
+  /**
+   * The `resolution` value supplied to the resolve endpoint must be
+   * UPHELD or DISMISSED — not a lifecycle state such as PENDING or EXPIRED.
+   */
+  BIZ_APPEAL_RESOLUTION_INVALID = 'BIZ_APPEAL_RESOLUTION_INVALID',
+  /** resolutionDeadline must be a future date. */
+  VAL_APPEAL_DEADLINE_PAST = 'VAL_APPEAL_DEADLINE_PAST',
+
   // ── System ────────────────────────────────────────────────────────────────
   SYS_INTERNAL_ERROR = 'SYS_INTERNAL_ERROR',
   SYS_SERVICE_UNAVAILABLE = 'SYS_SERVICE_UNAVAILABLE',
   SYS_RATE_LIMIT_EXCEEDED = 'SYS_RATE_LIMIT_EXCEEDED',
+
+  // ── Transactional outbox / cross-module atomicity (#1255) ───────────────
+  /**
+   * A staged outbox event named an event with no declared payload allowlist, or
+   * carried a field outside its allowlist. The outbox collection is not
+   * tenant-partitioned, so an undeclared field is a privacy defect and fails the
+   * request rather than being written and dropped downstream.
+   */
+  BIZ_OUTBOX_EVENT_NOT_ALLOWLISTED = 'BIZ_OUTBOX_EVENT_NOT_ALLOWLISTED',
+  /**
+   * `BudgetLedger.reservedAmount`/`disbursedAmount` no longer equal the sum of
+   * the program's reservations. Reconciliation has logged this and scheduled a
+   * repair; the invariant itself is authoritative and the drift is the fault.
+   */
+  BIZ_BUDGET_LEDGER_DRIFT = 'BIZ_BUDGET_LEDGER_DRIFT',
+  /**
+   * A `PaymentEligibility` exists whose verification decision is missing or not
+   * an approval. Only reachable through a degraded (non-transactional) write or
+   * manual data change; reconciliation is the repair path.
+   */
+  BIZ_PAYMENT_ELIGIBILITY_ORPHANED = 'BIZ_PAYMENT_ELIGIBILITY_ORPHANED',
+  /** A mentor availability change failed validation (dates, capacity). */
+  VAL_MENTOR_AVAILABILITY_INVALID = 'VAL_MENTOR_AVAILABILITY_INVALID',
+  /** An idempotency key was reused for a different availability change. */
+  BIZ_MENTOR_AVAILABILITY_CONFLICT = 'BIZ_MENTOR_AVAILABILITY_CONFLICT',
+  /** The mentor's current availability status does not allow applications. */
+  BIZ_MENTOR_NOT_ACCEPTING = 'BIZ_MENTOR_NOT_ACCEPTING',
+
+  // ── Mentorship lifecycle (MENTOR-004) ────────────────────────────────────
+  /** The requested state change is not an allowed transition from the current state. */
+  BIZ_MENTORSHIP_TRANSITION_FORBIDDEN = 'BIZ_MENTORSHIP_TRANSITION_FORBIDDEN',
+  /** This transition must carry a reason, and none (or an unusable one) was given. */
+  VAL_MENTORSHIP_REASON_REQUIRED = 'VAL_MENTORSHIP_REASON_REQUIRED',
+  /** The lifecycle changed between read and write; reload and retry. */
+  BIZ_MENTORSHIP_LIFECYCLE_CONFLICT = 'BIZ_MENTORSHIP_LIFECYCLE_CONFLICT',
+  // ── Mentorship profiles (MENTOR-008) ─────────────────────────────────────
+  /** The caller has no mentor profile yet. */
+  RES_MENTOR_PROFILE_NOT_FOUND = 'RES_MENTOR_PROFILE_NOT_FOUND',
+  /** Publishing needs a complete profile; the missing fields are listed. */
+  VAL_MENTOR_PROFILE_INCOMPLETE = 'VAL_MENTOR_PROFILE_INCOMPLETE',
+  /** The profile changed between read and write; retry with the latest. */
+  BIZ_MENTOR_PROFILE_CONFLICT = 'BIZ_MENTOR_PROFILE_CONFLICT',
 }

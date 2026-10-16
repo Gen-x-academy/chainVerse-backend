@@ -24,7 +24,7 @@ export class ConsumerStatus {
   @Prop({ required: true, default: 'pending' })
   status: string;
 
-  @Prop({ default: null })
+  @Prop({ type: Date, default: null })
   processedAt: Date | null;
 }
 
