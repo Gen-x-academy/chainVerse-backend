@@ -1,4 +1,9 @@
-import { ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 import {
   Body,
@@ -19,6 +24,7 @@ import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
 
+@ApiTags('Terms & Conditions')
 @ApiBearerAuth('access-token')
 @Controller('terms-conditions')
 export class TermsConditionsManagementController {
@@ -26,17 +32,33 @@ export class TermsConditionsManagementController {
 
   @Public()
   @Get()
+  @ApiOperation({ summary: 'List all terms and conditions documents' })
+  @ApiResponse({
+    status: 200,
+    description: 'Terms and conditions documents returned',
+  })
   findAll() {
     return this.service.findAll();
   }
 
   @Public()
   @Get(':id')
+  @ApiOperation({ summary: 'Get a terms and conditions document by id' })
+  @ApiResponse({
+    status: 200,
+    description: 'Terms and conditions document returned',
+  })
+  @ApiResponse({ status: 404, description: 'Document not found' })
   findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
   @Post()
+  @ApiOperation({ summary: 'Create a terms and conditions document' })
+  @ApiResponse({
+    status: 201,
+    description: 'Terms and conditions document created',
+  })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   create(@Body() payload: CreateTermsConditionsManagementDto) {
@@ -44,6 +66,11 @@ export class TermsConditionsManagementController {
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update a terms and conditions document' })
+  @ApiResponse({
+    status: 200,
+    description: 'Terms and conditions document updated',
+  })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   update(
@@ -54,6 +81,11 @@ export class TermsConditionsManagementController {
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Delete a terms and conditions document' })
+  @ApiResponse({
+    status: 200,
+    description: 'Terms and conditions document deleted',
+  })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
   remove(@Param('id', new ParseObjectIdPipe()) id: string) {

@@ -7,7 +7,12 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { ReportsService } from './reports.service';
 import { ExportService } from './export.service';
 import { ExportRequest } from './dto/export-request.dto';
@@ -53,6 +58,8 @@ export class ReportsController {
 
   @Get('tutor/:id')
   @ApiOperation({ summary: 'Tutor report (the tutor themselves, or an admin)' })
+  @ApiResponse({ status: 200, description: 'Tutor report returned' })
+  @ApiResponse({ status: 403, description: 'Not allowed to read this report' })
   getTutorReport(@Param('id') id: string, @CurrentUser() caller: ReportCaller) {
     assertCanAccessTutorReport(caller, id);
     return this.reportsService.getTutorReport(id);
@@ -60,6 +67,8 @@ export class ReportsController {
 
   @Post('export')
   @ApiOperation({ summary: 'Export a report as CSV (the tutor themselves, or an admin)' })
+  @ApiResponse({ status: 200, description: 'Report exported as CSV' })
+  @ApiResponse({ status: 403, description: 'Not allowed to export this report' })
   async exportReport(
     @Body() exportRequest: ExportRequest,
     @Res() res: Response,
