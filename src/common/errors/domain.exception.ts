@@ -10,6 +10,17 @@ import { ErrorCode } from './error-codes.enum';
 export class DomainException extends HttpException {
   readonly errorCode: ErrorCode;
 
+  /**
+   * @param details Optional structured context (e.g. conflicting fields)
+   *                returned to the client alongside the error code.
+   */
+  constructor(
+    message: string,
+    statusCode: HttpStatus,
+    errorCode: ErrorCode,
+    details?: Record<string, unknown>,
+  ) {
+    super({ message, errorCode, ...(details && { details }) }, statusCode);
   constructor(message: string, statusCode: HttpStatus, errorCode: ErrorCode) {
     super({ message, errorCode }, statusCode);
     this.errorCode = errorCode;
@@ -34,6 +45,9 @@ export class ValidationDomainException extends DomainException {
   constructor(
     message: string,
     errorCode: ErrorCode = ErrorCode.VAL_INVALID_INPUT,
+    details?: Record<string, unknown>,
+  ) {
+    super(message, HttpStatus.BAD_REQUEST, errorCode, details);
   ) {
     super(message, HttpStatus.BAD_REQUEST, errorCode);
   }
@@ -49,13 +63,20 @@ export class ResourceConflictException extends DomainException {
   constructor(
     message: string,
     errorCode: ErrorCode = ErrorCode.RES_ALREADY_EXISTS,
+    details?: Record<string, unknown>,
+  ) {
+    super(message, HttpStatus.CONFLICT, errorCode, details);
   ) {
     super(message, HttpStatus.CONFLICT, errorCode);
   }
 }
 
 export class BusinessRuleException extends DomainException {
-  constructor(message: string, errorCode: ErrorCode) {
-    super(message, HttpStatus.UNPROCESSABLE_ENTITY, errorCode);
+  constructor(
+    message: string,
+    errorCode: ErrorCode,
+    details?: Record<string, unknown>,
+  ) {
+    super(message, HttpStatus.UNPROCESSABLE_ENTITY, errorCode, details);
   }
 }
