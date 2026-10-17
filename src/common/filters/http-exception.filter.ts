@@ -18,6 +18,7 @@ export interface ErrorResponse {
   error: string;
   errorCode?: string;
   message: string | string[];
+  /** Optional structured, client-safe detail (e.g. field errors). */
   details?: Record<string, unknown>;
   /** Structured, non-sensitive context (e.g. failed eligibility checks). */
   details?: unknown;

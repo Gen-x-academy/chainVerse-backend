@@ -102,6 +102,9 @@ import { EventsModule } from './events/events.module';
 import { LibraryCirculationModule } from './library-circulation/library-circulation.module';
 import { ELibraryModule } from './e-library/e-library.module';
 
+// Mentorship
+import { MentorshipModule } from './mentorship/mentorship.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -180,6 +183,8 @@ import { ELibraryModule } from './e-library/e-library.module';
     StudentEnrollmentModule,
     // Analytics
     CourseAnalyticsModule,
+    // Mentorship (MENTOR-032/033/034)
+    MentorshipModule,
     // Mentorship
     MentorshipApplicationsModule,
     EventsModule,

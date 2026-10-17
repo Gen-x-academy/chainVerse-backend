@@ -73,6 +73,10 @@ export const envValidationSchema = Joi.object({
   RATE_LIMIT_SKIP_FAILED: Joi.boolean().default(false),
   RATE_LIMIT_KEY_PREFIX: Joi.string().default('rl:'),
 
+  // ── Mentorship applications ───────────────────────────────────────────────
+  MENTORSHIP_ENABLED: Joi.boolean().default(true),
+  MENTORSHIP_REVIEW_SWEEP_INTERVAL_MS: Joi.number().integer().min(0).default(60000),
+  MENTORSHIP_DEFAULT_REVIEW_SLA_DAYS: Joi.number().integer().min(1).max(90).default(7),
   // ── Scholarship finance ───────────────────────────────────────────────────
   STELLAR_HORIZON_URL_TESTNET: Joi.string()
     .uri()
