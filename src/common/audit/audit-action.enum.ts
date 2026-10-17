@@ -67,6 +67,12 @@ export enum AuditAction {
   SCHOLARSHIP_DISBURSEMENT_INTENT_CREATED = 'scholarship_disbursement_intent.created',
   SCHOLARSHIP_DISBURSEMENT_INTENT_TRANSITIONED = 'scholarship_disbursement_intent.transitioned',
 
+  // Mentorship applications (src/mentorship)
+  MENTORSHIP_PROGRAM_CREATED = 'mentorship_program.created',
+  MENTORSHIP_APPLICATION_DECIDED = 'mentorship_application.decided',
+  MENTORSHIP_APPLICATION_WITHDRAWN = 'mentorship_application.withdrawn',
+  MENTORSHIP_APPLICATION_REAPPLIED = 'mentorship_application.reapplied',
+
   // Upload lifecycle (src/worker)
   FILE_UPLOAD_QUARANTINED = 'file_upload.quarantined',
   FILE_UPLOAD_SCANNED = 'file_upload.scanned',
@@ -74,6 +80,17 @@ export enum AuditAction {
   FILE_UPLOAD_REJECTED = 'file_upload.rejected',
   FILE_UPLOAD_DELETED = 'file_upload.deleted',
 
+  // Mentor matching (src/mentorship)
+  MENTORSHIP_PROPOSAL_CREATED = 'mentorship_proposal.created',
+  MENTORSHIP_PROPOSAL_APPROVED = 'mentorship_proposal.approved',
+  MENTORSHIP_PROPOSAL_REJECTED = 'mentorship_proposal.rejected',
+  MENTORSHIP_PROPOSAL_WITHDRAWN = 'mentorship_proposal.withdrawn',
+  MENTORSHIP_PROPOSAL_EXPIRED = 'mentorship_proposal.expired',
+  MENTORSHIP_PROPOSAL_ADJUSTED = 'mentorship_proposal.adjusted',
+  MENTORSHIP_PROPOSAL_SUPERSEDED = 'mentorship_proposal.superseded',
+  MENTORSHIP_OVERRIDE_APPLIED = 'mentorship_override.applied',
+  MENTORSHIP_ENGAGEMENT_ACTIVATED = 'mentorship_engagement.activated',
+  MENTORSHIP_PROFILE_ELIGIBILITY_CHANGED = 'mentorship_profile.eligibility_changed',
   // Library configuration (src/library)
   LIBRARY_CONFIG_UPDATED = 'library_config.updated',
 

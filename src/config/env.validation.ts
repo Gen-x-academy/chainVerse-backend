@@ -28,7 +28,10 @@ export const envValidationSchema = Joi.object({
   MONGO_URI: Joi.string()
     .default('mongodb://localhost:27017/chain-verse'),
 
+  MONGODB_URI: Joi.string().allow('').optional(),
+
   MONGODB_TEST_URI: Joi.string().allow('').optional(),
+  MONGODB_DB: Joi.string().allow('').optional(),
 
   // ── Authentication ────────────────────────────────────────────────────────
   JWT_SECRET: Joi.string().min(32).required(),
@@ -52,6 +55,10 @@ export const envValidationSchema = Joi.object({
   REDIS_URL: Joi.string().allow('').optional(),
   FORCE_REDIS: Joi.boolean().default(false),
 
+  // ── Response cache ────────────────────────────────────────────────────────
+  CACHE_TTL_MS: Joi.number().integer().positive().default(300000),
+  CACHE_MAX_ITEMS: Joi.number().integer().positive().default(1000),
+
   // ── Rate limiting ─────────────────────────────────────────────────────────
   RATE_LIMIT_ENABLED: Joi.boolean().default(true),
   RATE_LIMIT_GUEST_WINDOW_MS: Joi.number().integer().positive().default(60000),
@@ -66,6 +73,10 @@ export const envValidationSchema = Joi.object({
   RATE_LIMIT_SKIP_FAILED: Joi.boolean().default(false),
   RATE_LIMIT_KEY_PREFIX: Joi.string().default('rl:'),
 
+  // ── Mentorship applications ───────────────────────────────────────────────
+  MENTORSHIP_ENABLED: Joi.boolean().default(true),
+  MENTORSHIP_REVIEW_SWEEP_INTERVAL_MS: Joi.number().integer().min(0).default(60000),
+  MENTORSHIP_DEFAULT_REVIEW_SLA_DAYS: Joi.number().integer().min(1).max(90).default(7),
   // ── Scholarship finance ───────────────────────────────────────────────────
   STELLAR_HORIZON_URL_TESTNET: Joi.string()
     .uri()

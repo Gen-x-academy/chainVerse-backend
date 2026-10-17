@@ -19,6 +19,44 @@ export const DomainEvents = {
   /** Fired after a certificate (NFT achievement) is issued to a student. */
   CERTIFICATE_ISSUED: 'certificate.issued',
 
+  /** Fired after a mentorship application form version is published (MENTOR-032). */
+  MENTORSHIP_FORM_PUBLISHED: 'mentorship.form.published',
+
+  /** Fired after an eligibility rule-set version is published (MENTOR-033). */
+  MENTORSHIP_RULESET_PUBLISHED: 'mentorship.ruleset.published',
+
+  /** Fired after an applicant submits a mentorship application. */
+  MENTORSHIP_APPLICATION_SUBMITTED: 'mentorship.application.submitted',
+
+  /** Fired after an application is (re)assigned or unassigned in a review queue (MENTOR-034). */
+  MENTORSHIP_REVIEW_ASSIGNED: 'mentorship.review.assigned',
+
+  /** Fired after a reviewer records a decision on an application (MENTOR-034). */
+  MENTORSHIP_REVIEW_DECIDED: 'mentorship.review.decided',
+
+  /** Fired by the review sweeper when an application passes its review due date. */
+  MENTORSHIP_REVIEW_OVERDUE: 'mentorship.review.overdue',
+  /** Fired after a structured decision is recorded on a mentorship application. */
+  MENTORSHIP_APPLICATION_DECIDED: 'mentorship.application.decided',
+
+  /** Fired after an applicant withdraws a mentorship application. */
+  MENTORSHIP_APPLICATION_WITHDRAWN: 'mentorship.application.withdrawn',
+
+  /** Fired after an applicant reapplies to a mentorship program. */
+  MENTORSHIP_APPLICATION_REAPPLIED: 'mentorship.application.reapplied',
+  /** Fired after a mentee submits a mentorship application (MENTOR-030). */
+  MENTORSHIP_APPLICATION_SUBMITTED: 'mentorship.application.submitted',
+  /** Fired when a mentor match proposal is created (participant or coordinator). */
+  MENTORSHIP_PROPOSAL_CREATED: 'mentorship.proposal-created',
+
+  /** Fired when a coordinator changes a pending proposal; participants must re-approve. */
+  MENTORSHIP_PROPOSAL_ADJUSTED: 'mentorship.proposal-adjusted',
+
+  /** Fired when a proposal is rejected, withdrawn, expired or superseded. */
+  MENTORSHIP_PROPOSAL_CLOSED: 'mentorship.proposal-closed',
+
+  /** Fired once all required approvals activate an engagement. */
+  MENTORSHIP_ENGAGEMENT_ACTIVATED: 'mentorship.engagement-activated',
   /** Fired when a recipient's verified payout address changes (payments go on hold). */
   SCHOLARSHIP_PAYOUT_WALLET_CHANGED: 'scholarship.payout-wallet-changed',
 
