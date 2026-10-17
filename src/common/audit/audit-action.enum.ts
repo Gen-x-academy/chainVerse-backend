@@ -67,6 +67,12 @@ export enum AuditAction {
   SCHOLARSHIP_DISBURSEMENT_INTENT_CREATED = 'scholarship_disbursement_intent.created',
   SCHOLARSHIP_DISBURSEMENT_INTENT_TRANSITIONED = 'scholarship_disbursement_intent.transitioned',
 
+  // Mentorship applications (src/mentorship)
+  MENTORSHIP_PROGRAM_CREATED = 'mentorship_program.created',
+  MENTORSHIP_APPLICATION_DECIDED = 'mentorship_application.decided',
+  MENTORSHIP_APPLICATION_WITHDRAWN = 'mentorship_application.withdrawn',
+  MENTORSHIP_APPLICATION_REAPPLIED = 'mentorship_application.reapplied',
+
   // Upload lifecycle (src/worker)
   FILE_UPLOAD_QUARANTINED = 'file_upload.quarantined',
   FILE_UPLOAD_SCANNED = 'file_upload.scanned',

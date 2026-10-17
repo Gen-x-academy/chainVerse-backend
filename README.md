@@ -6,6 +6,60 @@
 
 ---
 
+## ⚡ Quick start in 5 minutes
+
+New here (hackathon, first PR)? This gets you from clone to a running API with
+sample data and interactive docs. Requires **Node.js 20+** and **Docker** (for
+MongoDB). Redis is optional locally.
+
+```bash
+# 1. Clone and install (≈2 min)
+git clone https://github.com/Gen-x-academy/chainVerse-backend.git
+cd chainVerse-backend
+npm install
+
+# 2. Configure (the defaults work locally; only JWT_SECRET must be ≥ 32 chars)
+cp .env.example .env
+
+# 3. Start MongoDB
+docker run -d --name chainverse-mongo -p 27017:27017 mongo:7
+
+# 4. Seed sample students and courses (safe to re-run)
+npm run seed
+
+# 5. Run the API in watch mode
+npm run start:dev
+```
+
+Then open **Swagger UI at <http://localhost:3000/api/docs>** to browse and try
+every endpoint. Swagger is only served when `NODE_ENV` is not `production`.
+
+To call authenticated endpoints, register via `POST /auth/student/register`,
+log in via `POST /auth/student/login`, then click **Authorize** in Swagger and
+paste the `accessToken`.
+
+> Seeded accounts are for browsing data, not for logging in — their password
+> hashes are not bcrypt. Register a fresh account for auth flows.
+
+**Before opening a PR**, run the checks CI runs:
+
+```bash
+npm run lint && npm run build && npm test
+```
+
+### 🌱 Good first issues
+
+- Browse issues labelled
+  [`good first issue`](https://github.com/Gen-x-academy/chainVerse-backend/labels/good%20first%20issue).
+- Comment on the issue to be assigned **before** you start, and keep each PR
+  focused on a single issue.
+- Docs, Swagger examples (`@ApiProperty({ example })`) and DTO validation
+  issues are the quickest way to learn the codebase.
+- Read [CONTRIBUTING.md](CONTRIBUTING.md) for branch naming, commit style and
+  the full set of local checks.
+
+---
+
 ## 📌 Overview
 
 This project represents a **full architectural migration** from **Express.js to NestJS**, aimed at transforming a flexible but loosely structured codebase into a **highly maintainable, testable, and scalable system**.
@@ -155,6 +209,7 @@ route requires an authenticated user with the `admin` role (`JwtAuthGuard` plus
 ### 📚 Feature Documentation
 
 - [Course curriculum and transactional reordering](docs/courses/curriculum.md)
+- [Mentorship applications: decisions, withdrawal and reapplication](docs/mentorship/applications.md)
 
 ---
 
@@ -275,7 +330,7 @@ npm run start:prod
 After starting the server:
 
 ```
-http://localhost:3000/docs
+http://localhost:3000/api/docs
 ```
 
 This provides:
