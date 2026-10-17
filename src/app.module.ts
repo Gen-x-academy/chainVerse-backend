@@ -101,6 +101,8 @@ import { MentorshipModule } from './mentorship/mentorship.module';
 import { EventsModule } from './events/events.module';
 import { LibraryCirculationModule } from './library-circulation/library-circulation.module';
 import { ELibraryModule } from './e-library/e-library.module';
+import { ScholarshipsModule } from './scholarships/scholarships.module';
+import { DigitalRenditionsModule } from './digital-renditions/digital-renditions.module';
 
 // Mentorship
 import { MentorshipModule } from './mentorship/mentorship.module';
@@ -231,6 +233,7 @@ import { MentorshipModule } from './mentorship/mentorship.module';
     ELibraryModule,
     // Scholarship domain
     ScholarshipsModule,
+    DigitalRenditionsModule,
     ScholarshipModule,
     ScholarshipDisbursementModule,
     ScholarshipFinanceModule,
