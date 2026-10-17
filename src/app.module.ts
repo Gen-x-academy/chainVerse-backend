@@ -73,6 +73,7 @@ import { NotificationModule } from './notification/notification.module';
 import { FinancialAidModule } from './financial-aid/financial-aid.module';
 import { OrganizationModule } from './organization/organization.module';
 import { OrganizationMemberModule } from './organization-member/organization-member.module';
+import { OrganizationUserModule } from './organization-user/organization-user.module';
 import { SubscriptionPlanModule } from './subscription-plan/subscription-plan.module';
 import { BadgeModule } from './badge/badge.module';
 import { PointsModule } from './points/points.module';
@@ -190,6 +191,7 @@ import { ELibraryModule } from './e-library/e-library.module';
     FinancialAidModule,
     OrganizationModule,
     OrganizationMemberModule,
+    OrganizationUserModule,
     SubscriptionPlanModule,
     BadgeModule,
     PointsModule,

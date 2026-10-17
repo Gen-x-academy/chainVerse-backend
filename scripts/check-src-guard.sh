@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [ -d src/copy ] || [ -n "$(git ls-files 'src/copy/**' || true)" ]; then
+  echo "Stray src/copy/ directory detected; this repository has no copy source tree." >&2
+  exit 1
+fi
+
 forbidden=$(git ls-files 'src/**/*.php' 'src/**/composer.json' 'src/**/composer.lock' || true)
 
 if [ -n "$forbidden" ]; then
