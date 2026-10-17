@@ -1,4 +1,10 @@
-import { ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiNotFoundResponse,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 import {
   Body,
@@ -23,6 +29,7 @@ import { AuditActor } from '../common/audit/audit-context';
 import type { AuditContext } from '../common/audit/audit-context';
 import { FindReportsDto } from './dto/find-reports.dto';
 
+@ApiTags('Report Abuse')
 @ApiBearerAuth('access-token')
 @Controller('report-abuse')
 @UseGuards(JwtAuthGuard)
@@ -30,6 +37,13 @@ export class ReportAbuseController {
   constructor(private readonly service: ReportAbuseService) {}
 
   @Post()
+  @ApiOperation({
+    summary: 'Report abusive content (student/tutor/moderator)',
+    description:
+      'The report is attributed to the caller; `reporterId` is taken from the ' +
+      'access token rather than the request body.',
+  })
+  @ApiResponse({ status: 201, description: 'Abuse report created' })
   @UseGuards(RolesGuard)
   @Roles(Role.STUDENT, Role.TUTOR, Role.MODERATOR)
   create(
@@ -40,6 +54,10 @@ export class ReportAbuseController {
   }
 
   @Get()
+  @ApiOperation({
+    summary: 'List all abuse reports, newest first (admin/moderator)',
+  })
+  @ApiResponse({ status: 200, description: 'Paginated abuse-report page' })
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
   findAll(@Query() paginationDto: FindReportsDto) {
@@ -47,6 +65,8 @@ export class ReportAbuseController {
   }
 
   @Get('me')
+  @ApiOperation({ summary: 'List the caller’s own reports, newest first' })
+  @ApiResponse({ status: 200, description: 'Paginated abuse-report page' })
   findMyReports(
     @Req() req: { user: { id: string } },
     @Query() paginationDto: FindReportsDto,
@@ -55,6 +75,8 @@ export class ReportAbuseController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get one abuse report (admin/moderator)' })
+  @ApiNotFoundResponse({ description: 'RES_ABUSE_REPORT_NOT_FOUND' })
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
   findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
@@ -62,6 +84,11 @@ export class ReportAbuseController {
   }
 
   @Patch(':id')
+  @ApiOperation({
+    summary: 'Update moderation status or notes (admin/moderator)',
+    description: 'The transition is written to the moderation audit log.',
+  })
+  @ApiNotFoundResponse({ description: 'RES_ABUSE_REPORT_NOT_FOUND' })
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
   update(
@@ -73,6 +100,13 @@ export class ReportAbuseController {
   }
 
   @Delete(':id')
+  @ApiOperation({
+    summary: 'Delete an abuse report (admin only)',
+    description:
+      'The deletion and its prior state are written to the audit log.',
+  })
+  @ApiNotFoundResponse({ description: 'RES_ABUSE_REPORT_NOT_FOUND' })
+  @ApiResponse({ status: 200, description: 'Abuse report deleted' })
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   remove(
