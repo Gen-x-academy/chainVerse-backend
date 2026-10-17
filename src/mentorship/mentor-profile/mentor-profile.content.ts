@@ -13,6 +13,9 @@ export interface MentorProfileBody {
   timeZone: string;
   yearsOfExperience: number;
   teachingApproach: string;
+  deliveryMode: string;
+  hourlyRate: number;
+  rating: number;
   links: Array<{ label: string; url: string }>;
   visibility: MentorProfileVisibility;
 }
@@ -46,6 +49,9 @@ export function normalizeContent(dto: UpsertMentorProfileDto): MentorProfileBody
     timeZone: (dto.timeZone ?? '').trim(),
     yearsOfExperience: dto.yearsOfExperience ?? 0,
     teachingApproach: (dto.teachingApproach ?? '').trim(),
+    deliveryMode: (dto.deliveryMode ?? 'online').trim().toLowerCase(),
+    hourlyRate: dto.hourlyRate ?? 0,
+    rating: 0,
     links: (dto.links ?? []).map((link) => ({
       label: link.label.trim(),
       url: link.url.trim(),
@@ -64,6 +70,9 @@ export function toBody(content: MentorProfileContent): MentorProfileBody {
     timeZone: content.timeZone ?? '',
     yearsOfExperience: content.yearsOfExperience ?? 0,
     teachingApproach: content.teachingApproach ?? '',
+    deliveryMode: content.deliveryMode ?? 'online',
+    hourlyRate: content.hourlyRate ?? 0,
+    rating: content.rating ?? 0,
     links: (content.links ?? []).map((l) => ({ label: l.label, url: l.url })),
     visibility: content.visibility ?? MentorProfileVisibility.PUBLIC,
   };

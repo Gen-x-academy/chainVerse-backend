@@ -74,6 +74,18 @@ export class UpsertMentorProfileDto {
   @Max(80)
   yearsOfExperience?: number;
 
+  @ApiPropertyOptional({ maxLength: 40, example: 'online' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  deliveryMode?: string;
+
+  @ApiPropertyOptional({ minimum: 0 })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  hourlyRate?: number;
+
   @ApiPropertyOptional({ maxLength: 1500 })
   @IsOptional()
   @IsString()
