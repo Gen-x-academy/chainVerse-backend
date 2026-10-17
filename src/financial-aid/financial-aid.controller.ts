@@ -1,4 +1,4 @@
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 import {
   Body,
@@ -29,6 +29,7 @@ import { DeleteFinancialAidApplicationUseCase } from './use-cases/delete-financi
  * the request, delegates to the relevant use-case, and returns the result.
  * No persistence or domain logic lives here.
  */
+@ApiTags('Financial Aid')
 @ApiBearerAuth('access-token')
 @Controller('financial-aid')
 export class FinancialAidController {
@@ -40,6 +41,11 @@ export class FinancialAidController {
   ) {}
 
   @Post()
+  @ApiOperation({ summary: 'Apply for financial aid' })
+  @ApiResponse({ status: 201, description: 'Application created successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STUDENT)
   create(@Body() payload: CreateFinancialAidDto) {
@@ -47,6 +53,10 @@ export class FinancialAidController {
   }
 
   @Get('me')
+  @ApiOperation({ summary: "Retrieve the authenticated student's financial aid applications" })
+  @ApiResponse({ status: 200, description: 'List returned successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STUDENT)
   findMyApplications(@Req() req: { user: { id: string } }) {
@@ -54,6 +64,10 @@ export class FinancialAidController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'Retrieve all financial aid applications' })
+  @ApiResponse({ status: 200, description: 'List returned successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
   findAll() {
@@ -61,6 +75,11 @@ export class FinancialAidController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Retrieve a specific financial aid application' })
+  @ApiResponse({ status: 200, description: 'Application found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Not found' })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.STUDENT)
   findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
@@ -68,6 +87,12 @@ export class FinancialAidController {
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Review/update a financial aid application' })
+  @ApiResponse({ status: 200, description: 'Updated successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Not found' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
   update(
@@ -78,6 +103,11 @@ export class FinancialAidController {
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Delete a financial aid application' })
+  @ApiResponse({ status: 200, description: 'Deleted successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Not found' })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   remove(@Param('id', new ParseObjectIdPipe()) id: string) {
