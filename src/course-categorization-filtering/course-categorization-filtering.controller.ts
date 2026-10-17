@@ -1,4 +1,4 @@
-import { ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 import {
   Body,
@@ -23,6 +23,7 @@ import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
 
+@ApiTags('Course Categorization Filtering')
 @ApiBearerAuth('access-token')
 @Controller('courses/categorization-filtering')
 export class CourseCategorizationFilteringController {
@@ -34,6 +35,7 @@ export class CourseCategorizationFilteringController {
   @CacheKey('course-discovery')
   @CacheTTL(300000)
   @ApiOperation({ summary: 'List all courses (cached, 5 min TTL)' })
+  @ApiResponse({ status: 200, description: 'List of courses returned successfully' })
   findAll() {
     return this.service.findAll();
   }
@@ -61,6 +63,7 @@ export class CourseCategorizationFilteringController {
   @ApiQuery({ name: 'category', required: false, type: String })
   @ApiQuery({ name: 'level', required: false, type: String })
   @ApiQuery({ name: 'tags', required: false, type: [String] })
+  @ApiResponse({ status: 200, description: 'Search results returned successfully' })
   search(@Query() dto: SearchCourseDto) {
     // Normalise tags: accept both repeated params and a single comma-separated value
     if (typeof dto.tags === 'string') {
@@ -74,11 +77,18 @@ export class CourseCategorizationFilteringController {
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(300000)
   @ApiOperation({ summary: 'Get single course entry (cached, 5 min TTL)' })
+  @ApiResponse({ status: 200, description: 'Course found' })
+  @ApiResponse({ status: 404, description: 'Not found' })
   findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
   @Post()
+  @ApiOperation({ summary: 'Create a new course categorization/filtering entry' })
+  @ApiResponse({ status: 201, description: 'Created successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   create(@Body() payload: CreateCourseCategorizationFilteringDto) {
@@ -86,6 +96,12 @@ export class CourseCategorizationFilteringController {
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update an existing course categorization/filtering entry' })
+  @ApiResponse({ status: 200, description: 'Updated successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Not found' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   update(
@@ -96,6 +112,11 @@ export class CourseCategorizationFilteringController {
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Delete a course categorization/filtering entry' })
+  @ApiResponse({ status: 200, description: 'Deleted successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Not found' })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
   remove(@Param('id', new ParseObjectIdPipe()) id: string) {
