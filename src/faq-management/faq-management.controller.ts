@@ -1,4 +1,4 @@
-import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 import {
   Body,
@@ -21,6 +21,7 @@ import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
 
+@ApiTags('FAQ Management')
 @ApiBearerAuth('access-token')
 @Controller('faq')
 export class FaqManagementController {
@@ -32,6 +33,7 @@ export class FaqManagementController {
   @CacheKey('/api/v1/faq')
   @CacheTTL(600000)
   @ApiOperation({ summary: 'List all FAQs (cached, 10 min TTL)' })
+  @ApiResponse({ status: 200, description: 'List returned successfully' })
   findAll() {
     return this.service.findAll();
   }
@@ -41,11 +43,18 @@ export class FaqManagementController {
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(600000)
   @ApiOperation({ summary: 'Get single FAQ entry (cached, 10 min TTL)' })
+  @ApiResponse({ status: 200, description: 'FAQ found' })
+  @ApiResponse({ status: 404, description: 'Not found' })
   findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
   @Post()
+  @ApiOperation({ summary: 'Create a new FAQ entry' })
+  @ApiResponse({ status: 201, description: 'Created successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   create(@Body() payload: CreateFaqManagementDto) {
@@ -53,6 +62,12 @@ export class FaqManagementController {
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update an existing FAQ entry' })
+  @ApiResponse({ status: 200, description: 'Updated successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Not found' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   update(
@@ -63,6 +78,11 @@ export class FaqManagementController {
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Delete an FAQ entry' })
+  @ApiResponse({ status: 200, description: 'Deleted successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Not found' })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
   remove(@Param('id', new ParseObjectIdPipe()) id: string) {
