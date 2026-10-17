@@ -98,6 +98,14 @@ import { IdempotencyModule } from './idempotency/idempotency.module';
 import { MentorshipModule } from './mentorship/mentorship.module';
 import { PrivacyPolicyManagementModule } from './privacy-policy-management/privacy-policy-management.module';
 import { VerificationModule } from './verification/verification.module';
+import { WebhookSecurityModule } from './webhook-security/webhook-security.module';
+import { ScholarshipsModule } from './scholarships/scholarships.module';
+import { ScholarshipModule } from './scholarship/scholarship.module';
+import { ScholarshipDisbursementModule } from './scholarship-disbursement/scholarship-disbursement.module';
+import { ScholarshipStudentDashboardModule } from './scholarship-student-dashboard/scholarship-student-dashboard.module';
+import { ScholarshipSponsorDashboardModule } from './scholarship-sponsor-dashboard/scholarship-sponsor-dashboard.module';
+import { ScholarshipReviewerDashboardModule } from './scholarship-reviewer-dashboard/scholarship-reviewer-dashboard.module';
+import { ScholarshipFinanceStatementModule } from './scholarship-finance-statement/scholarship-finance-statement.module';
 import { MentorshipModule } from './mentorship/mentorship.module';
 import { EventsModule } from './events/events.module';
 import { LibraryCirculationModule } from './library-circulation/library-circulation.module';
@@ -227,6 +235,7 @@ import { MentorshipModule } from './mentorship/mentorship.module';
     ReportAbuseModule,
     ReportsModule,
     MentorshipLifecycleModule,
+    WebhookSecurityModule,
     IdempotencyModule,
     VerificationModule,
     MentorshipModule,
@@ -238,15 +247,12 @@ import { MentorshipModule } from './mentorship/mentorship.module';
     DigitalRenditionsModule,
     ScholarshipModule,
     ScholarshipDisbursementModule,
-    ScholarshipFinanceModule,
     ScholarshipOutboxModule,
     // Scholarship dashboards
     ScholarshipStudentDashboardModule,
     ScholarshipSponsorDashboardModule,
     ScholarshipReviewerDashboardModule,
     ScholarshipFinanceStatementModule,
-    ScholarshipDisbursementModule,
-    ScholarshipModule,
   ],
   controllers: [AppController],
   providers: [

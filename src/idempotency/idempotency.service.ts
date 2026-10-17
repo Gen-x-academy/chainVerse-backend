@@ -78,7 +78,6 @@ export class IdempotencyService {
     const expiresAt = new Date(Date.now() + ttlMs);
     await this.idempotencyModel.updateOne(
       { key, userId, path },
-      { key, userId },
       {
         $setOnInsert: {
           key,

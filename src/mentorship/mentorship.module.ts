@@ -224,6 +224,13 @@ import {
   MentorProfileRevisionSchema,
   MentorProfileSchema,
 } from './mentor-profile/schemas/mentor-profile.schema';
+import { MentorshipProgramsModule } from './programs/mentorship-programs.module';
+
+/** Mentorship domain: profiles, availability, trust, cohorts, eligibility, and waitlists. */
+@Module({
+  imports: [
+    MentorAvailabilityModule,
+    MentorshipProgramsModule,
 import { MentorshipProgramController } from './programs/mentorship-program.controller';
 import { MentorshipProgramService } from './programs/mentorship-program.service';
 import {
@@ -249,6 +256,9 @@ import { MentorDirectoryService } from './directory/mentor-directory.service';
   exports: [MentorAvailabilityModule, MentorTrustService, MentorProfileService, MentorshipProgramService, MentorshipFacilitatorService],
     ]),
   ],
+  controllers: [MentorTrustController, MentorProfileController],
+  providers: [MentorTrustService, MentorProfileService],
+  exports: [MentorAvailabilityModule, MentorshipProgramsModule, MentorTrustService, MentorProfileService],
   controllers: [
     MentorTrustController,
     MentorProfileController,

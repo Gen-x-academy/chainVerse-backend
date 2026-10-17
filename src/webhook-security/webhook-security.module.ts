@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { WebhookVerificationService } from './webhook-verification.service';
 import { WebhookLogService } from './webhook-log.service';
 import { WebhookSignatureGuard } from './webhook-signature.guard';
+import { WebhookReceiverController } from './webhook-receiver.controller';
 import {
   WebhookLog,
   WebhookLogSchema,
@@ -19,6 +20,7 @@ import {
     WebhookLogService,
     WebhookSignatureGuard,
   ],
+  controllers: [WebhookReceiverController],
   exports: [
     WebhookVerificationService,
     WebhookLogService,
