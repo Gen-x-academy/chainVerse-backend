@@ -20,7 +20,7 @@ const NON_OBJECT_ID_PARAMS: Record<string, string> = {
     'on-chain certificate id looked up via CertificateTx, not a Mongo document id',
   'reports/reports.controller.ts:id':
     'stub report endpoint backed by static data, not Mongo',
-  'addup/organization-user.controller.ts:id':
+  'organization-user/organization-user.controller.ts:id':
     'numeric TypeORM organization id, not a Mongo document id',
   'verification/verification.controller.ts:eventId':
     'event UUID, already validated with ParseUUIDPipe',

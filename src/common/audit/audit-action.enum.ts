@@ -37,6 +37,12 @@ export enum AuditAction {
   ORGANIZATION_INVITATION_ACCEPTED = 'organization_invitation.accepted',
   ORGANIZATION_INVITATION_REVOKED = 'organization_invitation.revoked',
 
+  // Mentorship delivery and scoped staffing (src/mentorship)
+  MENTORSHIP_PROGRAM_CREATED = 'mentorship_program.created',
+  MENTORSHIP_PROGRAM_UPDATED = 'mentorship_program.updated',
+  MENTORSHIP_FACILITATOR_ASSIGNED = 'mentorship_facilitator.assigned',
+  MENTORSHIP_FACILITATOR_REVOKED = 'mentorship_facilitator.revoked',
+
   // Scholarship disbursements (src/scholarship-disbursement)
   SCHOLARSHIP_ASSET_PROPOSED = 'scholarship_asset.proposed',
   SCHOLARSHIP_ASSET_APPROVED = 'scholarship_asset.approved',
