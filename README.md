@@ -239,17 +239,17 @@ npm install
 
 ## ⚙️ Environment Configuration
 
-Create a `.env` file in the root directory:
+Copy the example file and fill in your values:
 
+```bash
+cp .env.example .env
 ```
 PORT=3000
 
 MONGODB_URI=mongodb://localhost:27017/chainverse
 MONGO_URI=mongodb://localhost:27017/chainverse
 
-JWT_SECRET=your_access_secret
-JWT_REFRESH_SECRET=your_refresh_secret
-```
+[`.env.example`](.env.example) lists every environment variable the app reads, with a comment and default for each. Only `JWT_SECRET` is required (at least 32 characters); everything else falls back to a default suitable for local development. Variables are validated at startup by [`src/config/env.validation.ts`](src/config/env.validation.ts).
 
 > 💡 Tip: Use strong secrets and never commit `.env` to version control.
 
