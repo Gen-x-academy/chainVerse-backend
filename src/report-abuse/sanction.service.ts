@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Sanction, SanctionDocument, SanctionStatus } from '../schemas/sanction.schema';
+import { Sanction, SanctionDocument, SanctionStatus } from './schemas/sanction.schema';
 import { CreateSanctionDto } from '../dto/create-sanction.dto';
 import { AppealSanctionDto } from '../dto/appeal-sanction.dto';
 import { ReviewAppealDto, AppealDecision } from '../dto/review-appeal.dto';
