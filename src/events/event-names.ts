@@ -19,6 +19,17 @@ export const DomainEvents = {
   /** Fired after a certificate (NFT achievement) is issued to a student. */
   CERTIFICATE_ISSUED: 'certificate.issued',
 
+  /** Fired when a mentor match proposal is created (participant or coordinator). */
+  MENTORSHIP_PROPOSAL_CREATED: 'mentorship.proposal-created',
+
+  /** Fired when a coordinator changes a pending proposal; participants must re-approve. */
+  MENTORSHIP_PROPOSAL_ADJUSTED: 'mentorship.proposal-adjusted',
+
+  /** Fired when a proposal is rejected, withdrawn, expired or superseded. */
+  MENTORSHIP_PROPOSAL_CLOSED: 'mentorship.proposal-closed',
+
+  /** Fired once all required approvals activate an engagement. */
+  MENTORSHIP_ENGAGEMENT_ACTIVATED: 'mentorship.engagement-activated',
   /** Fired when a recipient's verified payout address changes (payments go on hold). */
   SCHOLARSHIP_PAYOUT_WALLET_CHANGED: 'scholarship.payout-wallet-changed',
 

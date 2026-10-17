@@ -92,6 +92,7 @@ import { ReportsModule } from './reports/reports.module';
 import { MentorshipLifecycleModule } from './mentorship/lifecycle/mentorship-lifecycle.module';
 import { IdempotencyModule } from './idempotency/idempotency.module';
 import { VerificationModule } from './verification/verification.module';
+import { MentorshipModule } from './mentorship/mentorship.module';
 import { EventsModule } from './events/events.module';
 import { LibraryCirculationModule } from './library-circulation/library-circulation.module';
 import { ELibraryModule } from './e-library/e-library.module';
@@ -209,6 +210,7 @@ import { ELibraryModule } from './e-library/e-library.module';
     MentorshipLifecycleModule,
     IdempotencyModule,
     VerificationModule,
+    MentorshipModule,
     EventsModule,
     LibraryCirculationModule,
     ELibraryModule,

@@ -74,6 +74,17 @@ export enum AuditAction {
   FILE_UPLOAD_REJECTED = 'file_upload.rejected',
   FILE_UPLOAD_DELETED = 'file_upload.deleted',
 
+  // Mentor matching (src/mentorship)
+  MENTORSHIP_PROPOSAL_CREATED = 'mentorship_proposal.created',
+  MENTORSHIP_PROPOSAL_APPROVED = 'mentorship_proposal.approved',
+  MENTORSHIP_PROPOSAL_REJECTED = 'mentorship_proposal.rejected',
+  MENTORSHIP_PROPOSAL_WITHDRAWN = 'mentorship_proposal.withdrawn',
+  MENTORSHIP_PROPOSAL_EXPIRED = 'mentorship_proposal.expired',
+  MENTORSHIP_PROPOSAL_ADJUSTED = 'mentorship_proposal.adjusted',
+  MENTORSHIP_PROPOSAL_SUPERSEDED = 'mentorship_proposal.superseded',
+  MENTORSHIP_OVERRIDE_APPLIED = 'mentorship_override.applied',
+  MENTORSHIP_ENGAGEMENT_ACTIVATED = 'mentorship_engagement.activated',
+  MENTORSHIP_PROFILE_ELIGIBILITY_CHANGED = 'mentorship_profile.eligibility_changed',
   // Library configuration (src/library)
   LIBRARY_CONFIG_UPDATED = 'library_config.updated',
 
