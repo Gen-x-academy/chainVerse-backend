@@ -2,6 +2,11 @@
 
 Thank you for contributing! Please read these guidelines before opening a PR.
 
+> **First time here?** Follow the
+> [Quick start in 5 minutes](README.md#-quick-start-in-5-minutes) in the README
+> to install, seed, run and open Swagger at `http://localhost:3000/api/docs`,
+> then pick a [`good first issue`](https://github.com/Gen-x-academy/chainVerse-backend/labels/good%20first%20issue).
+
 ## Branch Protection Rules
 
 Repository admins must configure the following branch protection settings on `main` to prevent broken code from being merged:
@@ -67,6 +72,7 @@ If your change requires a new environment variable, add it to `.env.example` wit
 ```bash
 cp .env.example .env   # fill in required values
 npm install
+npm run seed           # optional: sample students and courses
 npm run start:dev
 ```
 

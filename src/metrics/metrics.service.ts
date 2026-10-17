@@ -36,12 +36,44 @@ export class MetricsService {
   private readonly startedAt = Date.now();
   private readonly counters = new Map<string, Counter>();
   private readonly histograms = new Map<string, Histogram>();
+  /** Domain counters keyed by `name{label="value",...}`. */
+  private readonly domainCounters = new Map<string, { name: string; labels: Record<string, string>; value: number }>();
+  /** Business counters keyed by metric name, then by serialised label set. */
+  private readonly domainCounters = new Map<string, Map<string, number>>();
 
   /** Called by MetricsInterceptor after every request. */
   record(metric: RequestMetric): void {
     const label = `${metric.method} ${metric.path}`;
     this.incrementCounter(label, metric.statusCode);
     this.observeLatency(label, metric.durationMs);
+  }
+
+  /**
+   * Increments a domain-level counter (e.g. `mentorship_review_actions_total`).
+   * Label values must be low-cardinality (actions, outcomes) – never user ids.
+   */
+  increment(name: string, labels: Record<string, string> = {}, by = 1): void {
+    const key = `${name}${this.formatLabels(labels)}`;
+    const existing = this.domainCounters.get(key);
+    if (existing) {
+      existing.value += by;
+    } else {
+      this.domainCounters.set(key, { name, labels: { ...labels }, value: by });
+    }
+   * Increments a business-level counter, e.g.
+   * `increment('mentorship_proposals_total', { outcome: 'created' })`.
+   * Label values must be low-cardinality (never user ids).
+   */
+  increment(name: string, labels: Record<string, string> = {}): void {
+    if (!this.domainCounters.has(name)) {
+      this.domainCounters.set(name, new Map());
+    }
+    const series = this.domainCounters.get(name)!;
+    const key = Object.entries(labels)
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+      .map(([k, v]) => `${k}="${String(v).replace(/"/g, '\\"')}"`)
+      .join(',');
+    series.set(key, (series.get(key) ?? 0) + 1);
   }
 
   /** Returns a snapshot of all collected metrics. */
@@ -70,10 +102,19 @@ export class MetricsService {
       };
     }
 
+    const counters: Record<string, Record<string, number>> = {};
+    for (const [name, series] of this.domainCounters.entries()) {
+      counters[name] = Object.fromEntries(series.entries());
+    }
+
     return {
       uptimeSeconds: Math.floor((Date.now() - this.startedAt) / 1000),
       collectedAt: new Date().toISOString(),
       routes,
+      counters: Object.fromEntries(
+        [...this.domainCounters.entries()].map(([key, c]) => [key, c.value]),
+      ),
+      counters,
     };
   }
 
@@ -116,10 +157,35 @@ export class MetricsService {
       }
     }
 
+    const seen = new Set<string>();
+    for (const [key, counter] of this.domainCounters.entries()) {
+      if (!seen.has(counter.name)) {
+        seen.add(counter.name);
+        lines.push(`# TYPE ${counter.name} counter`);
+      }
+      lines.push(`${key} ${counter.value}`);
+    for (const [name, series] of this.domainCounters.entries()) {
+      lines.push(`# TYPE chainverse_${name} counter`);
+      for (const [labels, value] of series.entries()) {
+        lines.push(
+          labels
+            ? `chainverse_${name}{${labels}} ${value}`
+            : `chainverse_${name} ${value}`,
+        );
+      }
+      lines.push('');
+    }
+
     return lines.join('\n');
   }
 
   // ── Private helpers ─────────────────────────────────────────────────────────
+
+  private formatLabels(labels: Record<string, string>): string {
+    const entries = Object.entries(labels).sort(([a], [b]) => a.localeCompare(b));
+    if (entries.length === 0) return '';
+    return `{${entries.map(([k, v]) => `${k}="${String(v).replace(/"/g, '\\"')}"`).join(',')}}`;
+  }
 
   private incrementCounter(label: string, statusCode: number): void {
     if (!this.counters.has(label)) {

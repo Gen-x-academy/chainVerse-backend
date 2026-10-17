@@ -53,6 +53,9 @@ import { CourseAnalyticsModule } from './course-analytics/course-analytics.modul
 import { StudentSavedCoursesModule } from './student-saved-courses/student-saved-courses.module';
 import { StudentCartModule } from './student-cart/student-cart.module';
 import { StudentEnrollmentModule } from './student-enrollment/student-enrollment.module';
+import { CourseAnalyticsModule } from './course-analytics/course-analytics.module';
+// Mentorship modules
+import { MentorshipApplicationsModule } from './mentorship-applications/mentorship-applications.module';
 // Scholarship finance
 import { ScholarshipFinanceModule } from './scholarship-finance/scholarship-finance.module';
 // Platform extras imported by student flows
@@ -73,6 +76,7 @@ import { NotificationModule } from './notification/notification.module';
 import { FinancialAidModule } from './financial-aid/financial-aid.module';
 import { OrganizationModule } from './organization/organization.module';
 import { OrganizationMemberModule } from './organization-member/organization-member.module';
+import { OrganizationUserModule } from './organization-user/organization-user.module';
 import { SubscriptionPlanModule } from './subscription-plan/subscription-plan.module';
 import { BadgeModule } from './badge/badge.module';
 import { PointsModule } from './points/points.module';
@@ -91,6 +95,8 @@ import { ReportAbuseModule } from './report-abuse/report-abuse.module';
 import { ReportsModule } from './reports/reports.module';
 import { MentorshipLifecycleModule } from './mentorship/lifecycle/mentorship-lifecycle.module';
 import { IdempotencyModule } from './idempotency/idempotency.module';
+import { MentorshipModule } from './mentorship/mentorship.module';
+import { PrivacyPolicyManagementModule } from './privacy-policy-management/privacy-policy-management.module';
 import { VerificationModule } from './verification/verification.module';
 import { WebhookSecurityModule } from './webhook-security/webhook-security.module';
 import { ScholarshipsModule } from './scholarships/scholarships.module';
@@ -100,6 +106,15 @@ import { ScholarshipStudentDashboardModule } from './scholarship-student-dashboa
 import { ScholarshipSponsorDashboardModule } from './scholarship-sponsor-dashboard/scholarship-sponsor-dashboard.module';
 import { ScholarshipReviewerDashboardModule } from './scholarship-reviewer-dashboard/scholarship-reviewer-dashboard.module';
 import { ScholarshipFinanceStatementModule } from './scholarship-finance-statement/scholarship-finance-statement.module';
+import { MentorshipModule } from './mentorship/mentorship.module';
+import { EventsModule } from './events/events.module';
+import { LibraryCirculationModule } from './library-circulation/library-circulation.module';
+import { ELibraryModule } from './e-library/e-library.module';
+import { ScholarshipsModule } from './scholarships/scholarships.module';
+import { DigitalRenditionsModule } from './digital-renditions/digital-renditions.module';
+
+// Mentorship
+import { MentorshipModule } from './mentorship/mentorship.module';
 
 @Module({
   imports: [
@@ -177,6 +192,12 @@ import { ScholarshipFinanceStatementModule } from './scholarship-finance-stateme
     StudentSavedCoursesModule,
     StudentCartModule,
     StudentEnrollmentModule,
+    // Analytics
+    CourseAnalyticsModule,
+    // Mentorship (MENTOR-032/033/034)
+    MentorshipModule,
+    // Mentorship
+    MentorshipApplicationsModule,
     EventsModule,
     LibraryCirculationModule,
     // Scholarship finance
@@ -195,6 +216,7 @@ import { ScholarshipFinanceStatementModule } from './scholarship-finance-stateme
     FinancialAidModule,
     OrganizationModule,
     OrganizationMemberModule,
+    OrganizationUserModule,
     SubscriptionPlanModule,
     BadgeModule,
     PointsModule,
@@ -208,6 +230,7 @@ import { ScholarshipFinanceStatementModule } from './scholarship-finance-stateme
     AboutManagementModule,
     MentorshipModule,
     PrivateTutoringBookingsModule,
+    MentorshipModule,
     RemovalRequestModule,
     ReportAbuseModule,
     ReportsModule,
@@ -215,8 +238,13 @@ import { ScholarshipFinanceStatementModule } from './scholarship-finance-stateme
     WebhookSecurityModule,
     IdempotencyModule,
     VerificationModule,
+    MentorshipModule,
+    EventsModule,
+    LibraryCirculationModule,
+    ELibraryModule,
     // Scholarship domain
     ScholarshipsModule,
+    DigitalRenditionsModule,
     ScholarshipModule,
     ScholarshipDisbursementModule,
     ScholarshipOutboxModule,
