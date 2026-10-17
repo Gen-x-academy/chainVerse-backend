@@ -1,4 +1,4 @@
-import { ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 import {
   Body,
@@ -21,6 +21,7 @@ import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
 
+@ApiTags('Course Performance Leaderboard')
 @ApiBearerAuth('access-token')
 @Controller('courses/performance-leaderboard')
 export class CoursePerformanceLeaderboardController {
@@ -32,6 +33,7 @@ export class CoursePerformanceLeaderboardController {
   @CacheKey('leaderboard')
   @CacheTTL(300000)
   @ApiOperation({ summary: 'Get leaderboard (cached, 5 min TTL)' })
+  @ApiResponse({ status: 200, description: 'Leaderboard retrieved successfully' })
   findAll() {
     return this.service.findAll();
   }
@@ -41,11 +43,18 @@ export class CoursePerformanceLeaderboardController {
   @UseInterceptors(CacheInterceptor)
   @CacheTTL(300000)
   @ApiOperation({ summary: 'Get single leaderboard entry (cached, 5 min TTL)' })
+  @ApiResponse({ status: 200, description: 'Leaderboard entry found' })
+  @ApiResponse({ status: 404, description: 'Not found' })
   findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
   @Post()
+  @ApiOperation({ summary: 'Create a leaderboard entry' })
+  @ApiResponse({ status: 201, description: 'Created successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   create(@Body() payload: CreateCoursePerformanceLeaderboardDto) {
@@ -53,6 +62,12 @@ export class CoursePerformanceLeaderboardController {
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update a leaderboard entry' })
+  @ApiResponse({ status: 200, description: 'Updated successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Not found' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   update(
@@ -63,6 +78,11 @@ export class CoursePerformanceLeaderboardController {
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Delete a leaderboard entry' })
+  @ApiResponse({ status: 200, description: 'Deleted successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Not found' })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
   remove(@Param('id', new ParseObjectIdPipe()) id: string) {
