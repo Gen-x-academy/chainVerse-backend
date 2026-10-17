@@ -90,6 +90,118 @@ import { MentorshipReviewSweeper } from './review-queue/mentorship-review-sweepe
     MentorshipReviewQueueService,
     MentorshipReviewSweeper,
   ],
+import { NotificationModule } from '../notification/notification.module';
+import { MentorshipApplicationsController } from './mentorship-applications.controller';
+import { MentorshipApplicationsService } from './mentorship-applications.service';
+import { MentorshipDecisionDispatcher } from './mentorship-decision-dispatcher.service';
+import {
+  MentorshipApplicationDecision,
+  MentorshipApplicationDecisionSchema,
+} from './schemas/mentorship-application-decision.schema';
+import {
+  MentorshipApplication,
+  MentorshipApplicationSchema,
+} from './schemas/mentorship-application.schema';
+import {
+  MentorshipDecisionNotification,
+  MentorshipDecisionNotificationSchema,
+} from './schemas/mentorship-decision-notification.schema';
+import {
+  MentorshipProgram,
+  MentorshipProgramSchema,
+} from './schemas/mentorship-program.schema';
+import { MentorshipTelemetry } from './telemetry/mentorship.telemetry';
+
+/**
+ * Mentorship applications: programs, submissions, structured decisions
+ * (MENTOR-035) and withdrawal / reapplication (MENTOR-036).
+ * See docs/mentorship/applications.md.
+ */
+@Module({
+  // The @Interval dispatcher relies on ScheduleModule.forRoot(), which is
+  // registered globally by StellarModule; registering it again here would
+  // start a second scheduler.
+  imports: [
+    NotificationModule,
+    MongooseModule.forFeature([
+      { name: MentorshipProgram.name, schema: MentorshipProgramSchema },
+      { name: MentorshipApplication.name, schema: MentorshipApplicationSchema },
+      {
+        name: MentorshipApplicationDecision.name,
+        schema: MentorshipApplicationDecisionSchema,
+      },
+      {
+        name: MentorshipDecisionNotification.name,
+        schema: MentorshipDecisionNotificationSchema,
+      },
+    ]),
+  ],
+  controllers: [MentorshipApplicationsController],
+  providers: [
+    MentorshipApplicationsService,
+    MentorshipDecisionDispatcher,
+    MentorshipTelemetry,
+  ],
+  exports: [MentorshipApplicationsService],
+import { IdempotencyModule } from '../idempotency/idempotency.module';
+import { MetricsModule } from '../metrics/metrics.module';
+import { MatchProposalService } from './match-proposal.service';
+import { MentorshipAccessGuard } from './mentorship-access.guard';
+import { MentorshipCapacityService } from './mentorship-capacity.service';
+import { MentorshipCoordinatorController } from './mentorship-coordinator.controller';
+import { MentorshipCoordinatorService } from './mentorship-coordinator.service';
+import { MentorshipEligibilityService } from './mentorship-eligibility.service';
+import { MentorshipProfileService } from './mentorship-profile.service';
+import { MentorshipSweeper } from './mentorship-sweeper.service';
+import { MentorshipTelemetry } from './mentorship-telemetry.service';
+import { MentorshipController } from './mentorship.controller';
+import {
+  MatchProposal,
+  MatchProposalSchema,
+} from './schemas/match-proposal.schema';
+import {
+  MentorshipBlock,
+  MentorshipBlockSchema,
+} from './schemas/mentorship-block.schema';
+import {
+  MentorshipEngagement,
+  MentorshipEngagementSchema,
+} from './schemas/mentorship-engagement.schema';
+import {
+  MentorshipProfile,
+  MentorshipProfileSchema,
+} from './schemas/mentorship-profile.schema';
+
+/**
+ * Mentor matching: proposals (MENTOR-037), mutual acceptance (MENTOR-038)
+ * and coordinator-assisted matching (MENTOR-039). See docs/mentorship/matching.md.
+ *
+ * Relies on the global AuditModule, EventEmitterModule and the
+ * ScheduleModule registered by StellarModule.
+ */
+@Module({
+  imports: [
+    MongooseModule.forFeature([
+      { name: MatchProposal.name, schema: MatchProposalSchema },
+      { name: MentorshipEngagement.name, schema: MentorshipEngagementSchema },
+      { name: MentorshipProfile.name, schema: MentorshipProfileSchema },
+      { name: MentorshipBlock.name, schema: MentorshipBlockSchema },
+    ]),
+    IdempotencyModule,
+    MetricsModule,
+  ],
+  controllers: [MentorshipController, MentorshipCoordinatorController],
+  providers: [
+    MatchProposalService,
+    MentorshipCoordinatorService,
+    MentorshipProfileService,
+    MentorshipEligibilityService,
+    MentorshipCapacityService,
+    MentorshipTelemetry,
+    MentorshipSweeper,
+    MentorshipAccessGuard,
+  ],
+  exports: [MatchProposalService],
 import { MentorAvailabilityModule } from './availability/availability.module';
 import { MentorTrustController } from './trust/trust.controller';
 import { MentorTrustService } from './trust/trust.service';
