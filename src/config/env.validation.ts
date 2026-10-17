@@ -28,7 +28,10 @@ export const envValidationSchema = Joi.object({
   MONGO_URI: Joi.string()
     .default('mongodb://localhost:27017/chain-verse'),
 
+  MONGODB_URI: Joi.string().allow('').optional(),
+
   MONGODB_TEST_URI: Joi.string().allow('').optional(),
+  MONGODB_DB: Joi.string().allow('').optional(),
 
   // ── Authentication ────────────────────────────────────────────────────────
   JWT_SECRET: Joi.string().min(32).required(),
@@ -51,6 +54,10 @@ export const envValidationSchema = Joi.object({
   // ── Redis (optional – app degrades gracefully without it) ─────────────────
   REDIS_URL: Joi.string().allow('').optional(),
   FORCE_REDIS: Joi.boolean().default(false),
+
+  // ── Response cache ────────────────────────────────────────────────────────
+  CACHE_TTL_MS: Joi.number().integer().positive().default(300000),
+  CACHE_MAX_ITEMS: Joi.number().integer().positive().default(1000),
 
   // ── Rate limiting ─────────────────────────────────────────────────────────
   RATE_LIMIT_ENABLED: Joi.boolean().default(true),

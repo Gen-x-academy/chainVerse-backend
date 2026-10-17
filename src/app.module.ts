@@ -53,6 +53,9 @@ import { CourseAnalyticsModule } from './course-analytics/course-analytics.modul
 import { StudentSavedCoursesModule } from './student-saved-courses/student-saved-courses.module';
 import { StudentCartModule } from './student-cart/student-cart.module';
 import { StudentEnrollmentModule } from './student-enrollment/student-enrollment.module';
+import { CourseAnalyticsModule } from './course-analytics/course-analytics.module';
+// Mentorship modules
+import { MentorshipApplicationsModule } from './mentorship-applications/mentorship-applications.module';
 // Scholarship finance
 import { ScholarshipFinanceModule } from './scholarship-finance/scholarship-finance.module';
 // Platform extras imported by student flows
@@ -94,6 +97,7 @@ import { IdempotencyModule } from './idempotency/idempotency.module';
 import { MentorshipModule } from './mentorship/mentorship.module';
 import { PrivacyPolicyManagementModule } from './privacy-policy-management/privacy-policy-management.module';
 import { VerificationModule } from './verification/verification.module';
+import { MentorshipModule } from './mentorship/mentorship.module';
 import { EventsModule } from './events/events.module';
 import { LibraryCirculationModule } from './library-circulation/library-circulation.module';
 import { ELibraryModule } from './e-library/e-library.module';
@@ -174,6 +178,10 @@ import { ELibraryModule } from './e-library/e-library.module';
     StudentSavedCoursesModule,
     StudentCartModule,
     StudentEnrollmentModule,
+    // Analytics
+    CourseAnalyticsModule,
+    // Mentorship
+    MentorshipApplicationsModule,
     EventsModule,
     LibraryCirculationModule,
     // Scholarship finance
@@ -212,6 +220,7 @@ import { ELibraryModule } from './e-library/e-library.module';
     MentorshipLifecycleModule,
     IdempotencyModule,
     VerificationModule,
+    MentorshipModule,
     EventsModule,
     LibraryCirculationModule,
     ELibraryModule,

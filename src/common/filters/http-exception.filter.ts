@@ -18,6 +18,9 @@ export interface ErrorResponse {
   error: string;
   errorCode?: string;
   message: string | string[];
+  details?: Record<string, unknown>;
+  /** Structured, non-sensitive context (e.g. failed eligibility checks). */
+  details?: unknown;
   timestamp: string;
   path: string;
   requestId?: string;
@@ -54,6 +57,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
     let message: string | string[] = 'Internal server error';
     let error = 'Internal Server Error';
     let errorCode: string | undefined;
+    let details: Record<string, unknown> | undefined;
+    let details: unknown;
 
     if (exception instanceof HttpException) {
       statusCode = exception.getStatus();
@@ -70,6 +75,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
         message = (body.message as string | string[]) ?? exception.message;
         error = (body.error as string) ?? HttpStatus[statusCode] ?? 'Error';
         errorCode = body.errorCode as string | undefined;
+        details = body.details as Record<string, unknown> | undefined;
+        details = body.details;
       }
 
       if (!errorCode) {
@@ -102,6 +109,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
       error,
       ...(errorCode && { errorCode }),
       message,
+      ...(details && { details }),
+      ...(details !== undefined && { details }),
       timestamp: new Date().toISOString(),
       path: request.url,
       ...(requestId && { requestId }),

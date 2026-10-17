@@ -1,5 +1,12 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { InjectModel } from '@nestjs/mongoose';
+import { Cache } from 'cache-manager';
+import { isValidObjectId, Model } from 'mongoose';
+import {
+  CourseCategorizationItem,
+  CourseCategorizationItemDocument,
+} from './schemas/course-categorization-item.schema';
 import type { Cache } from 'cache-manager';
 import { CreateCourseCategorizationFilteringDto } from './dto/create-course-categorization-filtering.dto';
 import { UpdateCourseCategorizationFilteringDto } from './dto/update-course-categorization-filtering.dto';
@@ -11,24 +18,47 @@ export type CourseItem = {
   id: string;
 } & CreateCourseCategorizationFilteringDto;
 
+type CourseItemRecord = CourseCategorizationItem & { _id: unknown };
+
+const NOT_FOUND_MESSAGE = 'CourseCategorizationFiltering item not found';
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function exactCaseInsensitive(value: string): RegExp {
+  return new RegExp(`^${escapeRegex(value)}$`, 'i');
+}
+
 @Injectable()
 export class CourseCategorizationFilteringService {
-  private readonly items: CourseItem[] = [];
+  constructor(
+    @InjectModel(CourseCategorizationItem.name)
+    private readonly itemModel: Model<CourseCategorizationItemDocument>,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache,
+  ) {}
 
-  constructor(@Inject(CACHE_MANAGER) private readonly cache: Cache) {}
-
-  findAll() {
-    return this.items;
+  async findAll(): Promise<CourseItem[]> {
+    const docs = await this.itemModel
+      .find()
+      .sort({ _id: 1 })
+      .lean<CourseItemRecord[]>()
+      .exec();
+    return docs.map((doc) => this.toItem(doc));
   }
 
-  findOne(id: string) {
-    const item = this.items.find((entry) => entry.id === id);
-    if (!item) {
-      throw new NotFoundException(
-        'CourseCategorizationFiltering item not found',
-      );
+  async findOne(id: string): Promise<CourseItem> {
+    if (!isValidObjectId(id)) {
+      throw new NotFoundException(NOT_FOUND_MESSAGE);
     }
-    return item;
+    const doc = await this.itemModel
+      .findById(id)
+      .lean<CourseItemRecord>()
+      .exec();
+    if (!doc) {
+      throw new NotFoundException(NOT_FOUND_MESSAGE);
+    }
+    return this.toItem(doc);
   }
 
   /**
@@ -47,11 +77,34 @@ export class CourseCategorizationFilteringService {
    * Results with score > 0 are returned ordered by descending relevance.
    * When no query is provided every item passes the text-match step (score 0)
    * and results are ordered by insertion order after filters are applied.
+   *
+   * Filters are pushed down to MongoDB; relevance scoring runs in memory on
+   * the filtered result set.
    */
-  search(dto: SearchCourseDto): Array<CourseItem & { score: number }> {
+  async search(
+    dto: SearchCourseDto,
+  ): Promise<Array<CourseItem & { score: number }>> {
     const q = dto.query?.toLowerCase().trim() ?? '';
 
-    const scored = this.items
+    const filter: Record<string, unknown> = {};
+    if (dto.category) {
+      filter['metadata.category'] = exactCaseInsensitive(dto.category);
+    }
+    if (dto.level) {
+      filter['metadata.level'] = exactCaseInsensitive(dto.level);
+    }
+    if (dto.tags?.length) {
+      filter['metadata.tags'] = { $all: dto.tags.map(exactCaseInsensitive) };
+    }
+
+    const docs = await this.itemModel
+      .find(filter)
+      .sort({ _id: 1 })
+      .lean<CourseItemRecord[]>()
+      .exec();
+
+    const scored = docs
+      .map((doc) => this.toItem(doc))
       .map((item) => {
         // --- text matching ---
         let score = 0;
@@ -100,30 +153,44 @@ export class CourseCategorizationFilteringService {
   }
 
   async create(payload: CreateCourseCategorizationFilteringDto) {
-    const created = { id: crypto.randomUUID(), ...payload };
-    this.items.push(created);
+    const doc = await this.itemModel.create(payload);
     await this.cache.del(COURSE_DISCOVERY_CACHE_KEY);
-    return created;
+    return this.toItem(doc.toObject() as CourseItemRecord);
   }
 
   async update(id: string, payload: UpdateCourseCategorizationFilteringDto) {
-    const item = this.findOne(id);
-    Object.assign(item, payload);
+    if (!isValidObjectId(id)) {
+      throw new NotFoundException(NOT_FOUND_MESSAGE);
+    }
+    const doc = await this.itemModel
+      .findByIdAndUpdate(id, { $set: payload }, { new: true })
+      .lean<CourseItemRecord>()
+      .exec();
+    if (!doc) {
+      throw new NotFoundException(NOT_FOUND_MESSAGE);
+    }
     await this.cache.del(COURSE_DISCOVERY_CACHE_KEY);
     await this.cache.del(`${COURSE_DISCOVERY_CACHE_KEY}/${id}`);
-    return item;
+    return this.toItem(doc);
   }
 
   async remove(id: string) {
-    const index = this.items.findIndex((entry) => entry.id === id);
-    if (index === -1) {
-      throw new NotFoundException(
-        'CourseCategorizationFiltering item not found',
-      );
+    if (!isValidObjectId(id)) {
+      throw new NotFoundException(NOT_FOUND_MESSAGE);
     }
-    this.items.splice(index, 1);
+    const doc = await this.itemModel.findByIdAndDelete(id).exec();
+    if (!doc) {
+      throw new NotFoundException(NOT_FOUND_MESSAGE);
+    }
     await this.cache.del(COURSE_DISCOVERY_CACHE_KEY);
     await this.cache.del(`${COURSE_DISCOVERY_CACHE_KEY}/${id}`);
     return { id, deleted: true };
+  }
+
+  private toItem(doc: CourseItemRecord): CourseItem {
+    const item: CourseItem = { id: String(doc._id), title: doc.title };
+    if (doc.description !== undefined) item.description = doc.description;
+    if (doc.metadata !== undefined) item.metadata = doc.metadata;
+    return item;
   }
 }
