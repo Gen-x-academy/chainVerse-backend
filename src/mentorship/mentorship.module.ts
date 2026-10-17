@@ -3,21 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { MentorAvailabilityModule } from './availability/availability.module';
 import { MentorTrustController } from './trust/trust.controller';
 import { MentorTrustService } from './trust/trust.service';
-import {
-  MentorTrustSignals,
-  MentorTrustSignalsSchema,
-} from './trust/trust-signals.schema';
-
-@Module({
-  imports: [
-    MentorAvailabilityModule,
-    MongooseModule.forFeature([
-      { name: MentorTrustSignals.name, schema: MentorTrustSignalsSchema },
-    ]),
-  ],
-  controllers: [MentorTrustController],
-  providers: [MentorTrustService],
-  exports: [MentorAvailabilityModule, MentorTrustService],
+import { MentorTrustSignals, MentorTrustSignalsSchema } from './trust/trust-signals.schema';
 import { MentorProfileController } from './mentor-profile/mentor-profile.controller';
 import { MentorProfileService } from './mentor-profile/mentor-profile.service';
 import {
@@ -26,17 +12,21 @@ import {
   MentorProfileRevisionSchema,
   MentorProfileSchema,
 } from './mentor-profile/schemas/mentor-profile.schema';
+import { MentorshipProgramsModule } from './programs/mentorship-programs.module';
 
-/** Mentorship domain. Starts with mentor professional profiles (MENTOR-008). */
+/** Mentorship domain: profiles, availability, trust, cohorts, eligibility, and waitlists. */
 @Module({
   imports: [
+    MentorAvailabilityModule,
+    MentorshipProgramsModule,
     MongooseModule.forFeature([
+      { name: MentorTrustSignals.name, schema: MentorTrustSignalsSchema },
       { name: MentorProfile.name, schema: MentorProfileSchema },
       { name: MentorProfileRevision.name, schema: MentorProfileRevisionSchema },
     ]),
   ],
-  controllers: [MentorProfileController],
-  providers: [MentorProfileService],
-  exports: [MentorProfileService],
+  controllers: [MentorTrustController, MentorProfileController],
+  providers: [MentorTrustService, MentorProfileService],
+  exports: [MentorAvailabilityModule, MentorshipProgramsModule, MentorTrustService, MentorProfileService],
 })
 export class MentorshipModule {}
