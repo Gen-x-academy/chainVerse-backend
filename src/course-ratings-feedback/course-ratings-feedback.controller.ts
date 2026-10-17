@@ -1,4 +1,9 @@
-import { ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 import {
   Body,
@@ -20,12 +25,15 @@ import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
 
+@ApiTags('Course Ratings & Feedback')
 @ApiBearerAuth('access-token')
 @Controller('courses')
 export class CourseRatingsFeedbackController {
   constructor(private readonly service: CourseRatingsFeedbackService) {}
 
   @Post(':id/rate')
+  @ApiOperation({ summary: 'Rate a course' })
+  @ApiResponse({ status: 201, description: 'Rating created' })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STUDENT)
   create(
@@ -38,11 +46,15 @@ export class CourseRatingsFeedbackController {
 
   @Public()
   @Get(':id/ratings')
+  @ApiOperation({ summary: 'List ratings for a course' })
+  @ApiResponse({ status: 200, description: 'Ratings returned' })
   findAllForCourse(@Param('id', new ParseObjectIdPipe()) courseId: string) {
     return this.service.findAllForCourse(courseId);
   }
 
   @Get(':id/my-rating')
+  @ApiOperation({ summary: 'Get the current student rating for a course' })
+  @ApiResponse({ status: 200, description: 'Rating returned' })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STUDENT)
   findMyRating(
@@ -53,6 +65,8 @@ export class CourseRatingsFeedbackController {
   }
 
   @Put(':id/rate')
+  @ApiOperation({ summary: 'Update a course rating' })
+  @ApiResponse({ status: 200, description: 'Rating updated' })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STUDENT)
   update(
@@ -64,6 +78,8 @@ export class CourseRatingsFeedbackController {
   }
 
   @Delete(':id/rate')
+  @ApiOperation({ summary: 'Delete a course rating' })
+  @ApiResponse({ status: 200, description: 'Rating deleted' })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.STUDENT)
   remove(

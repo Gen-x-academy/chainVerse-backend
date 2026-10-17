@@ -1,4 +1,9 @@
-import { ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 import {
   Body,
@@ -19,6 +24,7 @@ import { Role } from '../common/enums/role.enum';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
 
+@ApiTags('Private Tutoring Bookings')
 @ApiBearerAuth('access-token')
 @Controller('tutoring/bookings')
 export class PrivateTutoringBookingsController {
@@ -26,17 +32,24 @@ export class PrivateTutoringBookingsController {
 
   @Public()
   @Get()
+  @ApiOperation({ summary: 'List private tutoring bookings' })
+  @ApiResponse({ status: 200, description: 'Bookings returned' })
   findAll() {
     return this.service.findAll();
   }
 
   @Public()
   @Get(':id')
+  @ApiOperation({ summary: 'Get a private tutoring booking by id' })
+  @ApiResponse({ status: 200, description: 'Booking returned' })
+  @ApiResponse({ status: 404, description: 'Booking not found' })
   findOne(@Param('id', new ParseObjectIdPipe()) id: string) {
     return this.service.findOne(id);
   }
 
   @Post()
+  @ApiOperation({ summary: 'Create a private tutoring booking' })
+  @ApiResponse({ status: 201, description: 'Booking created' })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   create(@Body() payload: CreatePrivateTutoringBookingsDto) {
@@ -44,6 +57,8 @@ export class PrivateTutoringBookingsController {
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update a private tutoring booking' })
+  @ApiResponse({ status: 200, description: 'Booking updated' })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR, Role.TUTOR)
   update(
@@ -54,6 +69,8 @@ export class PrivateTutoringBookingsController {
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Delete a private tutoring booking' })
+  @ApiResponse({ status: 200, description: 'Booking deleted' })
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN, Role.MODERATOR)
   remove(@Param('id', new ParseObjectIdPipe()) id: string) {
