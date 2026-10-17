@@ -63,6 +63,15 @@ export class MentorProfileContent {
   @Prop({ trim: true, maxlength: 1500, default: '' })
   teachingApproach: string;
 
+  @Prop({ trim: true, maxlength: 40, default: 'online' })
+  deliveryMode: string;
+
+  @Prop({ min: 0, default: 0 })
+  hourlyRate: number;
+
+  @Prop({ min: 0, max: 5, default: 0 })
+  rating: number;
+
   @Prop({ type: [MentorProfileLinkSchema], default: [] })
   links: MentorProfileLink[];
 
