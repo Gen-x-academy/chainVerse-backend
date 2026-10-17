@@ -105,7 +105,7 @@ export class ProgramFormField {
    * Maximum number of words permitted for this field's answer.
    * `null` means no limit beyond the system default (DEFAULT_ANSWER_WORD_LIMIT).
    */
-  @Prop({ min: 1, default: null })
+  @Prop({ type: Number, min: 1, default: null })
   wordLimit: number | null;
 
   /** When true the applicant must supply a non-empty answer. */
@@ -151,14 +151,14 @@ export class ScholarshipProgram {
    * Timestamp of the most recent status change.
    * Null for programs that have never had their status changed after creation.
    */
-  @Prop({ default: null })
+  @Prop({ type: Date, default: null })
   statusChangedAt: Date | null;
 
   /**
    * User id (JWT `sub`) of the actor who last changed the status.
    * Null for programs that have never had their status changed.
    */
-  @Prop({ default: null })
+  @Prop({ type: String, default: null })
   statusChangedBy: string | null;
 
   /**
@@ -176,6 +176,54 @@ export class ScholarshipProgram {
   @Prop({ required: true })
   createdBy: string;
 
+  // ── Denormalized search projection (#1175) ───────────────────────────────
+  //
+  // The catalog is a read model: it exists so students and staff can find
+  // programs without joining `program_terms_versions`. Award value, currency
+  // and deadline all live on the terms revision, so filtering on them would
+  // otherwise require an aggregation with a $lookup on every search request.
+  //
+  // These fields are written by `publishTerms` whenever a revision becomes
+  // current, so they always describe the *currently published* terms. They are
+  // never written by a client and never read as the source of truth — the terms
+  // revision remains authoritative, and these are a projection of it.
+
+  /** Award value of the currently published terms, or 0 when none is published. */
+  @Prop({ default: 0, index: true })
+  awardValue: number;
+
+  /** Currency of `awardValue`, or null when no terms are published. */
+  @Prop({ type: String, default: null })
+  awardCurrency: string | null;
+
+  /**
+   * Application deadline of the currently published terms, or null.
+   * Sourced from the first present of `closesAt`, `applicationDeadline`,
+   * `dueAt`, `deadline`.
+   */
+  @Prop({ type: Date, default: null, index: true })
+  applicationDeadline: Date | null;
+
+  /**
+   * How the program is funded. Drives the `fundingType` catalog filter and is
+   * the field the finance context uses to decide whether a payout can be
+   * settled on-chain.
+   */
+  @Prop({
+    default: 'manual',
+    enum: ['horizon', 'manual', 'deposit'],
+    index: true,
+  })
+  fundingType: 'horizon' | 'manual' | 'deposit';
+
+  /** Stellar network the program pays out on. */
+  @Prop({
+    default: 'testnet',
+    enum: ['testnet', 'public'],
+    index: true,
+  })
+  network: 'testnet' | 'public';
+
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -184,3 +232,12 @@ export const ScholarshipProgramSchema =
   SchemaFactory.createForClass(ScholarshipProgram);
 ScholarshipProgramSchema.index({ organizationId: 1, status: 1 });
 ScholarshipProgramSchema.index({ organizationId: 1, title: 1 });
+// Catalog search (#1175): the two compound indexes that cover the filtered
+// listing. `{status, awardValue}` serves the award-range filter and
+// `{organizationId, applicationDeadline}` serves "closing soon" queries.
+ScholarshipProgramSchema.index({
+  organizationId: 1,
+  status: 1,
+  awardValue: -1,
+});
+ScholarshipProgramSchema.index({ organizationId: 1, applicationDeadline: 1 });

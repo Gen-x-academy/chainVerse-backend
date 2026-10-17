@@ -145,6 +145,13 @@ Holding a role in one organization grants nothing in another. See
 - [Resource ownership for student-scoped records](docs/security/resource-ownership.md)
 - [ObjectId validation on route parameters](docs/security/object-id-validation.md)
 
+### 🔬 Profiling Endpoints
+
+`ProfilingController` (`/profiling/*`) can start CPU profiles, take heap snapshots and
+download the resulting files. These expose internals of the running process, so every
+route requires an authenticated user with the `admin` role (`JwtAuthGuard` plus
+`RolesGuard`). They are not public in any environment, including production.
+
 ### 📚 Feature Documentation
 
 - [Course curriculum and transactional reordering](docs/courses/curriculum.md)

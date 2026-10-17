@@ -5,6 +5,8 @@ import { ExportService } from './export.service';
 import { ReportType } from './dto/report-type.enum';
 import { createResponse } from 'node-mocks-http';
 
+const admin = { sub: 'admin-1', role: 'admin' };
+
 describe('ReportsController', () => {
   let controller: ReportsController;
   let exportService: ExportService;
@@ -41,7 +43,7 @@ describe('ReportsController', () => {
       const csv = 'header1,header2\ndata1,data2';
       (exportService.export as jest.Mock).mockResolvedValue(csv);
 
-      await controller.exportReport(exportRequest, res);
+      await controller.exportReport(exportRequest, res, admin);
 
       expect(exportService.export).toHaveBeenCalledWith(
         exportRequest.reportType,

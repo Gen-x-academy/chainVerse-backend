@@ -6,17 +6,25 @@ import {
   HttpException,
   Res,
   Param,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { createReadStream, existsSync } from 'fs';
 import { join } from 'path';
-import { Public } from '../common/decorators/public.decorator';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { Role } from '../common/enums/role.enum';
 import { ProfilingService } from './profiling.service';
 
 @ApiTags('Profiling')
 @Controller('profiling')
-@Public()
+// CPU profiles and heap snapshots expose internals (code paths, in-memory data), so
+// every route requires an authenticated admin. The controller is deliberately not
+// `@Public()`: the global JWT guard would otherwise skip authentication for it.
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.ADMIN)
 export class ProfilingController {
   constructor(private readonly profilingService: ProfilingService) {}
 

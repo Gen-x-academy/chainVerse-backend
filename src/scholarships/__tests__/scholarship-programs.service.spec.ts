@@ -117,7 +117,7 @@ describe('ScholarshipProgramsService', () => {
 
       await service.listPrograms(
         'org-1',
-        { status: ScholarshipProgramStatus.PUBLISHED },
+        { status: ScholarshipProgramStatus.PUBLISHED, includeClosed: true },
         { page: 1, limit: 10 },
       );
 
@@ -125,6 +125,141 @@ describe('ScholarshipProgramsService', () => {
         programModel,
         { page: 1, limit: 10 },
         { organizationId: 'org-1', status: ScholarshipProgramStatus.PUBLISHED },
+      );
+    });
+
+    it('defaults the catalog to published programs only (#1175)', async () => {
+      // The catalog is a discovery surface: by default it must not surface
+      // programs a student can no longer apply to.
+      paginationService.paginate.mockResolvedValue({ data: [], total: 0 } as never);
+
+      await service.listPrograms('org-1', {}, { page: 1, limit: 10 });
+
+      expect(paginationService.paginate).toHaveBeenCalledWith(
+        programModel,
+        { page: 1, limit: 10 },
+        { organizationId: 'org-1', status: { $in: [ScholarshipProgramStatus.PUBLISHED] } },
+      );
+    });
+
+    it('lets staff include closed and archived programs', async () => {
+      paginationService.paginate.mockResolvedValue({ data: [], total: 0 } as never);
+
+      await service.listPrograms(
+        'org-1',
+        { status: ScholarshipProgramStatus.CLOSED, includeClosed: true },
+        { page: 1, limit: 10 },
+      );
+
+      expect(paginationService.paginate).toHaveBeenCalledWith(
+        programModel,
+        { page: 1, limit: 10 },
+        { organizationId: 'org-1', status: ScholarshipProgramStatus.CLOSED },
+      );
+    });
+
+    it('matches search text against title and description, escaped', async () => {
+      paginationService.paginate.mockResolvedValue({ data: [], total: 0 } as never);
+
+      await service.listPrograms(
+        'org-1',
+        { search: 'stellar (smart)' },
+        { page: 1, limit: 10 },
+      );
+
+      const filter = (paginationService.paginate as jest.Mock).mock.calls[0][2];
+      // The regex metacharacters must be escaped, otherwise a query containing
+      // "(" or ")" would be interpreted as a pattern and throw.
+      expect(filter.$or).toHaveLength(2);
+      expect(String(filter.$or[0].title)).toContain('\\(');
+    });
+
+    it('filters by award value range', async () => {
+      paginationService.paginate.mockResolvedValue({ data: [], total: 0 } as never);
+
+      await service.listPrograms(
+        'org-1',
+        { minAwardValue: 1000, maxAwardValue: 5000 },
+        { page: 1, limit: 10 },
+      );
+
+      const filter = (paginationService.paginate as jest.Mock).mock.calls[0][2];
+      expect(filter.awardValue).toEqual({ $gte: 1000, $lte: 5000 });
+    });
+
+    it('treats an open-ended award range as one-sided', async () => {
+      paginationService.paginate.mockResolvedValue({ data: [], total: 0 } as never);
+
+      await service.listPrograms('org-1', { minAwardValue: 1000 }, {
+        page: 1,
+        limit: 10,
+      });
+
+      const filter = (paginationService.paginate as jest.Mock).mock.calls[0][2];
+      expect(filter.awardValue).toEqual({ $gte: 1000 });
+    });
+
+    it('upper-cases the award currency filter', async () => {
+      paginationService.paginate.mockResolvedValue({ data: [], total: 0 } as never);
+
+      await service.listPrograms('org-1', { awardCurrency: 'usd' }, {
+        page: 1,
+        limit: 10,
+      });
+
+      const filter = (paginationService.paginate as jest.Mock).mock.calls[0][2];
+      expect(filter.awardCurrency).toBe('USD');
+    });
+
+    it('filters by deadline window', async () => {
+      paginationService.paginate.mockResolvedValue({ data: [], total: 0 } as never);
+
+      await service.listPrograms(
+        'org-1',
+        { deadlineAfter: new Date('2026-01-01'), deadlineBefore: new Date('2026-12-31') },
+        { page: 1, limit: 10 },
+      );
+
+      const filter = (paginationService.paginate as jest.Mock).mock.calls[0][2];
+      expect(filter.applicationDeadline).toEqual({
+        $gte: new Date('2026-01-01'),
+        $lte: new Date('2026-12-31'),
+      });
+    });
+
+    it('filters by funding type and network', async () => {
+      paginationService.paginate.mockResolvedValue({ data: [], total: 0 } as never);
+
+      await service.listPrograms(
+        'org-1',
+        { fundingType: 'horizon', network: 'public' },
+        { page: 1, limit: 10 },
+      );
+
+      const filter = (paginationService.paginate as jest.Mock).mock.calls[0][2];
+      expect(filter.fundingType).toBe('horizon');
+      expect(filter.network).toBe('public');
+    });
+
+    it('combines filters into one query', async () => {
+      // A client can send several filters at once; they must narrow the SAME
+      // query that produces `total`, so counts always reflect the filters.
+      paginationService.paginate.mockResolvedValue({ data: [], total: 0 } as never);
+
+      await service.listPrograms(
+        'org-1',
+        {
+          search: 'stellar',
+          minAwardValue: 500,
+          awardCurrency: 'USD',
+          fundingType: 'deposit',
+        },
+        { page: 1, limit: 10 },
+      );
+
+      const filter = (paginationService.paginate as jest.Mock).mock.calls[0][2];
+      expect(Object.keys(filter).sort()).toEqual(
+        ['$or', 'awardCurrency', 'awardValue', 'fundingType', 'organizationId', 'status'].sort(),
       );
     });
   });
@@ -255,6 +390,66 @@ describe('ScholarshipProgramsService', () => {
       );
       expect(result.status).toBe(TermsVersionStatus.PUBLISHED);
     });
+
+    it('keeps the catalog search projection in step with the published terms (#1175)', async () => {
+      // Award value, currency and deadline live on the terms revision. The
+      // catalog filters on a denormalized copy of them, so publishing a new
+      // revision must update that copy — otherwise the award and deadline
+      // filters silently keep matching the *previous* terms.
+      programModel.findOne.mockReturnValue(execResolved(makeProgram()) as never);
+      termsModel.findOne.mockReturnValue(execResolved(makeTerms()) as never);
+      termsModel.updateMany.mockReturnValue(execResolved({ modifiedCount: 1 }) as never);
+      termsModel.findOneAndUpdate.mockReturnValue(
+        execResolved(
+          makeTerms({
+            status: TermsVersionStatus.PUBLISHED,
+            awardValue: 2500,
+            awardCurrency: 'USDC',
+            deadlines: { closesAt: '2026-11-30T00:00:00.000Z' },
+          }),
+        ) as never,
+      );
+      programModel.updateOne.mockReturnValue(execResolved({ modifiedCount: 1 }) as never);
+
+      await service.publishTerms(
+        'org-1',
+        '507f1f77bcf86cd799439011',
+        '507f1f77bcf86cd799439021',
+        'staff-1',
+      );
+
+      expect(programModel.updateOne).toHaveBeenCalledWith(
+        { _id: '507f1f77bcf86cd799439011' },
+        expect.objectContaining({
+          $set: expect.objectContaining({
+            awardValue: 2500,
+            awardCurrency: 'USDC',
+            applicationDeadline: new Date('2026-11-30T00:00:00.000Z'),
+          }),
+        }),
+      );
+    });
+
+    it('stores a null deadline when the revision publishes none', async () => {
+      programModel.findOne.mockReturnValue(execResolved(makeProgram()) as never);
+      termsModel.findOne.mockReturnValue(execResolved(makeTerms()) as never);
+      termsModel.updateMany.mockReturnValue(execResolved({ modifiedCount: 1 }) as never);
+      termsModel.findOneAndUpdate.mockReturnValue(
+        execResolved(makeTerms({ status: TermsVersionStatus.PUBLISHED })) as never,
+      );
+      programModel.updateOne.mockReturnValue(execResolved({ modifiedCount: 1 }) as never);
+
+      await service.publishTerms(
+        'org-1',
+        '507f1f77bcf86cd799439011',
+        '507f1f77bcf86cd799439021',
+        'staff-1',
+      );
+
+      const $set = (programModel.updateOne as jest.Mock).mock.calls[0][1].$set;
+      // "No deadline" must be stored as null, never guessed from createdAt.
+      expect($set.applicationDeadline).toBeNull();
+    });
   });
 
   describe('getTermsVersion', () => {
@@ -264,6 +459,133 @@ describe('ScholarshipProgramsService', () => {
       await expect(
         service.getTermsVersion('org-1', '507f1f77bcf86cd799439011', 'version-x'),
       ).rejects.toMatchObject({ code: ErrorCode.RES_TERMS_VERSION_NOT_FOUND });
+    });
+  });
+
+  describe('program lifecycle state machine (#1248)', () => {
+    const programId = '507f1f77bcf86cd799439011';
+
+    it('does not expose an unvalidated status setter on the service', () => {
+      // The legacy `setProgramStatus` wrote an arbitrary status with no
+      // state-machine check and no audit entry, which allowed a CLOSED or
+      // ARCHIVED program to be silently reopened. It must not come back.
+      const surface = Object.getOwnPropertyNames(
+        ScholarshipProgramsService.prototype,
+      ) as string[];
+      expect(surface).not.toContain('setProgramStatus');
+      expect(
+        surface.filter((name) => /status/i.test(name)),
+      ).toEqual(['transitionProgramStatus']);
+    });
+
+    it('rejects reopening a CLOSED program', async () => {
+      programModel.findOne.mockReturnValue(
+        execResolved(makeProgram({ status: ScholarshipProgramStatus.CLOSED })) as never,
+      );
+
+      await expect(
+        service.transitionProgramStatus(
+          'org-1',
+          programId,
+          ScholarshipProgramStatus.PUBLISHED,
+          'staff-1',
+        ),
+      ).rejects.toMatchObject({
+        code: ErrorCode.BIZ_PROGRAM_INVALID_TRANSITION,
+      });
+      expect(programModel.findOneAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('rejects every transition out of ARCHIVED', async () => {
+      for (const target of Object.values(ScholarshipProgramStatus)) {
+        programModel.findOne.mockReturnValue(
+          execResolved(makeProgram({ status: ScholarshipProgramStatus.ARCHIVED })) as never,
+        );
+
+        await expect(
+          service.transitionProgramStatus('org-1', programId, target, 'staff-1'),
+        ).rejects.toMatchObject({ code: ErrorCode.BIZ_PROGRAM_ARCHIVED });
+      }
+      expect(programModel.findOneAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('rejects skipping a lifecycle step (DRAFT → CLOSED)', async () => {
+      programModel.findOne.mockReturnValue(execResolved(makeProgram()) as never);
+
+      await expect(
+        service.transitionProgramStatus(
+          'org-1',
+          programId,
+          ScholarshipProgramStatus.CLOSED,
+          'staff-1',
+        ),
+      ).rejects.toMatchObject({
+        code: ErrorCode.BIZ_PROGRAM_INVALID_TRANSITION,
+      });
+      expect(programModel.findOneAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('records the actor and timestamp in the append-only history', async () => {
+      programModel.findOne.mockReturnValue(execResolved(makeProgram()) as never);
+      programModel.findOneAndUpdate.mockReturnValue(
+        execResolved(
+          makeProgram({ status: ScholarshipProgramStatus.PUBLISHED }),
+        ) as never,
+      );
+
+      await service.transitionProgramStatus(
+        'org-1',
+        programId,
+        ScholarshipProgramStatus.PUBLISHED,
+        'staff-1',
+      );
+
+      expect(programModel.findOneAndUpdate).toHaveBeenCalledWith(
+        { _id: programId, organizationId: 'org-1', status: ScholarshipProgramStatus.DRAFT },
+        expect.objectContaining({
+          $push: {
+            statusHistory: expect.objectContaining({
+              status: ScholarshipProgramStatus.PUBLISHED,
+              changedBy: 'staff-1',
+              changedAt: expect.any(Date),
+            }),
+          },
+        }),
+        { new: true },
+      );
+    });
+
+    it('reports a conflict when a concurrent transition already moved the program', async () => {
+      // The conditional filter matched nothing, i.e. another actor advanced
+      // the program between our read and our write.
+      programModel.findOne.mockReturnValue(execResolved(makeProgram()) as never);
+      programModel.findOneAndUpdate.mockReturnValue(execResolved(null) as never);
+
+      await expect(
+        service.transitionProgramStatus(
+          'org-1',
+          programId,
+          ScholarshipProgramStatus.PUBLISHED,
+          'staff-1',
+        ),
+      ).rejects.toMatchObject({
+        code: ErrorCode.BIZ_PROGRAM_INVALID_TRANSITION,
+      });
+    });
+
+    it('refuses to transition a program owned by another tenant', async () => {
+      programModel.findOne.mockReturnValue(execResolved(null) as never);
+
+      await expect(
+        service.transitionProgramStatus(
+          'org-2',
+          programId,
+          ScholarshipProgramStatus.PUBLISHED,
+          'staff-1',
+        ),
+      ).rejects.toMatchObject({
+        code: ErrorCode.RES_SCHOLARSHIP_PROGRAM_NOT_FOUND,
+      });
     });
   });
 

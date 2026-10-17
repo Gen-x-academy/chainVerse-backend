@@ -43,10 +43,10 @@ export class ContentReport {
   @Prop({ required: true, enum: ReportStatus, default: ReportStatus.OPEN })
   status: ReportStatus;
 
-  @Prop({ default: null })
+  @Prop({ type: String, default: null })
   assignedTo: string | null;
 
-  @Prop({ default: null })
+  @Prop({ type: String, default: null })
   resolutionNotes: string | null;
 
   @Prop({ required: true, index: true })
@@ -56,8 +56,7 @@ export class ContentReport {
   updatedAt?: Date;
 }
 
-export const ContentReportSchema =
-  SchemaFactory.createForClass(ContentReport);
+export const ContentReportSchema = SchemaFactory.createForClass(ContentReport);
 ContentReportSchema.index({ dedupKey: 1 }, { unique: true });
 ContentReportSchema.index({ reporterId: 1, createdAt: -1 });
 ContentReportSchema.index({ status: 1, targetType: 1 });

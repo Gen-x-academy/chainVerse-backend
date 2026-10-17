@@ -17,8 +17,14 @@ import {
   TermsVersionStatus,
 } from '../schemas/program-terms-version.schema';
 import { PaginationService } from '../../common/pagination/pagination.service';
+import { SortOrder } from '../../common/dto/pagination.dto';
 import { ScholarshipApplicationsService } from '../services/scholarship-applications.service';
-import { ApplicationDecision } from '../dto/scholarship-application.dto';
+import {
+  APPLICATION_HISTORY_MAX_LIMIT,
+  ApplicationDecision,
+  ApplicationHistorySortField,
+} from '../dto/scholarship-application.dto';
+import { DEFAULT_APPLICATION_HISTORY_LIMIT } from '../services/scholarship-applications.service';
 import { ErrorCode } from '../../common/errors/error-codes.enum';
 
 describe('ScholarshipApplicationsService', () => {
@@ -295,6 +301,261 @@ describe('ScholarshipApplicationsService', () => {
     });
   });
 
+  describe('listMine pagination (#1249)', () => {
+    it('scopes the history to the authenticated applicant', async () => {
+      paginationService.paginate.mockResolvedValue({
+        data: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        totalPages: 0,
+      } as never);
+
+      await service.listMine('student-1', {});
+
+      expect(paginationService.paginate).toHaveBeenCalledWith(
+        applicationModel,
+        { page: 1, limit: DEFAULT_APPLICATION_HISTORY_LIMIT },
+        { applicantId: 'student-1' },
+        undefined,
+        { createdAt: -1, _id: -1 },
+      );
+    });
+
+    it('adds a deterministic _id tie-breaker to the requested sort field', async () => {
+      paginationService.paginate.mockResolvedValue({
+        data: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        totalPages: 0,
+      } as never);
+
+      await service.listMine('student-1', {
+        page: 3,
+        limit: 50,
+        sortBy: ApplicationHistorySortField.UPDATED_AT,
+        sortOrder: SortOrder.ASC,
+      });
+
+      expect(paginationService.paginate).toHaveBeenCalledWith(
+        applicationModel,
+        { page: 3, limit: 50 },
+        { applicantId: 'student-1' },
+        undefined,
+        { updatedAt: 1, _id: 1 },
+      );
+    });
+
+    it('caps the page size at the documented maximum even if bypassed', async () => {
+      paginationService.paginate.mockResolvedValue({
+        data: [],
+        total: 0,
+        page: 1,
+        limit: APPLICATION_HISTORY_MAX_LIMIT,
+        totalPages: 0,
+      } as never);
+
+      // The DTO rejects `limit > 100`, but the service clamps as well so a
+      // future caller (a job, an internal route) cannot reintroduce an
+      // unbounded page.
+      await service.listMine('student-1', { limit: 5_000 });
+
+      expect(paginationService.paginate).toHaveBeenCalledWith(
+        applicationModel,
+        { page: 1, limit: APPLICATION_HISTORY_MAX_LIMIT },
+        { applicantId: 'student-1' },
+        undefined,
+        { createdAt: -1, _id: -1 },
+      );
+    });
+  });
+
+  describe('listMine over a large history', () => {
+    /**
+     * In-memory stand-in for the Mongoose model.  Deliberately not a jest mock
+     * of `PaginationService`: the point of these cases is the interaction
+     * between the service and the *real* paginator over a dataset with many
+     * rows that share a `createdAt` value, which is where duplicates and gaps
+     * come from.
+     */
+    interface HistoryRow {
+      _id: string;
+      applicantId: string;
+      createdAt: string;
+    }
+
+    /** Minimal chainable query, matching the subset of the Mongoose API used. */
+    class FakeQuery {
+      private sortSpec: Record<string, 1 | -1> = {};
+      private skipCount = 0;
+      private limitCount: number | undefined;
+
+      constructor(
+        private readonly rows: HistoryRow[],
+        private readonly filter: Record<string, unknown>,
+      ) {}
+
+      sort(spec: Record<string, 1 | -1>): this {
+        this.sortSpec = { ...this.sortSpec, ...spec };
+        return this;
+      }
+
+      skip(n: number): this {
+        this.skipCount = n;
+        return this;
+      }
+
+      limit(n: number): this {
+        this.limitCount = n;
+        return this;
+      }
+
+      private matching(): HistoryRow[] {
+        return this.rows.filter((row) =>
+          Object.entries(this.filter).every(
+            ([key, value]) => String(row[key as keyof HistoryRow]) === String(value),
+          ),
+        );
+      }
+
+      async exec(): Promise<HistoryRow[]> {
+        let data = this.matching();
+        const keys = Object.keys(this.sortSpec);
+        if (keys.length > 0) {
+          data = [...data].sort((a, b) => {
+            for (const key of keys) {
+              const dir = this.sortSpec[key];
+              const av = a[key as keyof HistoryRow];
+              const bv = b[key as keyof HistoryRow];
+              if (av === bv) continue;
+              return av > bv ? dir : -dir;
+            }
+            return 0;
+          });
+        }
+        const end =
+          this.limitCount === undefined
+            ? data.length
+            : this.skipCount + this.limitCount;
+        return data.slice(this.skipCount, end);
+      }
+    }
+
+    function fakeApplicationModel(rows: HistoryRow[]) {
+      return {
+        find: jest.fn((filter: Record<string, unknown> = {}) => new FakeQuery(rows, filter)),
+        countDocuments: jest.fn(
+          async (filter: Record<string, unknown> = {}) =>
+            rows.filter((row) =>
+              Object.entries(filter).every(
+                ([key, value]) =>
+                  String(row[key as keyof HistoryRow]) === String(value),
+              ),
+            ).length,
+        ),
+      };
+    }
+
+    /**
+     * 250 applications, the first 50 of which share one `createdAt` value —
+     * exactly like a burst of submissions handled inside the same
+     * millisecond.
+     */
+    function buildHistory(total: number, tiedAt: number): HistoryRow[] {
+      const rows: HistoryRow[] = [];
+      for (let i = 0; i < total; i++) {
+        rows.push({
+          _id: `app-${String(i).padStart(4, '0')}`,
+          applicantId: 'student-1',
+          createdAt:
+            i < tiedAt
+              ? '2026-01-01T00:00:00.000Z'
+              : new Date(
+                  Date.UTC(2026, 0, 1) + (i - tiedAt + 1) * 60_000,
+                ).toISOString(),
+        });
+      }
+      return rows;
+    }
+
+    async function makeServiceWithHistory(rows: HistoryRow[]) {
+      const model = fakeApplicationModel(rows);
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          ScholarshipApplicationsService,
+          { provide: getModelToken(ScholarshipApplication.name), useValue: model },
+          { provide: getModelToken(ScholarshipProgram.name), useValue: programModel },
+          { provide: getModelToken(ProgramTermsVersion.name), useValue: termsModel },
+          { provide: PaginationService, useValue: new PaginationService() },
+        ],
+      }).compile();
+      return module.get<ScholarshipApplicationsService>(
+        ScholarshipApplicationsService,
+      );
+    }
+
+    it('walks a 250-application history with no duplicates and no gaps', async () => {
+      const history = buildHistory(250, 50);
+      const paged = await makeServiceWithHistory(history);
+
+      const seen: string[] = [];
+      let page = 1;
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const result = await paged.listMine('student-1', { page, limit: 25 });
+        expect(result.page).toBe(page);
+        expect(result.limit).toBe(25);
+        // `total` counts the whole filtered collection, not the page.
+        expect(result.total).toBe(250);
+        if (result.data.length === 0) break;
+        seen.push(...result.data.map((doc) => String(doc._id)));
+        page += 1;
+        if (page > 50) throw new Error('pagination did not terminate');
+      }
+
+      // No duplicates.
+      expect(new Set(seen).size).toBe(seen.length);
+      // No gaps: every stored application was returned exactly once.
+      expect([...seen].sort()).toEqual(
+        history.map((r) => r._id).sort(),
+      );
+    });
+
+    it('returns the same page for a tied sort field on repeated calls', async () => {
+      const history = buildHistory(120, 80);
+      const paged = await makeServiceWithHistory(history);
+
+      const first = await paged.listMine('student-1', { page: 2, limit: 40 });
+      const second = await paged.listMine('student-1', { page: 2, limit: 40 });
+
+      expect(second.data.map((d) => String(d._id))).toEqual(
+        first.data.map((d) => String(d._id)),
+      );
+      // The 80 rows sharing one createdAt do not bleed across the page seam.
+      expect(first.data).toHaveLength(40);
+    });
+
+    it('never leaks another applicant’s applications', async () => {
+      const history = buildHistory(30, 5);
+      const other: HistoryRow[] = buildHistory(10, 0).map((r) => ({
+        ...r,
+        _id: `other-${r._id}`,
+        applicantId: 'student-2',
+      }));
+      const paged = await makeServiceWithHistory([...history, ...other]);
+
+      const result = await paged.listMine('student-1', { page: 1, limit: 100 });
+
+      expect(result.total).toBe(30);
+      expect(
+        result.data.every(
+          (d) => (d as unknown as { applicantId: string }).applicantId === 'student-1',
+        ),
+      ).toBe(true);
+    });
+  });
+
   describe('listForProgram', () => {
     it('throws not-found when the program is outside the tenant', async () => {
       programModel.findOne.mockReturnValue(execResolved(null) as never);
@@ -323,6 +584,8 @@ describe('ScholarshipApplicationsService', () => {
           programId,
           status: ScholarshipApplicationStatus.SUBMITTED,
         },
+        undefined,
+        { createdAt: -1, _id: -1 },
       );
     });
   });
