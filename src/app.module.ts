@@ -112,9 +112,17 @@ import { LibraryCirculationModule } from './library-circulation/library-circulat
 import { ELibraryModule } from './e-library/e-library.module';
 import { ScholarshipsModule } from './scholarships/scholarships.module';
 import { DigitalRenditionsModule } from './digital-renditions/digital-renditions.module';
+import { MentorshipDeliverablesModule } from './mentorship-deliverables/mentorship-deliverables.module';
+import { MentorshipTimelineModule } from './mentorship-timeline/mentorship-timeline.module';
+import { MentorshipGoalsModule } from './mentorship-goals/mentorship-goals.module';
+import { MentorshipConsentModule } from './mentorship-consent/mentorship-consent.module';
 
 // Mentorship
 import { MentorshipActionsModule } from './mentorship-actions/mentorship-actions.module';
+import { MentorshipModule } from './mentorship/mentorship.module';
+// Mentorship deliverables (MENTOR-073/074) and progress timeline (MENTOR-075)
+import { MentorshipDeliverablesModule } from './mentorship-deliverables/mentorship-deliverables.module';
+import { MentorshipTimelineModule } from './mentorship-timeline/mentorship-timeline.module';
 
 @Module({
   imports: [
@@ -236,6 +244,8 @@ import { MentorshipActionsModule } from './mentorship-actions/mentorship-actions
     ReportAbuseModule,
     ReportsModule,
     MentorshipLifecycleModule,
+    MentorshipDeliverablesModule,
+    MentorshipTimelineModule,
     WebhookSecurityModule,
     IdempotencyModule,
     VerificationModule,
@@ -254,6 +264,10 @@ import { MentorshipActionsModule } from './mentorship-actions/mentorship-actions
     ScholarshipSponsorDashboardModule,
     ScholarshipReviewerDashboardModule,
     ScholarshipFinanceStatementModule,
+    MentorshipDeliverablesModule,
+    MentorshipTimelineModule,
+    MentorshipGoalsModule,
+    MentorshipConsentModule,
   ],
   controllers: [AppController],
   providers: [

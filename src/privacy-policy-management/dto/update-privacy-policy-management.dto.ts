@@ -1,5 +1,4 @@
-export class UpdatePrivacyPolicyManagementDto {
-  title?: string;
-  description?: string;
-  metadata?: Record<string, unknown>;
-}
+export {
+  CreatePrivacyPolicyManagementDto,
+  UpdatePrivacyPolicyManagementDto,
+} from './create-privacy-policy-management.dto';
