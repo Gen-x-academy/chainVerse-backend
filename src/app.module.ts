@@ -118,6 +118,7 @@ import { MentorshipGoalsModule } from './mentorship-goals/mentorship-goals.modul
 import { MentorshipConsentModule } from './mentorship-consent/mentorship-consent.module';
 
 // Mentorship
+import { MentorshipActionsModule } from './mentorship-actions/mentorship-actions.module';
 import { MentorshipModule } from './mentorship/mentorship.module';
 // Mentorship deliverables (MENTOR-073/074) and progress timeline (MENTOR-075)
 import { MentorshipDeliverablesModule } from './mentorship-deliverables/mentorship-deliverables.module';
@@ -236,6 +237,7 @@ import { MentorshipTimelineModule } from './mentorship-timeline/mentorship-timel
     TermsConditionsManagementModule,
     AboutManagementModule,
     MentorshipModule,
+    MentorshipActionsModule,
     PrivateTutoringBookingsModule,
     MentorshipModule,
     RemovalRequestModule,
