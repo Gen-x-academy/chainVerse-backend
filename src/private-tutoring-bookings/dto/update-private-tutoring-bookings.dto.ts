@@ -1,5 +1,4 @@
-export class UpdatePrivateTutoringBookingsDto {
-  title?: string;
-  description?: string;
-  metadata?: Record<string, unknown>;
-}
+export {
+  CreatePrivateTutoringBookingsDto,
+  UpdatePrivateTutoringBookingsDto,
+} from './create-private-tutoring-bookings.dto';

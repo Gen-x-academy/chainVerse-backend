@@ -114,7 +114,7 @@ import { ScholarshipsModule } from './scholarships/scholarships.module';
 import { DigitalRenditionsModule } from './digital-renditions/digital-renditions.module';
 
 // Mentorship
-import { MentorshipModule } from './mentorship/mentorship.module';
+import { MentorshipActionsModule } from './mentorship-actions/mentorship-actions.module';
 
 @Module({
   imports: [
@@ -229,6 +229,7 @@ import { MentorshipModule } from './mentorship/mentorship.module';
     TermsConditionsManagementModule,
     AboutManagementModule,
     MentorshipModule,
+    MentorshipActionsModule,
     PrivateTutoringBookingsModule,
     MentorshipModule,
     RemovalRequestModule,
