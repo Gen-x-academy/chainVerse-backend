@@ -115,6 +115,9 @@ import { DigitalRenditionsModule } from './digital-renditions/digital-renditions
 
 // Mentorship
 import { MentorshipModule } from './mentorship/mentorship.module';
+// Mentorship deliverables (MENTOR-073/074) and progress timeline (MENTOR-075)
+import { MentorshipDeliverablesModule } from './mentorship-deliverables/mentorship-deliverables.module';
+import { MentorshipTimelineModule } from './mentorship-timeline/mentorship-timeline.module';
 
 @Module({
   imports: [
@@ -235,6 +238,8 @@ import { MentorshipModule } from './mentorship/mentorship.module';
     ReportAbuseModule,
     ReportsModule,
     MentorshipLifecycleModule,
+    MentorshipDeliverablesModule,
+    MentorshipTimelineModule,
     WebhookSecurityModule,
     IdempotencyModule,
     VerificationModule,
