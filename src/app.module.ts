@@ -112,6 +112,10 @@ import { LibraryCirculationModule } from './library-circulation/library-circulat
 import { ELibraryModule } from './e-library/e-library.module';
 import { ScholarshipsModule } from './scholarships/scholarships.module';
 import { DigitalRenditionsModule } from './digital-renditions/digital-renditions.module';
+import { MentorshipDeliverablesModule } from './mentorship-deliverables/mentorship-deliverables.module';
+import { MentorshipTimelineModule } from './mentorship-timeline/mentorship-timeline.module';
+import { MentorshipGoalsModule } from './mentorship-goals/mentorship-goals.module';
+import { MentorshipConsentModule } from './mentorship-consent/mentorship-consent.module';
 
 // Mentorship
 import { MentorshipModule } from './mentorship/mentorship.module';
@@ -253,6 +257,10 @@ import { MentorshipModule } from './mentorship/mentorship.module';
     ScholarshipSponsorDashboardModule,
     ScholarshipReviewerDashboardModule,
     ScholarshipFinanceStatementModule,
+    MentorshipDeliverablesModule,
+    MentorshipTimelineModule,
+    MentorshipGoalsModule,
+    MentorshipConsentModule,
   ],
   controllers: [AppController],
   providers: [
