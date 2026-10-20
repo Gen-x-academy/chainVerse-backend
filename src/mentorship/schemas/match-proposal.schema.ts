@@ -142,7 +142,11 @@ export class MatchProposal {
   status!: ProposalStatus;
 
   /** Snapshot of required approvals at creation so config changes don't strand proposals. */
-  @Prop({ type: [String], enum: Object.values(ParticipantRole), required: true })
+  @Prop({
+    type: [String],
+    enum: Object.values(ParticipantRole),
+    required: true,
+  })
   requiredApprovals!: ParticipantRole[];
 
   @Prop({ type: [ProposalApproval], default: [] })

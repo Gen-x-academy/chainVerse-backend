@@ -53,7 +53,6 @@ import { CourseAnalyticsModule } from './course-analytics/course-analytics.modul
 import { StudentSavedCoursesModule } from './student-saved-courses/student-saved-courses.module';
 import { StudentCartModule } from './student-cart/student-cart.module';
 import { StudentEnrollmentModule } from './student-enrollment/student-enrollment.module';
-import { CourseAnalyticsModule } from './course-analytics/course-analytics.module';
 // Mentorship modules
 import { MentorshipApplicationsModule } from './mentorship-applications/mentorship-applications.module';
 // Scholarship finance
@@ -95,8 +94,6 @@ import { ReportAbuseModule } from './report-abuse/report-abuse.module';
 import { ReportsModule } from './reports/reports.module';
 import { MentorshipLifecycleModule } from './mentorship/lifecycle/mentorship-lifecycle.module';
 import { IdempotencyModule } from './idempotency/idempotency.module';
-import { MentorshipModule } from './mentorship/mentorship.module';
-import { PrivacyPolicyManagementModule } from './privacy-policy-management/privacy-policy-management.module';
 import { VerificationModule } from './verification/verification.module';
 import { WebhookSecurityModule } from './webhook-security/webhook-security.module';
 import { ScholarshipsModule } from './scholarships/scholarships.module';
@@ -106,11 +103,8 @@ import { ScholarshipStudentDashboardModule } from './scholarship-student-dashboa
 import { ScholarshipSponsorDashboardModule } from './scholarship-sponsor-dashboard/scholarship-sponsor-dashboard.module';
 import { ScholarshipReviewerDashboardModule } from './scholarship-reviewer-dashboard/scholarship-reviewer-dashboard.module';
 import { ScholarshipFinanceStatementModule } from './scholarship-finance-statement/scholarship-finance-statement.module';
-import { MentorshipModule } from './mentorship/mentorship.module';
-import { EventsModule } from './events/events.module';
-import { LibraryCirculationModule } from './library-circulation/library-circulation.module';
 import { ELibraryModule } from './e-library/e-library.module';
-import { ScholarshipsModule } from './scholarships/scholarships.module';
+// Mentorship modules (MENTOR program module — single canonical import)
 import { DigitalRenditionsModule } from './digital-renditions/digital-renditions.module';
 import { MentorshipDeliverablesModule } from './mentorship-deliverables/mentorship-deliverables.module';
 import { MentorshipTimelineModule } from './mentorship-timeline/mentorship-timeline.module';
@@ -119,10 +113,15 @@ import { MentorshipConsentModule } from './mentorship-consent/mentorship-consent
 
 // Mentorship
 import { MentorshipActionsModule } from './mentorship-actions/mentorship-actions.module';
+<<<<<<< Updated upstream
 import { MentorshipModule } from './mentorship/mentorship.module';
 // Mentorship deliverables (MENTOR-073/074) and progress timeline (MENTOR-075)
 import { MentorshipDeliverablesModule } from './mentorship-deliverables/mentorship-deliverables.module';
 import { MentorshipTimelineModule } from './mentorship-timeline/mentorship-timeline.module';
+=======
+// Mentorship operations dashboards (MENTOR-114/115/116)
+import { MentorshipOperationsModule } from './mentorship/operations/mentorship-operations.module';
+>>>>>>> Stashed changes
 
 @Module({
   imports: [

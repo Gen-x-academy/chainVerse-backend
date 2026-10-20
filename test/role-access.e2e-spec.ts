@@ -3,7 +3,7 @@ import { INestApplication } from '@nestjs/common';
 import { AppModule } from '../src/app.module';
 import request from 'supertest';
 import { Server } from 'http';
-import { createUser, loginUser } from './helpers/auth.helper';
+import { createAdminUser, createUser, loginUser } from './helpers/auth.helper';
 
 describe('Role-Based Access Control (e2e)', () => {
   let app: INestApplication;
@@ -41,20 +41,6 @@ describe('Role-Based Access Control (e2e)', () => {
     // Create a moderator user and get the access token
     await createAdminUser(server, 'moderator@example.com', 'password123', 'moderator', superAdminAccessToken);
     moderatorAccessToken = await loginUser(server, 'moderator@example.com', 'password123', 'moderator');
-  });
-
-describe('Role-Based Access Control (e2e)', () => {
-  let app: INestApplication;
-  let server: Server;
-
-  beforeAll(async () => {
-    const moduleFixture: TestingModule = await NestTest.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    await app.init();
-    server = app.getHttpServer() as Server;
   });
 
   afterAll(async () => {

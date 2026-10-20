@@ -4,9 +4,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Model } from 'mongoose';
 import {
-  Cohort, CohortAudit, CohortDocument, CohortEnrollment, CohortEnrollmentDocument,
-  CohortOffer, CohortOfferDocument, CohortStatus, CohortWaitlistEntry,
-  CohortWaitlistEntryDocument, EnrollmentStatus, EligibilityRuleVersion,
+  Cohort, CohortAudit, CohortDocument, CohortEnrollment, EnrollmentDocument,
+  CohortOffer, OfferDocument, CohortStatus, CohortWaitlistEntry,
+  WaitlistDocument, EnrollmentStatus, EligibilityRuleVersion,
   EligibilityVersionDocument, OfferStatus, WaitlistStatus,
 } from './schemas/program.schema';
 import { CreateCohortDto, CreateEligibilityVersionDto, EligibilityEvaluationDto } from './dto/program.dto';
@@ -19,32 +19,14 @@ import { ErrorCode } from '../../common/errors/error-codes.enum';
 
 const duplicate = (error: unknown) => (error as { code?: number } | null)?.code === 11000;
 const COHORT_NOT_FOUND = 'Mentorship cohort not found.';
-import { ConfigService } from '@nestjs/config';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { ValidationDomainException } from '../../common/errors';
-import { assertSafeText } from '../shared/safe-text';
-import { MentorshipAccessPolicy } from '../shared/mentorship-access.policy';
-import { MentorshipAuditService } from '../shared/audit/mentorship-audit.service';
-import { MentorshipRequestContext } from '../shared/mentorship-context';
-import { MentorshipTelemetry } from '../shared/mentorship-telemetry.service';
-import {
-  MentorshipProgram,
-  MentorshipProgramDocument,
-} from './schemas/mentorship-program.schema';
-import {
-  ProgramReviewer,
-  ProgramReviewerDocument,
-} from './schemas/program-reviewer.schema';
-import { CreateProgramDto, UpdateProgramDto, UpsertReviewerDto } from './dto/program.dto';
 
 @Injectable()
 export class MentorshipProgramsService {
   constructor(
     @InjectModel(Cohort.name) private readonly cohorts: Model<CohortDocument>,
-    @InjectModel(CohortEnrollment.name) private readonly enrollments: Model<CohortEnrollmentDocument>,
-    @InjectModel(CohortWaitlistEntry.name) private readonly waitlist: Model<CohortWaitlistEntryDocument>,
-    @InjectModel(CohortOffer.name) private readonly offers: Model<CohortOfferDocument>,
+    @InjectModel(CohortEnrollment.name) private readonly enrollments: Model<EnrollmentDocument>,
+    @InjectModel(CohortWaitlistEntry.name) private readonly waitlist: Model<WaitlistDocument>,
+    @InjectModel(CohortOffer.name) private readonly offers: Model<OfferDocument>,
     @InjectModel(EligibilityRuleVersion.name) private readonly eligibility: Model<EligibilityVersionDocument>,
     @InjectModel(CohortAudit.name) private readonly audits: Model<any>,
     private readonly events: EventEmitter2,
@@ -156,7 +138,13 @@ export class MentorshipProgramsService {
     const previous = await this.eligibility.findOne({ programId }).sort({ version: -1 }).exec();
     const version = (previous?.version ?? 0) + 1;
     await this.eligibility.updateMany({ programId }, { $set: { active: false } }).exec();
-    return this.eligibility.create({ programId, version, rules: dto.rules, active: true, createdBy: actorId });
+    return this.eligibility.create({
+      programId,
+      version,
+      rules: dto.rules as unknown as Array<Record<string, unknown>>,
+      active: true,
+      createdBy: actorId,
+    });
   }
 
   async evaluate(programId: string, dto: EligibilityEvaluationDto) {
@@ -181,7 +169,7 @@ export class MentorshipProgramsService {
     if (available <= 0) return;
     const entry = await this.waitlist.findOneAndUpdate({ cohortId, status: WaitlistStatus.WAITING }, { $set: { status: WaitlistStatus.OFFERED, offeredAt: new Date(), expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000) } }, { sort: { position: 1 }, new: true }).exec();
     if (!entry) return;
-    await this.offers.create({ cohortId, participantId: entry.participantId, status: OfferStatus.RESERVED, expiresAt: entry.expiresAt });
+    await this.offers.create({ cohortId, participantId: entry.participantId, status: OfferStatus.RESERVED, expiresAt: entry.expiresAt ?? undefined });
     this.events.emit('mentorship.cohort.offer.created', { cohortId, participantId: entry.participantId });
   }
 
@@ -194,139 +182,5 @@ export class MentorshipProgramsService {
     if (cohort.createdBy !== actorId && !cohort.coordinatorIds.includes(actorId)) {
       throw new ForbiddenDomainException('Only a cohort coordinator may perform this action.', ErrorCode.AUTH_INSUFFICIENT_PERMISSIONS);
     }
-    @InjectModel(MentorshipProgram.name)
-    private readonly programModel: Model<MentorshipProgramDocument>,
-    @InjectModel(ProgramReviewer.name)
-    private readonly reviewerModel: Model<ProgramReviewerDocument>,
-    private readonly policy: MentorshipAccessPolicy,
-    private readonly audit: MentorshipAuditService,
-    private readonly telemetry: MentorshipTelemetry,
-    private readonly config: ConfigService,
-  ) {}
-
-  async create(ctx: MentorshipRequestContext, dto: CreateProgramDto) {
-    assertSafeText([
-      { field: 'title', value: dto.title },
-      { field: 'description', value: dto.description },
-    ]);
-
-    const program = await this.programModel.create({
-      ...dto,
-      reviewSlaDays: dto.reviewSlaDays ?? this.config.get<number>('mentorship.defaultReviewSlaDays') ?? 7,
-      ownerId: ctx.user.id,
-      status: 'draft',
-    });
-
-    await this.audit.record(ctx, {
-      action: 'program.created',
-      programId: String(program._id),
-      subjectType: 'program',
-      subjectId: String(program._id),
-    });
-    this.telemetry.count('mentorship_program_actions_total', { action: 'create' });
-    return this.toView(program);
-  }
-
-  async get(ctx: MentorshipRequestContext, programId: string) {
-    const program = await this.policy.loadProgram(programId);
-    // Open programs are discoverable by any authenticated user; drafts and
-    // closed programs only by people who run them.
-    if (program.status !== 'open') {
-      await this.policy.assertCanViewProgramInternals(ctx.user, program);
-    }
-    return this.toView(program);
-  }
-
-  async update(ctx: MentorshipRequestContext, programId: string, dto: UpdateProgramDto) {
-    const program = await this.policy.loadProgram(programId);
-    this.policy.assertCanManageProgram(ctx.user, program);
-    assertSafeText([
-      { field: 'title', value: dto.title },
-      { field: 'description', value: dto.description },
-    ]);
-
-    const opens = dto.applicationOpensAt !== undefined ? dto.applicationOpensAt : program.applicationOpensAt;
-    const closes = dto.applicationClosesAt !== undefined ? dto.applicationClosesAt : program.applicationClosesAt;
-    if (opens && closes && opens >= closes) {
-      throw new ValidationDomainException('applicationClosesAt must be after applicationOpensAt');
-    }
-
-    program.set(dto);
-    await program.save();
-
-    await this.audit.record(ctx, {
-      action: 'program.updated',
-      programId,
-      subjectType: 'program',
-      subjectId: programId,
-      metadata: { fields: Object.keys(dto) },
-    });
-    return this.toView(program);
-  }
-
-  async listReviewers(ctx: MentorshipRequestContext, programId: string) {
-    const program = await this.policy.loadProgram(programId);
-    if (!(await this.policy.canLeadQueue(ctx.user, program))) this.policy.deny('list_reviewers');
-    const reviewers = await this.reviewerModel.find({ programId }).sort({ reviewerId: 1 }).lean().exec();
-    return reviewers.map((r) => this.reviewerView(r));
-  }
-
-  /** Idempotent: PUT with the same body yields the same membership. */
-  async upsertReviewer(
-    ctx: MentorshipRequestContext,
-    programId: string,
-    reviewerId: string,
-    dto: UpsertReviewerDto,
-  ) {
-    const program = await this.policy.loadProgram(programId);
-    this.policy.assertCanManageProgram(ctx.user, program);
-
-    const membership = await this.reviewerModel
-      .findOneAndUpdate(
-        { programId, reviewerId },
-        {
-          $set: { role: dto.role, capacity: dto.capacity, active: dto.active },
-          $setOnInsert: { programId, reviewerId, activeAssignments: 0 },
-        },
-        { upsert: true, returnDocument: 'after', runValidators: true },
-      )
-      .lean()
-      .exec();
-
-    await this.audit.record(ctx, {
-      action: 'reviewer.upserted',
-      programId,
-      subjectType: 'reviewer',
-      subjectId: reviewerId,
-      metadata: { role: dto.role, capacity: dto.capacity, active: dto.active },
-    });
-    this.telemetry.count('mentorship_program_actions_total', { action: 'upsert_reviewer' });
-    return this.reviewerView(membership!);
-  }
-
-  toView(p: MentorshipProgramDocument | (MentorshipProgram & { _id: unknown })) {
-    return {
-      id: String(p._id),
-      title: p.title,
-      description: p.description,
-      ownerId: p.ownerId,
-      status: p.status,
-      applicationOpensAt: p.applicationOpensAt,
-      applicationClosesAt: p.applicationClosesAt,
-      reviewSlaDays: p.reviewSlaDays,
-      currentFormVersion: p.currentFormVersion,
-      currentRuleSetVersion: p.currentRuleSetVersion,
-    };
-  }
-
-  private reviewerView(r: ProgramReviewer) {
-    return {
-      programId: String(r.programId),
-      reviewerId: r.reviewerId,
-      role: r.role,
-      capacity: r.capacity,
-      activeAssignments: r.activeAssignments,
-      active: r.active,
-    };
   }
 }

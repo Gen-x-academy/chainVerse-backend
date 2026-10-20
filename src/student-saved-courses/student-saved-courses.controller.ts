@@ -1,4 +1,4 @@
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 import {
   Controller,
@@ -15,7 +15,6 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '../common/enums/role.enum';
 
-@ApiTags('Student Saved Courses')
 @ApiBearerAuth('access-token')
 @Controller('student/saved-courses')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -24,8 +23,6 @@ export class StudentSavedCoursesController {
   constructor(private readonly service: StudentSavedCoursesService) {}
 
   @Post(':id/add')
-  @ApiOperation({ summary: 'Save a course to the authenticated student\'s list' })
-  add(@Req() req: { user: { id: string } }, @Param('id', new ParseObjectIdPipe()) courseId: string) {
   add(
     @Req() req: { user: { id: string } },
     @Param('id', new ParseObjectIdPipe()) courseId: string,
@@ -33,18 +30,16 @@ export class StudentSavedCoursesController {
     return this.service.add(req.user.id, courseId);
   }
 
-  @Get()
-  @ApiOperation({ summary: 'Get all saved courses for the authenticated student' })
-  list(@Req() req: { user: { id: string } }) {
-    return this.service.list(req.user.id);
+  @Get(':id')
+  list(@Param('id', new ParseObjectIdPipe()) studentId: string) {
+    return this.service.list(studentId);
   }
 
-  @Delete(':courseId')
-  @ApiOperation({ summary: 'Remove a course from the authenticated student\'s saved list' })
+  @Delete(':id/:courseId')
   remove(
-    @Req() req: { user: { id: string } },
+    @Param('id', new ParseObjectIdPipe()) studentId: string,
     @Param('courseId', new ParseObjectIdPipe()) courseId: string,
   ) {
-    return this.service.remove(req.user.id, courseId);
+    return this.service.remove(studentId, courseId);
   }
 }

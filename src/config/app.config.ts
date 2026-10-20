@@ -189,7 +189,10 @@ export default (): AppConfig => ({
         'https://horizon-testnet.stellar.org',
       public:
         process.env.STELLAR_HORIZON_URL_PUBLIC ?? 'https://horizon.stellar.org',
-      timeoutMs: parseInt(process.env.STELLAR_HORIZON_TIMEOUT_MS ?? '10000', 10),
+      timeoutMs: parseInt(
+        process.env.STELLAR_HORIZON_TIMEOUT_MS ?? '10000',
+        10,
+      ),
     },
     reconciliationIntervalMs: parseInt(
       process.env.SCHOLARSHIP_RECONCILIATION_INTERVAL_MS ?? '3600000',
