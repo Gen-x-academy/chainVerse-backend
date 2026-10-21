@@ -75,7 +75,7 @@ export class ScholarshipStudentDashboardController {
   // ── My Applications ───────────────────────────────────────────────────────
 
   @Get('applications')
-  @ApiOperation({ summary: 'List the calling applicant's submissions with status' })
+    @ApiOperation({ summary: "List the calling applicant's submissions with status" })
   @ApiResponse({ status: 200, description: 'Paginated application status cards' })
   listApplications(
     @CurrentUser('sub') applicantId: string,

@@ -19,7 +19,7 @@ describe('ScholarshipProgramsController route surface', () => {
   function routes(): RouteInfo[] {
     const controllerPath =
       Reflect.getMetadata(PATH_METADATA, ScholarshipProgramsController) ?? '';
-    const prototype = ScholarshipProgramsController.prototype as Record<
+    const prototype = ScholarshipProgramsController.prototype as unknown as Record<
       string,
       unknown
     >;
@@ -52,7 +52,7 @@ describe('ScholarshipProgramsController route surface', () => {
 
   it('exposes exactly one route that can change a program status', () => {
     const mutating = routes()
-      .filter((r) => r.method !== RequestMethod.GET)
+      .filter((r) => r.method !== 'GET')
       .map((r) => `${r.method} ${r.path}`)
       .sort();
 
@@ -76,7 +76,7 @@ describe('ScholarshipProgramsController route surface', () => {
   });
 
   it('keeps the transition handler bound to the validating service method', () => {
-    const prototype = ScholarshipProgramsController.prototype as Record<
+    const prototype = ScholarshipProgramsController.prototype as unknown as Record<
       string,
       unknown
     >;

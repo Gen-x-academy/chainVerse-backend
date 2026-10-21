@@ -1,4 +1,4 @@
-import {
+﻿import {
   Body,
   Controller,
   Get,
@@ -39,7 +39,7 @@ import {
 } from '../dto/scholarship-application.dto';
 
 @ApiBearerAuth('access-token')
-@ApiTags('Scholarships — Programs')
+@ApiTags('Scholarships â€” Programs')
 @UseGuards(JwtAuthGuard, OrganizationRolesGuard)
 @Controller('scholarships/programs')
 export class ScholarshipProgramsController {
@@ -69,12 +69,6 @@ export class ScholarshipProgramsController {
     OrganizationRole.MEMBER,
   )
   @ApiOperation({ summary: 'List an organization\'s scholarship programs' })
-  list(@Query() dto: ScholarshipProgramQueryDto) {
-    return this.programsService.listPrograms(
-      dto.organizationId,
-      { status: dto.status },
-      { page: dto.page, limit: dto.limit },
-    );
   @ApiQuery({ name: 'search', required: false, type: String })
   @ApiQuery({ name: 'minAwardValue', required: false, type: Number })
   @ApiQuery({ name: 'maxAwardValue', required: false, type: Number })
@@ -116,11 +110,12 @@ export class ScholarshipProgramsController {
     return this.programsService.getProgram(scope.organizationId, programId);
   }
 
+
   /**
    * Lifecycle transition endpoint (issue #1122).
    *
    * Enforces the program state machine:
-   *   DRAFT → PUBLISHED → PAUSED → PUBLISHED → CLOSED → ARCHIVED
+   *   DRAFT â†’ PUBLISHED â†’ PAUSED â†’ PUBLISHED â†’ CLOSED â†’ ARCHIVED
    *
    * Every successful transition is recorded in `statusHistory` with the
    * actor id and timestamp, providing a complete, append-only audit trail.
@@ -131,14 +126,10 @@ export class ScholarshipProgramsController {
    *     `OrganizationRolesGuard` before this handler is invoked.
    *
    * Operational impact:
-   *   - Transitioning to ARCHIVED is irreversible — no further transitions
+   *   - Transitioning to ARCHIVED is irreversible â€” no further transitions
    *     are permitted.  The program and its applications remain queryable.
    *   - Transitioning to PAUSED or CLOSED prevents new applications from
    *     being submitted (PUBLISHED status required to accept applications).
-   *
-   * Legacy bypass (`PATCH :programId/status`) was removed in #1248 — this is
-   * the only route that can change a program's status.  See
-   * docs/scholarships/program-lifecycle-status-sunset.md.
    */
   @Patch(':programId/transition')
   @OrgScope({ source: 'query', key: 'organizationId' })
@@ -146,8 +137,8 @@ export class ScholarshipProgramsController {
   @ApiOperation({
     summary: 'Transition a program to the next lifecycle state',
     description:
-      'Legal transitions: DRAFT→PUBLISHED, PUBLISHED→PAUSED, ' +
-      'PAUSED→PUBLISHED, PUBLISHED→CLOSED, CLOSED→ARCHIVED. ' +
+      'Legal transitions: DRAFTâ†’PUBLISHED, PUBLISHEDâ†’PAUSED, ' +
+      'PAUSEDâ†’PUBLISHED, PUBLISHEDâ†’CLOSED, CLOSEDâ†’ARCHIVED. ' +
       'Each transition is recorded in statusHistory.',
   })
   @ApiResponse({ status: 200, description: 'Transition applied' })

@@ -215,6 +215,17 @@ export const envValidationSchema = Joi.object({
     .min(30)
     .max(3650)
     .default(365),
+<<<<<<< Updated upstream
+=======
+  // Operations dashboards (MENTOR-114/115/116)
+  MENTORSHIP_ANALYTICS_SUPPRESSION_THRESHOLD: Joi.number()
+    .integer()
+    .min(2)
+    .default(5),
+  MENTORSHIP_OPS_FRESHNESS_MINUTES: Joi.number().integer().min(1).default(30),
+  MENTORSHIP_OPS_CRON: Joi.string().default('*/15 * * * *'),
+  MENTORSHIP_OPS_JOBS_DISABLED: Joi.boolean().default(false),
+>>>>>>> Stashed changes
 });
 
 /**

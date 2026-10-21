@@ -254,32 +254,6 @@ describe('CourseCategorizationFilteringService', () => {
       title: 'Python for Data Science',
       description: 'Data wrangling with pandas and numpy',
       metadata: { category: 'data', level: 'beginner', tags: ['python'] },
-    const seed: CreateCourseCategorizationFilteringDto[] = [
-      {
-        title: 'Intro to Blockchain',
-        description: 'Learn the basics of blockchain technology',
-        metadata: {
-          category: 'web3',
-          level: 'beginner',
-          tags: ['defi', 'nft'],
-        },
-      },
-      {
-        title: 'Advanced DeFi',
-        description: 'Deep dive into decentralised finance protocols',
-        metadata: { category: 'web3', level: 'advanced', tags: ['defi'] },
-      },
-      {
-        title: 'Python for Data Science',
-        description: 'Data wrangling with pandas and numpy',
-        metadata: { category: 'data', level: 'beginner', tags: ['python'] },
-      },
-    ];
-
-    beforeEach(async () => {
-      for (const dto of seed) {
-        await service.create(dto);
-      }
     });
 
     function filterArg(): Record<string, unknown> {

@@ -1,5 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { trace } from '@opentelemetry/api';
+import { MetricsService } from '../metrics/metrics.service';
+import { MentorshipException } from './mentorship.errors';
 
 /** Emits low-cardinality, privacy-safe events; never records addresses, links, or notes. */
 @Injectable()
@@ -7,9 +9,8 @@ export class MentorshipTelemetryService {
   record(event: string, attributes: Record<string, string | number | boolean>): void {
     const span = trace.getActiveSpan();
     span?.addEvent(`mentorship.${event}`, attributes);
-import { Injectable, Logger } from '@nestjs/common';
-import { MetricsService } from '../metrics/metrics.service';
-import { MentorshipException } from './mentorship.errors';
+  }
+}
 
 /**
  * Counters (exposed on /metrics and /metrics/prometheus) and structured logs
