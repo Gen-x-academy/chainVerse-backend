@@ -21,8 +21,6 @@ export class DomainException extends HttpException {
     details?: Record<string, unknown>,
   ) {
     super({ message, errorCode, ...(details && { details }) }, statusCode);
-  constructor(message: string, statusCode: HttpStatus, errorCode: ErrorCode) {
-    super({ message, errorCode }, statusCode);
     this.errorCode = errorCode;
   }
 }
@@ -48,8 +46,6 @@ export class ValidationDomainException extends DomainException {
     details?: Record<string, unknown>,
   ) {
     super(message, HttpStatus.BAD_REQUEST, errorCode, details);
-  ) {
-    super(message, HttpStatus.BAD_REQUEST, errorCode);
   }
 }
 
@@ -66,8 +62,6 @@ export class ResourceConflictException extends DomainException {
     details?: Record<string, unknown>,
   ) {
     super(message, HttpStatus.CONFLICT, errorCode, details);
-  ) {
-    super(message, HttpStatus.CONFLICT, errorCode);
   }
 }
 
