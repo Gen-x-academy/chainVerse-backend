@@ -36,6 +36,15 @@ export interface AppConfig {
     skipFailed: boolean;
     keyPrefix: string;
   };
+  mentorship: {
+    enabled: boolean;
+    reviewSweepIntervalMs: number;
+    defaultReviewSlaDays: number;
+    requiredApprovals: string[];
+    defaultProposalTtlHours: number;
+    maxProposalTtlHours: number;
+    sweepCron: string;
+  };
   scholarshipFinance: {
     horizon: { testnet: string; public: string; timeoutMs: number };
     reconciliationIntervalMs: number;
@@ -183,6 +192,32 @@ export default (): AppConfig => ({
     skipSuccess: process.env.RATE_LIMIT_SKIP_SUCCESS === 'true',
     skipFailed: process.env.RATE_LIMIT_SKIP_FAILED === 'true',
     keyPrefix: process.env.RATE_LIMIT_KEY_PREFIX ?? 'rl:',
+  },
+  mentorship: {
+    enabled: process.env.MENTORSHIP_ENABLED !== 'false',
+    reviewSweepIntervalMs: parseInt(
+      process.env.MENTORSHIP_REVIEW_SWEEP_INTERVAL_MS ?? '60000',
+      10,
+    ),
+    defaultReviewSlaDays: parseInt(
+      process.env.MENTORSHIP_DEFAULT_REVIEW_SLA_DAYS ?? '7',
+      10,
+    ),
+    requiredApprovals: (
+      process.env.MENTORSHIP_REQUIRED_APPROVALS ?? 'mentor,mentee'
+    )
+      .split(',')
+      .map((role) => role.trim())
+      .filter(Boolean),
+    defaultProposalTtlHours: parseInt(
+      process.env.MENTORSHIP_PROPOSAL_TTL_HOURS ?? '72',
+      10,
+    ),
+    maxProposalTtlHours: parseInt(
+      process.env.MENTORSHIP_PROPOSAL_MAX_TTL_HOURS ?? '720',
+      10,
+    ),
+    sweepCron: process.env.MENTORSHIP_SWEEP_CRON ?? '0 */5 * * * *',
   },
   scholarshipFinance: {
     horizon: {

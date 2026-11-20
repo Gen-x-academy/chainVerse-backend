@@ -25,6 +25,7 @@ import { AppCacheModule } from './cache/app-cache.module';
 import { SessionModule } from './session/session.module';
 import { SessionService } from './session/session.service';
 import { StreakModule } from './session/streak.module';
+import { ProjectFundingModule } from './project-funding/project-funding.module';
 
 // Auth modules
 import { StudentAuthModule } from './student-auth/student-auth.module';
@@ -194,8 +195,6 @@ import { ProjectWorkspaceModule } from './project-workspace/project-workspace.mo
     StudentSavedCoursesModule,
     StudentCartModule,
     StudentEnrollmentModule,
-    // Analytics
-    CourseAnalyticsModule,
     // Mentorship (MENTOR-032/033/034)
     MentorshipModule,
     // Mentorship
@@ -230,10 +229,9 @@ import { ProjectWorkspaceModule } from './project-workspace/project-workspace.mo
     PrivacyPolicyManagementModule,
     TermsConditionsManagementModule,
     AboutManagementModule,
-    MentorshipModule,
     MentorshipActionsModule,
+    MentorshipOperationsModule,
     PrivateTutoringBookingsModule,
-    MentorshipModule,
     RemovalRequestModule,
     ReportAbuseModule,
     ReportsModule,
@@ -243,10 +241,6 @@ import { ProjectWorkspaceModule } from './project-workspace/project-workspace.mo
     WebhookSecurityModule,
     IdempotencyModule,
     VerificationModule,
-    MentorshipModule,
-    EventsModule,
-    LibraryCirculationModule,
-    ELibraryModule,
     // Scholarship domain
     ScholarshipsModule,
     DigitalRenditionsModule,
@@ -258,10 +252,9 @@ import { ProjectWorkspaceModule } from './project-workspace/project-workspace.mo
     ScholarshipSponsorDashboardModule,
     ScholarshipReviewerDashboardModule,
     ScholarshipFinanceStatementModule,
-    MentorshipDeliverablesModule,
-    MentorshipTimelineModule,
     MentorshipGoalsModule,
     MentorshipConsentModule,
+    ProjectFundingModule,
     MentorshipOperationsModule,
     ProjectWorkspaceModule,
   ],
