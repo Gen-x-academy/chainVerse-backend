@@ -25,6 +25,7 @@ import { AppCacheModule } from './cache/app-cache.module';
 import { SessionModule } from './session/session.module';
 import { SessionService } from './session/session.service';
 import { StreakModule } from './session/streak.module';
+import { ProjectFundingModule } from './project-funding/project-funding.module';
 
 // Auth modules
 import { StudentAuthModule } from './student-auth/student-auth.module';
@@ -116,6 +117,8 @@ import { MentorshipConsentModule } from './mentorship-consent/mentorship-consent
 import { MentorshipActionsModule } from './mentorship-actions/mentorship-actions.module';
 // Mentorship operations dashboards (MENTOR-114/115/116)
 import { MentorshipOperationsModule } from './mentorship/operations/mentorship-operations.module';
+// Project workspace (CAPSTONE-065/066/067/068)
+import { ProjectWorkspaceModule } from './project-workspace/project-workspace.module';
 
 @Module({
   imports: [
@@ -253,6 +256,9 @@ import { MentorshipOperationsModule } from './mentorship/operations/mentorship-o
     ProposalReviewModule,
     MentorshipGoalsModule,
     MentorshipConsentModule,
+    ProjectFundingModule,
+    MentorshipOperationsModule,
+    ProjectWorkspaceModule,
   ],
   controllers: [AppController],
   providers: [
