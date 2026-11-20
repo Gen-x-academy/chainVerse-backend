@@ -118,6 +118,7 @@ import { ProjectPlanningModule } from './project-planning/project-planning.modul
 import { MentorshipActionsModule } from './mentorship-actions/mentorship-actions.module';
 // Mentorship operations dashboards (MENTOR-114/115/116)
 import { MentorshipOperationsModule } from './mentorship/operations/mentorship-operations.module';
+import { ReviewOutcomesModule } from './review-outcomes/review-outcomes.module';
 // Project workspace (CAPSTONE-065/066/067/068)
 import { ProjectWorkspaceModule } from './project-workspace/project-workspace.module';
 
@@ -256,6 +257,7 @@ import { ProjectWorkspaceModule } from './project-workspace/project-workspace.mo
     ScholarshipFinanceStatementModule,
     MentorshipGoalsModule,
     MentorshipConsentModule,
+    ReviewOutcomesModule,
     ProjectPlanningModule,
     ProposalReviewModule,
     MentorshipGoalsModule,
