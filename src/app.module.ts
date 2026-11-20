@@ -104,6 +104,7 @@ import { ScholarshipStudentDashboardModule } from './scholarship-student-dashboa
 import { ScholarshipSponsorDashboardModule } from './scholarship-sponsor-dashboard/scholarship-sponsor-dashboard.module';
 import { ScholarshipReviewerDashboardModule } from './scholarship-reviewer-dashboard/scholarship-reviewer-dashboard.module';
 import { ScholarshipFinanceStatementModule } from './scholarship-finance-statement/scholarship-finance-statement.module';
+import { ProposalReviewModule } from './proposal-review/proposal-review.module';
 import { ELibraryModule } from './e-library/e-library.module';
 // Mentorship modules (MENTOR program module — single canonical import)
 import { DigitalRenditionsModule } from './digital-renditions/digital-renditions.module';
@@ -252,6 +253,7 @@ import { ProjectWorkspaceModule } from './project-workspace/project-workspace.mo
     ScholarshipSponsorDashboardModule,
     ScholarshipReviewerDashboardModule,
     ScholarshipFinanceStatementModule,
+    ProposalReviewModule,
     MentorshipGoalsModule,
     MentorshipConsentModule,
     ProjectFundingModule,
