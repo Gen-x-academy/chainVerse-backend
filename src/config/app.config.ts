@@ -40,6 +40,11 @@ export interface AppConfig {
     enabled: boolean;
     reviewSweepIntervalMs: number;
     defaultReviewSlaDays: number;
+    requiredApprovals: string[];
+    defaultProposalTtlHours: number;
+    maxProposalTtlHours: number;
+    sweepCron: string;
+  };
   scholarshipFinance: {
     horizon: { testnet: string; public: string; timeoutMs: number };
     reconciliationIntervalMs: number;
@@ -47,6 +52,7 @@ export interface AppConfig {
     payoutRetryIntervalMs: number;
     payoutMaxAttempts: number;
     payoutEnvelopeTtlSeconds: number;
+  };
   /** Immutable audit trail for privileged actions. */
   audit: {
     /** HMAC key for entry integrity hashes; falls back to `jwtSecret`. */
@@ -76,14 +82,6 @@ export interface AppConfig {
       timeoutMs: number;
     };
   };
-  /** Mentor matching: proposals, approvals and coordinator assistance. */
-  mentorship: {
-    /** Participant roles whose approval activates an engagement. */
-    requiredApprovals: string[];
-    defaultProposalTtlHours: number;
-    maxProposalTtlHours: number;
-    /** Cron cadence for expiring proposals and reconciling capacity. */
-    sweepCron: string;
   /** Scholarship disbursement execution and verification settings. */
   scholarships: {
     /** Stellar network name; must match the network of every configured asset. */
@@ -105,6 +103,7 @@ export interface AppConfig {
     leaseSeconds: number;
     walletChallengeTtlSeconds: number;
     walletChallengeMaxAttempts: number;
+  };
   /** Webhook signature verification and replay protection settings. */
   webhook: {
     /** Shared secret for HMAC-SHA256 signature verification. */
@@ -182,6 +181,24 @@ export default (): AppConfig => ({
     ),
     defaultReviewSlaDays: parseInt(
       process.env.MENTORSHIP_DEFAULT_REVIEW_SLA_DAYS ?? '7',
+      10,
+    ),
+    requiredApprovals: (
+      process.env.MENTORSHIP_REQUIRED_APPROVALS ?? 'mentor,mentee'
+    )
+      .split(',')
+      .map((role) => role.trim())
+      .filter(Boolean),
+    defaultProposalTtlHours: parseInt(
+      process.env.MENTORSHIP_PROPOSAL_TTL_HOURS ?? '72',
+      10,
+    ),
+    maxProposalTtlHours: parseInt(
+      process.env.MENTORSHIP_PROPOSAL_MAX_TTL_HOURS ?? '720',
+      10,
+    ),
+    sweepCron: process.env.MENTORSHIP_SWEEP_CRON ?? '0 */5 * * * *',
+  },
   scholarshipFinance: {
     horizon: {
       testnet:
@@ -212,6 +229,9 @@ export default (): AppConfig => ({
     ),
     payoutEnvelopeTtlSeconds: parseInt(
       process.env.SCHOLARSHIP_PAYOUT_ENVELOPE_TTL_SECONDS ?? '300',
+      10,
+    ),
+  },
   audit: {
     hmacSecret: process.env.AUDIT_HMAC_SECRET,
     failClosed: process.env.AUDIT_LOG_FAIL_CLOSED === 'true',
@@ -247,22 +267,6 @@ export default (): AppConfig => ({
       timeoutMs: parseInt(process.env.MALWARE_SCAN_TIMEOUT_MS ?? '30000', 10),
     },
   },
-  mentorship: {
-    requiredApprovals: (
-      process.env.MENTORSHIP_REQUIRED_APPROVALS ?? 'mentor,mentee'
-    )
-      .split(',')
-      .map((role) => role.trim())
-      .filter(Boolean),
-    defaultProposalTtlHours: parseInt(
-      process.env.MENTORSHIP_PROPOSAL_TTL_HOURS ?? '72',
-      10,
-    ),
-    maxProposalTtlHours: parseInt(
-      process.env.MENTORSHIP_PROPOSAL_MAX_TTL_HOURS ?? '720',
-      10,
-    ),
-    sweepCron: process.env.MENTORSHIP_SWEEP_CRON ?? '0 */5 * * * *',
   scholarships: {
     network: (process.env.STELLAR_NETWORK ?? 'testnet').toLowerCase(),
     treasurySecret: process.env.SCHOLARSHIP_TREASURY_SECRET,
@@ -292,6 +296,9 @@ export default (): AppConfig => ({
     ),
     walletChallengeMaxAttempts: parseInt(
       process.env.SCHOLARSHIP_WALLET_CHALLENGE_MAX_ATTEMPTS ?? '5',
+      10,
+    ),
+  },
   webhook: {
     secret: process.env.WEBHOOK_SECRET,
     timestampToleranceMs: parseInt(
