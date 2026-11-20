@@ -36,10 +36,6 @@ export interface AppConfig {
     skipFailed: boolean;
     keyPrefix: string;
   };
-  mentorship: {
-    enabled: boolean;
-    reviewSweepIntervalMs: number;
-    defaultReviewSlaDays: number;
   scholarshipFinance: {
     horizon: { testnet: string; public: string; timeoutMs: number };
     reconciliationIntervalMs: number;
@@ -47,6 +43,7 @@ export interface AppConfig {
     payoutRetryIntervalMs: number;
     payoutMaxAttempts: number;
     payoutEnvelopeTtlSeconds: number;
+  };
   /** Immutable audit trail for privileged actions. */
   audit: {
     /** HMAC key for entry integrity hashes; falls back to `jwtSecret`. */
@@ -84,6 +81,11 @@ export interface AppConfig {
     maxProposalTtlHours: number;
     /** Cron cadence for expiring proposals and reconciling capacity. */
     sweepCron: string;
+    /** Master switch and cadence for the mentorship review sweeper. */
+    enabled: boolean;
+    reviewSweepIntervalMs: number;
+    defaultReviewSlaDays: number;
+  };
   /** Scholarship disbursement execution and verification settings. */
   scholarships: {
     /** Stellar network name; must match the network of every configured asset. */
@@ -105,6 +107,14 @@ export interface AppConfig {
     leaseSeconds: number;
     walletChallengeTtlSeconds: number;
     walletChallengeMaxAttempts: number;
+  };
+  /** Private researcher note encryption (CAPSTONE-067). */
+  projectNotes: {
+    /** Base64-encoded 32-byte AES-256-GCM key; unset disables private notes. */
+    encryptionKey: string | undefined;
+    /** Identifier stored beside ciphertext so the key can be rotated. */
+    encryptionKeyId: string;
+  };
   /** Webhook signature verification and replay protection settings. */
   webhook: {
     /** Shared secret for HMAC-SHA256 signature verification. */
@@ -174,14 +184,6 @@ export default (): AppConfig => ({
     skipFailed: process.env.RATE_LIMIT_SKIP_FAILED === 'true',
     keyPrefix: process.env.RATE_LIMIT_KEY_PREFIX ?? 'rl:',
   },
-  mentorship: {
-    enabled: process.env.MENTORSHIP_ENABLED !== 'false',
-    reviewSweepIntervalMs: parseInt(
-      process.env.MENTORSHIP_REVIEW_SWEEP_INTERVAL_MS ?? '60000',
-      10,
-    ),
-    defaultReviewSlaDays: parseInt(
-      process.env.MENTORSHIP_DEFAULT_REVIEW_SLA_DAYS ?? '7',
   scholarshipFinance: {
     horizon: {
       testnet:
@@ -212,6 +214,9 @@ export default (): AppConfig => ({
     ),
     payoutEnvelopeTtlSeconds: parseInt(
       process.env.SCHOLARSHIP_PAYOUT_ENVELOPE_TTL_SECONDS ?? '300',
+      10,
+    ),
+  },
   audit: {
     hmacSecret: process.env.AUDIT_HMAC_SECRET,
     failClosed: process.env.AUDIT_LOG_FAIL_CLOSED === 'true',
@@ -263,6 +268,16 @@ export default (): AppConfig => ({
       10,
     ),
     sweepCron: process.env.MENTORSHIP_SWEEP_CRON ?? '0 */5 * * * *',
+    enabled: process.env.MENTORSHIP_ENABLED !== 'false',
+    reviewSweepIntervalMs: parseInt(
+      process.env.MENTORSHIP_REVIEW_SWEEP_INTERVAL_MS ?? '60000',
+      10,
+    ),
+    defaultReviewSlaDays: parseInt(
+      process.env.MENTORSHIP_DEFAULT_REVIEW_SLA_DAYS ?? '7',
+      10,
+    ),
+  },
   scholarships: {
     network: (process.env.STELLAR_NETWORK ?? 'testnet').toLowerCase(),
     treasurySecret: process.env.SCHOLARSHIP_TREASURY_SECRET,
@@ -292,6 +307,13 @@ export default (): AppConfig => ({
     ),
     walletChallengeMaxAttempts: parseInt(
       process.env.SCHOLARSHIP_WALLET_CHALLENGE_MAX_ATTEMPTS ?? '5',
+      10,
+    ),
+  },
+  projectNotes: {
+    encryptionKey: process.env.PROJECT_NOTES_ENCRYPTION_KEY || undefined,
+    encryptionKeyId: process.env.PROJECT_NOTES_ENCRYPTION_KEY_ID ?? 'v1',
+  },
   webhook: {
     secret: process.env.WEBHOOK_SECRET,
     timestampToleranceMs: parseInt(

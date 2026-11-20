@@ -113,15 +113,10 @@ import { MentorshipConsentModule } from './mentorship-consent/mentorship-consent
 
 // Mentorship
 import { MentorshipActionsModule } from './mentorship-actions/mentorship-actions.module';
-<<<<<<< Updated upstream
-import { MentorshipModule } from './mentorship/mentorship.module';
-// Mentorship deliverables (MENTOR-073/074) and progress timeline (MENTOR-075)
-import { MentorshipDeliverablesModule } from './mentorship-deliverables/mentorship-deliverables.module';
-import { MentorshipTimelineModule } from './mentorship-timeline/mentorship-timeline.module';
-=======
 // Mentorship operations dashboards (MENTOR-114/115/116)
 import { MentorshipOperationsModule } from './mentorship/operations/mentorship-operations.module';
->>>>>>> Stashed changes
+// Project workspace (CAPSTONE-065/066/067/068)
+import { ProjectWorkspaceModule } from './project-workspace/project-workspace.module';
 
 @Module({
   imports: [
@@ -267,6 +262,8 @@ import { MentorshipOperationsModule } from './mentorship/operations/mentorship-o
     MentorshipTimelineModule,
     MentorshipGoalsModule,
     MentorshipConsentModule,
+    MentorshipOperationsModule,
+    ProjectWorkspaceModule,
   ],
   controllers: [AppController],
   providers: [
