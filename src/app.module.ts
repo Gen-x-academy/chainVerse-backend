@@ -112,6 +112,7 @@ import { MentorshipDeliverablesModule } from './mentorship-deliverables/mentorsh
 import { MentorshipTimelineModule } from './mentorship-timeline/mentorship-timeline.module';
 import { MentorshipGoalsModule } from './mentorship-goals/mentorship-goals.module';
 import { MentorshipConsentModule } from './mentorship-consent/mentorship-consent.module';
+import { ProjectPlanningModule } from './project-planning/project-planning.module';
 
 // Mentorship
 import { MentorshipActionsModule } from './mentorship-actions/mentorship-actions.module';
@@ -253,6 +254,9 @@ import { ProjectWorkspaceModule } from './project-workspace/project-workspace.mo
     ScholarshipSponsorDashboardModule,
     ScholarshipReviewerDashboardModule,
     ScholarshipFinanceStatementModule,
+    MentorshipGoalsModule,
+    MentorshipConsentModule,
+    ProjectPlanningModule,
     ProposalReviewModule,
     MentorshipGoalsModule,
     MentorshipConsentModule,
