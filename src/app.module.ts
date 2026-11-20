@@ -25,6 +25,7 @@ import { AppCacheModule } from './cache/app-cache.module';
 import { SessionModule } from './session/session.module';
 import { SessionService } from './session/session.service';
 import { StreakModule } from './session/streak.module';
+import { ProjectFundingModule } from './project-funding/project-funding.module';
 
 // Auth modules
 import { StudentAuthModule } from './student-auth/student-auth.module';
@@ -103,6 +104,7 @@ import { ScholarshipStudentDashboardModule } from './scholarship-student-dashboa
 import { ScholarshipSponsorDashboardModule } from './scholarship-sponsor-dashboard/scholarship-sponsor-dashboard.module';
 import { ScholarshipReviewerDashboardModule } from './scholarship-reviewer-dashboard/scholarship-reviewer-dashboard.module';
 import { ScholarshipFinanceStatementModule } from './scholarship-finance-statement/scholarship-finance-statement.module';
+import { ProposalReviewModule } from './proposal-review/proposal-review.module';
 import { ELibraryModule } from './e-library/e-library.module';
 // Mentorship modules (MENTOR program module — single canonical import)
 import { DigitalRenditionsModule } from './digital-renditions/digital-renditions.module';
@@ -110,12 +112,15 @@ import { MentorshipDeliverablesModule } from './mentorship-deliverables/mentorsh
 import { MentorshipTimelineModule } from './mentorship-timeline/mentorship-timeline.module';
 import { MentorshipGoalsModule } from './mentorship-goals/mentorship-goals.module';
 import { MentorshipConsentModule } from './mentorship-consent/mentorship-consent.module';
+import { ProjectPlanningModule } from './project-planning/project-planning.module';
 
 // Mentorship
 import { MentorshipActionsModule } from './mentorship-actions/mentorship-actions.module';
 // Mentorship operations dashboards (MENTOR-114/115/116)
 import { MentorshipOperationsModule } from './mentorship/operations/mentorship-operations.module';
 import { ReviewOutcomesModule } from './review-outcomes/review-outcomes.module';
+// Project workspace (CAPSTONE-065/066/067/068)
+import { ProjectWorkspaceModule } from './project-workspace/project-workspace.module';
 
 @Module({
   imports: [
@@ -253,6 +258,13 @@ import { ReviewOutcomesModule } from './review-outcomes/review-outcomes.module';
     MentorshipGoalsModule,
     MentorshipConsentModule,
     ReviewOutcomesModule,
+    ProjectPlanningModule,
+    ProposalReviewModule,
+    MentorshipGoalsModule,
+    MentorshipConsentModule,
+    ProjectFundingModule,
+    MentorshipOperationsModule,
+    ProjectWorkspaceModule,
   ],
   controllers: [AppController],
   providers: [
