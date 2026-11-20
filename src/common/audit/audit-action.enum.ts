@@ -74,7 +74,6 @@ export enum AuditAction {
   SCHOLARSHIP_DISBURSEMENT_INTENT_TRANSITIONED = 'scholarship_disbursement_intent.transitioned',
 
   // Mentorship applications (src/mentorship)
-  MENTORSHIP_PROGRAM_CREATED = 'mentorship_program.created',
   MENTORSHIP_APPLICATION_DECIDED = 'mentorship_application.decided',
   MENTORSHIP_APPLICATION_WITHDRAWN = 'mentorship_application.withdrawn',
   MENTORSHIP_APPLICATION_REAPPLIED = 'mentorship_application.reapplied',
@@ -110,6 +109,22 @@ export enum AuditAction {
   BOOK_REVIEW_DELETED = 'book_review.deleted',
   CONTENT_REPORT_CREATED = 'content_report.created',
   CONTENT_REPORT_RESOLVED = 'content_report.resolved',
+
+  // Project workspace (CAPSTONE-065/066/067/068)
+  PROJECT_WORKSPACE_CREATED = 'project_workspace.created',
+  PROJECT_WORKSPACE_UPDATED = 'project_workspace.updated',
+  PROJECT_WORKSPACE_STATUS_CHANGED = 'project_workspace.status_changed',
+  PROJECT_WORKSPACE_MEMBER_ADDED = 'project_workspace.member_added',
+  PROJECT_NOTE_CREATED = 'project_note.created',
+  PROJECT_NOTE_UPDATED = 'project_note.updated',
+  PROJECT_NOTE_ARCHIVED = 'project_note.archived',
+  PRIVATE_NOTE_CREATED = 'private_note.created',
+  PRIVATE_NOTE_UPDATED = 'private_note.updated',
+  PRIVATE_NOTE_ARCHIVED = 'private_note.archived',
+  PROJECT_RESOURCE_SUBMITTED = 'project_resource.submitted',
+  PROJECT_RESOURCE_APPROVED = 'project_resource.approved',
+  PROJECT_RESOURCE_REJECTED = 'project_resource.rejected',
+  PROJECT_RESOURCE_ARCHIVED = 'project_resource.archived',
 }
 
 /**
