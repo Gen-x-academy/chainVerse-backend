@@ -110,6 +110,12 @@ export enum AuditAction {
   CONTENT_REPORT_CREATED = 'content_report.created',
   CONTENT_REPORT_RESOLVED = 'content_report.resolved',
 
+  // Project milestones (CAPSTONE-060)
+  PROJECT_MILESTONE_CREATED = 'project_milestone.created',
+  PROJECT_MILESTONE_UPDATED = 'project_milestone.updated',
+  PROJECT_MILESTONE_TRANSITIONED = 'project_milestone.transitioned',
+  PROJECT_MILESTONE_REVIEWER_ASSIGNED = 'project_milestone.reviewer_assigned',
+
   // Project workspace (CAPSTONE-065/066/067/068)
   PROJECT_WORKSPACE_CREATED = 'project_workspace.created',
   PROJECT_WORKSPACE_UPDATED = 'project_workspace.updated',
