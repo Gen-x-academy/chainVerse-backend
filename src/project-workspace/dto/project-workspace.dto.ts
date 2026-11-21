@@ -22,7 +22,9 @@ import {
   ResourceKind,
 } from '../schemas/project-resource.schema';
 import {
+  ClosureConsentDecision,
   ObjectiveStatus,
+  ProjectClosureReason,
   WorkspaceRole,
   WorkspaceStatus,
 } from '../schemas/project-workspace.schema';
@@ -162,6 +164,52 @@ export class WorkspaceStatusDto {
   @IsInt()
   @Min(1)
   expectedVersion!: number;
+}
+
+export class CloseProjectDto {
+  @ApiProperty({
+    enum: [
+      ProjectClosureReason.SUCCESSFUL_COMPLETION,
+      ProjectClosureReason.MUTUAL_TERMINATION,
+      ProjectClosureReason.POLICY_ACTION,
+      ProjectClosureReason.SPONSOR_WITHDRAWAL,
+    ],
+  })
+  @IsEnum([
+    ProjectClosureReason.SUCCESSFUL_COMPLETION,
+    ProjectClosureReason.MUTUAL_TERMINATION,
+    ProjectClosureReason.POLICY_ACTION,
+    ProjectClosureReason.SPONSOR_WITHDRAWAL,
+  ])
+  reason!:
+    | ProjectClosureReason.SUCCESSFUL_COMPLETION
+    | ProjectClosureReason.MUTUAL_TERMINATION
+    | ProjectClosureReason.POLICY_ACTION
+    | ProjectClosureReason.SPONSOR_WITHDRAWAL;
+
+  @ApiProperty()
+  @IsInt()
+  @Min(1)
+  expectedVersion!: number;
+
+  @ApiProperty({ pattern: IDEMPOTENCY.source })
+  @Matches(IDEMPOTENCY)
+  idempotencyKey!: string;
+}
+
+export class ProjectClosureConsentDto {
+  @ApiProperty({ enum: ClosureConsentDecision })
+  @IsEnum(ClosureConsentDecision)
+  decision!: ClosureConsentDecision;
+
+  @ApiProperty()
+  @IsInt()
+  @Min(1)
+  expectedVersion!: number;
+
+  @ApiProperty({ pattern: IDEMPOTENCY.source })
+  @Matches(IDEMPOTENCY)
+  idempotencyKey!: string;
 }
 
 export class AddMemberDto {

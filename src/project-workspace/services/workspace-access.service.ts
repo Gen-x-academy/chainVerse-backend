@@ -1,14 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { ResourceNotFoundException } from '../../common/errors/domain.exception';
+import {
+  BusinessRuleException,
+  ResourceNotFoundException,
+} from '../../common/errors/domain.exception';
 import { ErrorCode } from '../../common/errors/error-codes.enum';
 import {
   ProjectWorkspace,
   ProjectWorkspaceDocument,
   WorkspaceRole,
 } from '../schemas/project-workspace.schema';
-import { requireMember } from '../support/workspace-rules';
+import { assertNotArchived, requireMember } from '../support/workspace-rules';
 
 /**
  * Single choke point for loading a parent workspace. Every sub-resource
@@ -35,6 +38,22 @@ export class WorkspaceAccessService {
       );
     }
     requireMember(workspace, actorId, roles);
+    return workspace;
+  }
+
+  async loadForMutation(
+    projectId: string,
+    actorId: string,
+    roles: WorkspaceRole[],
+  ): Promise<ProjectWorkspaceDocument> {
+    const workspace = await this.load(projectId, actorId, roles);
+    assertNotArchived(workspace);
+    if (workspace.terminationProposal) {
+      throw new BusinessRuleException(
+        'Workspace changes are paused while mutual termination is pending',
+        ErrorCode.BIZ_WORKSPACE_CLOSURE_PENDING,
+      );
+    }
     return workspace;
   }
 }

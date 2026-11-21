@@ -51,7 +51,7 @@ const note = {
 
 describe('ProjectNoteService', () => {
   let notes: Record<string, jest.Mock>;
-  let access: { load: jest.Mock };
+  let access: { load: jest.Mock; loadForMutation: jest.Mock };
   let audit: { record: jest.Mock };
   let service: ProjectNoteService;
 
@@ -65,7 +65,10 @@ describe('ProjectNoteService', () => {
     };
     notes.findOne.mockReturnValue(query(null));
     notes.find.mockReturnValue(query([]));
-    access = { load: jest.fn().mockResolvedValue(workspace) };
+    access = {
+      load: jest.fn().mockResolvedValue(workspace),
+      loadForMutation: jest.fn().mockResolvedValue(workspace),
+    };
     audit = { record: jest.fn().mockResolvedValue(null) };
     service = new ProjectNoteService(
       notes as never,

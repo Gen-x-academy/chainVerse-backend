@@ -53,7 +53,7 @@ Where does new code go? This page maps every folder under `src/` to the feature 
 | `student-saved-courses/` | Saved courses (wishlist) | `student/save` | yes |
 | `private-tutoring-bookings/` | 1-on-1 tutoring bookings | `tutoring/bookings` | no |
 | `mentorship/` | Mentorship programs, versioned application forms, eligibility preflight, review queues ([docs](mentorship/applications.md)) | `mentorship` | yes |
-| `project-workspace/` | Tenant-scoped capstone workspaces, shared and encrypted private notes, and the resource library ([docs](project-workspace.md)) | `project-workspaces` | yes |
+| `project-workspace/` | Tenant-scoped capstone workspaces, lifecycle closure, mutual termination consent, encrypted private notes, and the resource library ([docs](project-workspace.md)) | `project-workspaces` | yes |
 
 ## Certificates, badges and gamification
 

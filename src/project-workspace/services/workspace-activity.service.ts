@@ -3,6 +3,10 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
+  ProjectWorkspace,
+  ProjectWorkspaceDocument,
+} from '../schemas/project-workspace.schema';
+import {
   WorkspaceActivity,
   WorkspaceActivityDocument,
 } from '../schemas/workspace-activity.schema';
@@ -28,15 +32,26 @@ export class WorkspaceActivityService {
   constructor(
     @InjectModel(WorkspaceActivity.name)
     private readonly activity: Model<WorkspaceActivityDocument>,
+    @InjectModel(ProjectWorkspace.name)
+    private readonly workspaces: Model<ProjectWorkspaceDocument>,
   ) {}
 
   @OnEvent('workspace.activity.recorded')
   async handle(event: WorkspaceActivityEvent): Promise<void> {
     try {
-      await this.activity.create({
-        ...event,
-        requestId: event.requestId ?? null,
-      });
+      await Promise.all([
+        this.activity.create({
+          ...event,
+          requestId: event.requestId ?? null,
+        }),
+        this.workspaces
+          .updateOne(
+            { _id: event.projectId, tenantId: event.tenantId },
+            { $set: { updatedAt: new Date() } },
+            { timestamps: false },
+          )
+          .exec(),
+      ]);
     } catch (error) {
       this.logger.error(
         `Failed to record workspace activity action=${event.action} projectId=${event.projectId}`,

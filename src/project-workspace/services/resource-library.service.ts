@@ -68,7 +68,7 @@ export class ResourceLibraryService {
     projectId: string,
     dto: CreateResourceDto,
   ): Promise<PlainRecord> {
-    const workspace = await this.access.load(projectId, actorId, [
+    const workspace = await this.access.loadForMutation(projectId, actorId, [
       WorkspaceRole.OWNER,
       WorkspaceRole.EDITOR,
     ]);
@@ -182,7 +182,7 @@ export class ResourceLibraryService {
     resourceId: string,
     dto: UpdateResourceDto,
   ): Promise<PlainRecord> {
-    const workspace = await this.access.load(projectId, actorId, [
+    const workspace = await this.access.loadForMutation(projectId, actorId, [
       WorkspaceRole.OWNER,
       WorkspaceRole.EDITOR,
     ]);
@@ -320,7 +320,7 @@ export class ResourceLibraryService {
     dto: ReviewResourceDto,
     to: ResourceStatus,
   ): Promise<PlainRecord> {
-    const workspace = await this.access.load(projectId, actorId, [
+    const workspace = await this.access.loadForMutation(projectId, actorId, [
       WorkspaceRole.OWNER,
     ]);
     const resource = await this.ownedResource(workspace, projectId, resourceId);

@@ -27,6 +27,7 @@ import {
 import {
   ProjectWorkspace,
   ProjectWorkspaceDocument,
+  ProjectClosureReason,
   WorkspaceRole,
   WorkspaceStatus,
 } from '../schemas/project-workspace.schema';
@@ -58,7 +59,36 @@ function workspaceView(value: unknown): PlainRecord {
   delete view._id;
   delete view.__v;
   delete view.idempotencyKey;
-  return view;
+  const closure = view.closure as PlainRecord | null | undefined;
+  const proposal = view.terminationProposal as PlainRecord | null | undefined;
+  delete view.closure;
+  delete view.terminationProposal;
+  return {
+    ...view,
+    ...(closure && {
+      closure: {
+        reason: closure.reason,
+        outcome: closure.outcome,
+        closedAt: closure.closedAt,
+      },
+    }),
+    ...(proposal && {
+      terminationProposal: {
+        reason: ProjectClosureReason.MUTUAL_TERMINATION,
+        initiatedAt: proposal.initiatedAt,
+        consentsReceived: Array.isArray(proposal.consents)
+          ? proposal.consents.length
+          : 0,
+        consentsRequired: Array.isArray(plain.members)
+          ? new Set(
+              (plain.members as Array<{ userId: string }>).map(
+                (member) => member.userId,
+              ),
+            ).size
+          : 0,
+      },
+    }),
+  };
 }
 
 @Injectable()
@@ -141,6 +171,7 @@ export class ProjectWorkspaceService {
       WorkspaceRole.OWNER,
       WorkspaceRole.EDITOR,
       WorkspaceRole.VIEWER,
+      WorkspaceRole.SPONSOR,
     ]);
     return workspaceView(workspace);
   }
@@ -158,7 +189,7 @@ export class ProjectWorkspaceService {
     projectId: string,
     dto: UpdateWorkspaceDto,
   ): Promise<PlainRecord> {
-    const workspace = await this.access.load(projectId, actorId, [
+    const workspace = await this.access.loadForMutation(projectId, actorId, [
       WorkspaceRole.OWNER,
       WorkspaceRole.EDITOR,
     ]);
@@ -216,9 +247,97 @@ export class ProjectWorkspaceService {
     projectId: string,
     dto: WorkspaceStatusDto,
   ): Promise<PlainRecord> {
-    const workspace = await this.access.load(projectId, actorId, [
+    if (dto.status === WorkspaceStatus.ARCHIVED) {
+      const completedWorkspace = await this.access.load(
+        projectId,
+        actorId,
+        [WorkspaceRole.OWNER],
+      );
+      if (completedWorkspace.status === WorkspaceStatus.COMPLETED) {
+        assertWorkspaceTransition(
+          completedWorkspace.status,
+          WorkspaceStatus.ARCHIVED,
+        );
+        if (dto.expectedVersion !== completedWorkspace.version) {
+          throw new BusinessRuleException(
+            `Expected workspace version ${dto.expectedVersion} but found ${completedWorkspace.version}`,
+            ErrorCode.BIZ_WORKSPACE_STALE_VERSION,
+            {
+              expected: dto.expectedVersion,
+              actual: completedWorkspace.version,
+            },
+          );
+        }
+        const archived = await this.workspaces
+          .findOneAndUpdate(
+            {
+              _id: projectId,
+              tenantId: completedWorkspace.tenantId,
+              version: dto.expectedVersion,
+              status: WorkspaceStatus.COMPLETED,
+            },
+            {
+              $set: { status: WorkspaceStatus.ARCHIVED },
+              $inc: { version: 1 },
+            },
+            { new: true, runValidators: true },
+          )
+          .exec();
+        if (!archived) {
+          const fresh = await this.workspaces.findById(projectId).exec();
+          if (fresh && fresh.version !== dto.expectedVersion) {
+            throw new BusinessRuleException(
+              `Expected workspace version ${dto.expectedVersion} but found ${fresh.version}`,
+              ErrorCode.BIZ_WORKSPACE_STALE_VERSION,
+              { expected: dto.expectedVersion, actual: fresh.version },
+            );
+          }
+          throw new BusinessRuleException(
+            'Workspace changed concurrently; reload and retry',
+            ErrorCode.BIZ_WORKSPACE_INVALID_TRANSITION,
+          );
+        }
+
+        await this.audit.record({
+          action: 'project_workspace.status_changed',
+          context: audit,
+          target: { type: 'project_workspace', id: projectId },
+          before: { status: completedWorkspace.status },
+          after: { id: projectId, status: WorkspaceStatus.ARCHIVED },
+        });
+        this.events.emit('workspace.activity.recorded', {
+          tenantId: completedWorkspace.tenantId,
+          projectId,
+          actorId,
+          action: 'project_workspace.status_changed',
+          targetType: 'project_workspace',
+          targetId: projectId,
+          requestId: audit.requestId,
+        });
+        return workspaceView(archived);
+      }
+
+      if (completedWorkspace.status === WorkspaceStatus.ARCHIVED) {
+        throw new BusinessRuleException(
+          'Archived workspaces are immutable',
+          ErrorCode.BIZ_WORKSPACE_ARCHIVED,
+        );
+      }
+      throw new BusinessRuleException(
+        'Use the project closure endpoint to terminate a workspace',
+        ErrorCode.BIZ_WORKSPACE_CLOSURE_REQUIRED,
+      );
+    }
+
+    const workspace = await this.access.loadForMutation(projectId, actorId, [
       WorkspaceRole.OWNER,
     ]);
+    if (dto.status === WorkspaceStatus.COMPLETED) {
+      throw new BusinessRuleException(
+        'Use the project closure endpoint to complete a workspace',
+        ErrorCode.BIZ_WORKSPACE_CLOSURE_REQUIRED,
+      );
+    }
     assertWorkspaceTransition(workspace.status, dto.status);
 
     const updated = await this.applyVersionedUpdate(
@@ -252,7 +371,7 @@ export class ProjectWorkspaceService {
     projectId: string,
     dto: AddMemberDto,
   ): Promise<PlainRecord> {
-    const workspace = await this.access.load(projectId, actorId, [
+    const workspace = await this.access.loadForMutation(projectId, actorId, [
       WorkspaceRole.OWNER,
     ]);
     assertNotArchived(workspace);
@@ -269,8 +388,12 @@ export class ProjectWorkspaceService {
       .findOneAndUpdate(
         {
           _id: projectId,
-          status: { $ne: WorkspaceStatus.ARCHIVED },
+          status: {
+            $nin: [WorkspaceStatus.ARCHIVED, WorkspaceStatus.COMPLETED],
+          },
           'members.userId': { $ne: dto.userId },
+          closure: null,
+          terminationProposal: null,
         },
         {
           $addToSet: {
@@ -315,6 +438,7 @@ export class ProjectWorkspaceService {
       WorkspaceRole.OWNER,
       WorkspaceRole.EDITOR,
       WorkspaceRole.VIEWER,
+      WorkspaceRole.SPONSOR,
     ]);
     const [sharedNotes, approvedResources, recentActivity] = await Promise.all([
       this.notes.countDocuments({
@@ -358,7 +482,11 @@ export class ProjectWorkspaceService {
         {
           _id: projectId,
           version: expectedVersion,
-          status: { $ne: WorkspaceStatus.ARCHIVED },
+          status: {
+            $nin: [WorkspaceStatus.ARCHIVED, WorkspaceStatus.COMPLETED],
+          },
+          closure: null,
+          terminationProposal: null,
         },
         { ...update, $inc: { version: 1 } },
         { new: true, runValidators: true },
