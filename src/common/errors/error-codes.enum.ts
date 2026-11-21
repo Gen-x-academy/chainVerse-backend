@@ -480,6 +480,12 @@ export enum ErrorCode {
   BIZ_WORKSPACE_STALE_VERSION = 'BIZ_WORKSPACE_STALE_VERSION',
   BIZ_WORKSPACE_MEMBER_CONFLICT = 'BIZ_WORKSPACE_MEMBER_CONFLICT',
   BIZ_WORKSPACE_ARCHIVED = 'BIZ_WORKSPACE_ARCHIVED',
+  BIZ_WORKSPACE_CLOSED = 'BIZ_WORKSPACE_CLOSED',
+  BIZ_WORKSPACE_CLOSURE_REQUIRED = 'BIZ_WORKSPACE_CLOSURE_REQUIRED',
+  BIZ_WORKSPACE_CLOSURE_PENDING = 'BIZ_WORKSPACE_CLOSURE_PENDING',
+  BIZ_WORKSPACE_ALREADY_CLOSED = 'BIZ_WORKSPACE_ALREADY_CLOSED',
+  BIZ_WORKSPACE_CONSENT_EXISTS = 'BIZ_WORKSPACE_CONSENT_EXISTS',
+  BIZ_WORKSPACE_COMPLETION_INCOMPLETE = 'BIZ_WORKSPACE_COMPLETION_INCOMPLETE',
   BIZ_WORKSPACE_NOTE_REVISION_CONFLICT = 'BIZ_WORKSPACE_NOTE_REVISION_CONFLICT',
   BIZ_WORKSPACE_RESOURCE_DUPLICATE = 'BIZ_WORKSPACE_RESOURCE_DUPLICATE',
   BIZ_WORKSPACE_RESOURCE_NOT_APPROVED = 'BIZ_WORKSPACE_RESOURCE_NOT_APPROVED',
@@ -489,6 +495,33 @@ export enum ErrorCode {
   BIZ_WORKSPACE_PAUSE_EXPIRED = 'BIZ_WORKSPACE_PAUSE_EXPIRED',
   BIZ_WORKSPACE_PAUSE_SELF_APPROVAL = 'BIZ_WORKSPACE_PAUSE_SELF_APPROVAL',
   VAL_WORKSPACE_UNSAFE_MARKUP = 'VAL_WORKSPACE_UNSAFE_MARKUP',
+
+  // ── Project Milestones (CAPSTONE-060) ────────────────────────────────────
+  /** The requested milestone was not found in the addressed tenant. */
+  RES_MILESTONE_NOT_FOUND = 'RES_MILESTONE_NOT_FOUND',
+  /**
+   * The requested status transition is not permitted from the milestone's
+   * current status (e.g. COMPLETED → ACTIVE, or any transition from a terminal
+   * state).
+   */
+  BIZ_MILESTONE_INVALID_TRANSITION = 'BIZ_MILESTONE_INVALID_TRANSITION',
+  /**
+   * The operation requires the milestone to be in a non-terminal state, but it
+   * is COMPLETED or CANCELLED.
+   */
+  BIZ_MILESTONE_ALREADY_COMPLETED = 'BIZ_MILESTONE_ALREADY_COMPLETED',
+  /**
+   * One or more predecessor milestones listed in `dependsOn` have not yet
+   * reached COMPLETED status; the milestone cannot become ACTIVE.
+   */
+  BIZ_MILESTONE_DEPENDENCY_NOT_MET = 'BIZ_MILESTONE_DEPENDENCY_NOT_MET',
+  /**
+   * The supplied dependency list would create a directed cycle in the
+   * project's milestone dependency graph.
+   */
+  BIZ_MILESTONE_CYCLE_DETECTED = 'BIZ_MILESTONE_CYCLE_DETECTED',
+  /** The dueDate value is not a valid ISO-8601 date or datetime string. */
+  VAL_MILESTONE_DATE_INVALID = 'VAL_MILESTONE_DATE_INVALID',
 
   // ── System ────────────────────────────────────────────────────────────────
   SYS_INTERNAL_ERROR = 'SYS_INTERNAL_ERROR',
@@ -536,4 +569,24 @@ export enum ErrorCode {
   VAL_MENTOR_PROFILE_INCOMPLETE = 'VAL_MENTOR_PROFILE_INCOMPLETE',
   /** The profile changed between read and write; retry with the latest. */
   BIZ_MENTOR_PROFILE_CONFLICT = 'BIZ_MENTOR_PROFILE_CONFLICT',
+
+  // ── Work Breakdown Structures (CAPSTONE-058) ──────────────────────────────
+  /** The requested WBS was not found. */
+  RES_WBS_NOT_FOUND = 'RES_WBS_NOT_FOUND',
+  /** The requested work package was not found. */
+  RES_WBS_PACKAGE_NOT_FOUND = 'RES_WBS_PACKAGE_NOT_FOUND',
+  /** The requested task was not found. */
+  RES_WBS_TASK_NOT_FOUND = 'RES_WBS_TASK_NOT_FOUND',
+  /** The requested dependency edge was not found. */
+  RES_WBS_DEPENDENCY_NOT_FOUND = 'RES_WBS_DEPENDENCY_NOT_FOUND',
+  /** Adding this dependency would create a circular dependency cycle. */
+  BIZ_WBS_DEPENDENCY_CYCLE = 'BIZ_WBS_DEPENDENCY_CYCLE',
+  /** The package status transition is not permitted from the current state. */
+  BIZ_WBS_INVALID_STATUS_TRANSITION = 'BIZ_WBS_INVALID_STATUS_TRANSITION',
+  /** A dependency package must be DONE before this package can be completed. */
+  BIZ_WBS_DEPENDENCY_NOT_DONE = 'BIZ_WBS_DEPENDENCY_NOT_DONE',
+  /** orderedPackages must reference exactly all packages in the WBS. */
+  VAL_WBS_ORDER_MISMATCH = 'VAL_WBS_ORDER_MISMATCH',
+  /** A package in a terminal state cannot be modified. */
+  BIZ_WBS_PACKAGE_TERMINAL = 'BIZ_WBS_PACKAGE_TERMINAL',
 }

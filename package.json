@@ -126,7 +126,7 @@
       "lcov",
       "html"
     ],
-    "coverageThresholds": {
+    "coverageThreshold": {
       "global": {
         "statements": 40,
         "branches": 30,

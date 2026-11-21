@@ -22,6 +22,7 @@ import { PrivateNoteCipher } from './support/private-note-cipher';
 import { PrivateNoteService } from './services/private-note.service';
 import { ProjectNoteService } from './services/project-note.service';
 import { ProjectWorkspaceService } from './services/project-workspace.service';
+import { ProjectClosureService } from './services/project-closure.service';
 import { ResourceLibraryService } from './services/resource-library.service';
 import { WorkspaceAccessService } from './services/workspace-access.service';
 import { WorkspaceActivityService } from './services/workspace-activity.service';
@@ -46,6 +47,7 @@ import { WorkspaceActivityService } from './services/workspace-activity.service'
     WorkspaceAccessService,
     WorkspaceActivityService,
     ProjectWorkspaceService,
+    ProjectClosureService,
     ProjectNoteService,
     PrivateNoteService,
     ResourceLibraryService,
@@ -54,6 +56,7 @@ import { WorkspaceActivityService } from './services/workspace-activity.service'
   exports: [
     WorkspaceAccessService,
     ProjectWorkspaceService,
+    ProjectClosureService,
     ProjectNoteService,
     PrivateNoteService,
     ResourceLibraryService,

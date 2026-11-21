@@ -24,7 +24,9 @@ import {
   ResourceKind,
 } from '../schemas/project-resource.schema';
 import {
+  ClosureConsentDecision,
   ObjectiveStatus,
+  ProjectClosureReason,
   WorkspaceRole,
   WorkspaceFundingImpact,
   WorkspaceStatus,
@@ -177,25 +179,26 @@ export class WorkspaceStatusDto {
   expectedVersion!: number;
 }
 
-export class RequestWorkspacePauseDto {
-  @ApiProperty({ maxLength: 500 })
-  @IsString()
-  @IsNotEmpty()
-  @Matches(/\S/, { message: 'reason must contain a non-whitespace character' })
-  @MaxLength(500)
-  reason!: string;
-
-  @ApiProperty({ type: String, format: 'date-time' })
-  @IsDateString()
-  expiresAt!: string;
-
-  @ApiPropertyOptional({
-    enum: WorkspaceFundingImpact,
-    default: WorkspaceFundingImpact.REVIEW_REQUIRED,
+export class CloseProjectDto {
+  @ApiProperty({
+    enum: [
+      ProjectClosureReason.SUCCESSFUL_COMPLETION,
+      ProjectClosureReason.MUTUAL_TERMINATION,
+      ProjectClosureReason.POLICY_ACTION,
+      ProjectClosureReason.SPONSOR_WITHDRAWAL,
+    ],
   })
-  @IsOptional()
-  @IsEnum(WorkspaceFundingImpact)
-  fundingImpact?: WorkspaceFundingImpact;
+  @IsEnum([
+    ProjectClosureReason.SUCCESSFUL_COMPLETION,
+    ProjectClosureReason.MUTUAL_TERMINATION,
+    ProjectClosureReason.POLICY_ACTION,
+    ProjectClosureReason.SPONSOR_WITHDRAWAL,
+  ])
+  reason!:
+    | ProjectClosureReason.SUCCESSFUL_COMPLETION
+    | ProjectClosureReason.MUTUAL_TERMINATION
+    | ProjectClosureReason.POLICY_ACTION
+    | ProjectClosureReason.SPONSOR_WITHDRAWAL;
 
   @ApiProperty()
   @IsInt()
@@ -207,31 +210,11 @@ export class RequestWorkspacePauseDto {
   idempotencyKey!: string;
 }
 
-export class DecideWorkspacePauseDto {
-  @ApiProperty({ description: 'Approve or reject the requested pause' })
-  @IsBoolean()
-  approved!: boolean;
+export class ProjectClosureConsentDto {
+  @ApiProperty({ enum: ClosureConsentDecision })
+  @IsEnum(ClosureConsentDecision)
+  decision!: ClosureConsentDecision;
 
-  @ApiPropertyOptional({ maxLength: 500 })
-  @IsOptional()
-  @IsString()
-  @Matches(/\S/, {
-    message: 'decisionReason must contain a non-whitespace character',
-  })
-  @MaxLength(500)
-  decisionReason?: string;
-
-  @ApiProperty()
-  @IsInt()
-  @Min(1)
-  expectedVersion!: number;
-
-  @ApiProperty({ pattern: IDEMPOTENCY.source })
-  @Matches(IDEMPOTENCY)
-  idempotencyKey!: string;
-}
-
-export class ResumeWorkspaceDto {
   @ApiProperty()
   @IsInt()
   @Min(1)

@@ -239,7 +239,7 @@ export function validateEnv(
     abortEarly: true,
     allowUnknown: true,
     stripUnknown: false,
-  });
+  }) as { error?: Error; value: Record<string, unknown> };
 
   if (result.error) {
     throw new Error(`Environment validation failed: ${result.error.message}`);

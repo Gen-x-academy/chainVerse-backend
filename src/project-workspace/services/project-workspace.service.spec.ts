@@ -73,7 +73,9 @@ describe('ProjectWorkspaceService', () => {
     };
     access = {
       load: jest.fn().mockResolvedValue(workspace),
-      loadForMutation: jest.fn().mockResolvedValue(workspace),
+      loadForMutation: jest
+        .fn()
+        .mockImplementation(() => access.load()),
     };
     audit = { record: jest.fn().mockResolvedValue(null) };
     events = { emit: jest.fn() };
@@ -150,7 +152,7 @@ describe('ProjectWorkspaceService', () => {
         expectedVersion: 3,
       }),
     ).rejects.toMatchObject({
-      errorCode: ErrorCode.BIZ_WORKSPACE_INVALID_TRANSITION,
+      errorCode: ErrorCode.BIZ_WORKSPACE_CLOSURE_REQUIRED,
     });
     expect(workspaces.findOneAndUpdate).not.toHaveBeenCalled();
   });

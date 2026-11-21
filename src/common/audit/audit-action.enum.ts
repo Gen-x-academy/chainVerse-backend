@@ -110,14 +110,20 @@ export enum AuditAction {
   CONTENT_REPORT_CREATED = 'content_report.created',
   CONTENT_REPORT_RESOLVED = 'content_report.resolved',
 
+  // Project milestones (CAPSTONE-060)
+  PROJECT_MILESTONE_CREATED = 'project_milestone.created',
+  PROJECT_MILESTONE_UPDATED = 'project_milestone.updated',
+  PROJECT_MILESTONE_TRANSITIONED = 'project_milestone.transitioned',
+  PROJECT_MILESTONE_REVIEWER_ASSIGNED = 'project_milestone.reviewer_assigned',
+
   // Project workspace (CAPSTONE-065/066/067/068)
   PROJECT_WORKSPACE_CREATED = 'project_workspace.created',
   PROJECT_WORKSPACE_UPDATED = 'project_workspace.updated',
   PROJECT_WORKSPACE_STATUS_CHANGED = 'project_workspace.status_changed',
   PROJECT_WORKSPACE_MEMBER_ADDED = 'project_workspace.member_added',
-  PROJECT_WORKSPACE_PAUSE_REQUESTED = 'project_workspace.pause_requested',
-  PROJECT_WORKSPACE_PAUSE_DECIDED = 'project_workspace.pause_decided',
-  PROJECT_WORKSPACE_PAUSE_RESUMED = 'project_workspace.pause_resumed',
+  PROJECT_WORKSPACE_CLOSURE_PROPOSED = 'project_workspace.closure_proposed',
+  PROJECT_WORKSPACE_CLOSURE_CONSENTED = 'project_workspace.closure_consented',
+  PROJECT_WORKSPACE_CLOSED = 'project_workspace.closed',
   PROJECT_NOTE_CREATED = 'project_note.created',
   PROJECT_NOTE_UPDATED = 'project_note.updated',
   PROJECT_NOTE_ARCHIVED = 'project_note.archived',

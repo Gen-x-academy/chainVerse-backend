@@ -12,7 +12,7 @@ import {
   WorkspaceRole,
   WorkspaceStatus,
 } from '../schemas/project-workspace.schema';
-import { requireMember } from '../support/workspace-rules';
+import { assertNotArchived, requireMember } from '../support/workspace-rules';
 
 /**
  * Single choke point for loading a parent workspace. Every sub-resource
@@ -48,10 +48,11 @@ export class WorkspaceAccessService {
     roles: WorkspaceRole[],
   ): Promise<ProjectWorkspaceDocument> {
     const workspace = await this.load(projectId, actorId, roles);
-    if (workspace.status === WorkspaceStatus.ON_HOLD) {
+    assertNotArchived(workspace);
+    if (workspace.terminationProposal) {
       throw new BusinessRuleException(
-        'Workspace mutations are disabled while the project is paused',
-        ErrorCode.BIZ_WORKSPACE_PAUSE_INVALID,
+        'Workspace changes are paused while mutual termination is pending',
+        ErrorCode.BIZ_WORKSPACE_CLOSURE_PENDING,
       );
     }
     return workspace;

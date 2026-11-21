@@ -26,6 +26,7 @@ import { SessionModule } from './session/session.module';
 import { SessionService } from './session/session.service';
 import { StreakModule } from './session/streak.module';
 import { ProjectFundingModule } from './project-funding/project-funding.module';
+import { ProjectMilestonesModule } from './project-milestones/project-milestones.module';
 
 // Auth modules
 import { StudentAuthModule } from './student-auth/student-auth.module';
@@ -121,6 +122,8 @@ import { MentorshipOperationsModule } from './mentorship/operations/mentorship-o
 import { ReviewOutcomesModule } from './review-outcomes/review-outcomes.module';
 // Project workspace (CAPSTONE-065/066/067/068)
 import { ProjectWorkspaceModule } from './project-workspace/project-workspace.module';
+// Work Breakdown Structures (CAPSTONE-058)
+import { WorkBreakdownModule } from './work-breakdown/work-breakdown.module';
 
 @Module({
   imports: [
@@ -201,7 +204,15 @@ import { ProjectWorkspaceModule } from './project-workspace/project-workspace.mo
     // Mentorship (MENTOR-032/033/034)
     MentorshipModule,
     // Mentorship
+    MentorshipModule,
     MentorshipApplicationsModule,
+    MentorshipActionsModule,
+    MentorshipLifecycleModule,
+    MentorshipOperationsModule,
+    MentorshipDeliverablesModule,
+    MentorshipTimelineModule,
+    MentorshipGoalsModule,
+    MentorshipConsentModule,
     EventsModule,
     LibraryCirculationModule,
     // Scholarship finance
@@ -238,9 +249,6 @@ import { ProjectWorkspaceModule } from './project-workspace/project-workspace.mo
     RemovalRequestModule,
     ReportAbuseModule,
     ReportsModule,
-    MentorshipLifecycleModule,
-    MentorshipDeliverablesModule,
-    MentorshipTimelineModule,
     WebhookSecurityModule,
     IdempotencyModule,
     VerificationModule,
@@ -263,8 +271,10 @@ import { ProjectWorkspaceModule } from './project-workspace/project-workspace.mo
     MentorshipGoalsModule,
     MentorshipConsentModule,
     ProjectFundingModule,
+    ProjectMilestonesModule,
     MentorshipOperationsModule,
     ProjectWorkspaceModule,
+    WorkBreakdownModule,
   ],
   controllers: [AppController],
   providers: [
