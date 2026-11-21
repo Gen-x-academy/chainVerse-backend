@@ -44,8 +44,6 @@ export const DomainEvents = {
 
   /** Fired after an applicant reapplies to a mentorship program. */
   MENTORSHIP_APPLICATION_REAPPLIED: 'mentorship.application.reapplied',
-  /** Fired after a mentee submits a mentorship application (MENTOR-030). */
-  MENTORSHIP_APPLICATION_SUBMITTED: 'mentorship.application.submitted',
   /** Fired when a mentor match proposal is created (participant or coordinator). */
   MENTORSHIP_PROPOSAL_CREATED: 'mentorship.proposal-created',
 

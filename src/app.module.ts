@@ -201,7 +201,15 @@ import { ProjectWorkspaceModule } from './project-workspace/project-workspace.mo
     // Mentorship (MENTOR-032/033/034)
     MentorshipModule,
     // Mentorship
+    MentorshipModule,
     MentorshipApplicationsModule,
+    MentorshipActionsModule,
+    MentorshipLifecycleModule,
+    MentorshipOperationsModule,
+    MentorshipDeliverablesModule,
+    MentorshipTimelineModule,
+    MentorshipGoalsModule,
+    MentorshipConsentModule,
     EventsModule,
     LibraryCirculationModule,
     // Scholarship finance
@@ -238,9 +246,6 @@ import { ProjectWorkspaceModule } from './project-workspace/project-workspace.mo
     RemovalRequestModule,
     ReportAbuseModule,
     ReportsModule,
-    MentorshipLifecycleModule,
-    MentorshipDeliverablesModule,
-    MentorshipTimelineModule,
     WebhookSecurityModule,
     IdempotencyModule,
     VerificationModule,
