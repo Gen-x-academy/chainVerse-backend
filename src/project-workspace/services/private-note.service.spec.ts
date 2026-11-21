@@ -45,7 +45,7 @@ const config = {
 
 describe('PrivateNoteService', () => {
   let notes: Record<string, jest.Mock>;
-  let access: { load: jest.Mock };
+  let access: { load: jest.Mock; loadForMutation: jest.Mock };
   let audit: { record: jest.Mock };
   let service: PrivateNoteService;
 
@@ -56,7 +56,10 @@ describe('PrivateNoteService', () => {
       find: jest.fn(),
       findOneAndUpdate: jest.fn(),
     };
-    access = { load: jest.fn().mockResolvedValue(workspace) };
+    access = {
+      load: jest.fn().mockResolvedValue(workspace),
+      loadForMutation: jest.fn().mockResolvedValue(workspace),
+    };
     audit = { record: jest.fn().mockResolvedValue(null) };
     service = new PrivateNoteService(
       notes as never,

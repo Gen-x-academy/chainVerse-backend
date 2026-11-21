@@ -16,6 +16,19 @@ All routes are protected by `JwtAuthGuard` and documented with Swagger tags `Pro
 - `POST /project-workspaces/:id/status` — advance the declared lifecycle state.
 - `POST /project-workspaces/:id/members` — add a member with an explicit role.
 
+### Project pause and resume (CAPSTONE-053)
+
+- `POST /project-workspaces/:id/pause-requests` — request a pause with a required private reason, expiry, optional funding impact (`none` or `review_required`), `expectedVersion`, and required `idempotencyKey`.
+- `GET /project-workspaces/:id/pause-requests/:pauseId` — read a pause reason and decision reason as a workspace owner.
+- `POST /project-workspaces/:id/pause-requests/:pauseId/decision` — approve or reject as a different workspace owner. Rejection requires a private decision reason.
+- `POST /project-workspaces/:id/resume` — resume an approved pause with `expectedVersion` and required `idempotencyKey`. The expiry worker also resumes active pauses.
+
+Only an active project can be paused. Every request needs approval from a second owner; self-approval is rejected with `BIZ_WORKSPACE_PAUSE_SELF_APPROVAL`. Expiry must be in the future and at most 90 days away. Expired pending requests are closed without changing project status. Expired active pauses are resumed by a one-minute scheduled job. The generic status endpoint cannot enter or leave `on_hold`, so it cannot bypass this workflow.
+
+On resume, the workspace deadline and all objective/milestone due dates are shifted by the actual elapsed pause duration. A request defaults funding impact to `review_required`; approval and resumption emit metadata-only `project-workspace.pause.approved` and `project-workspace.pause.resumed` events with stable event ids. These events signal a funding review but do not alter reservations, escrows, or transfers. Any downstream event consumer must deduplicate by `eventId`.
+
+While `on_hold`, workspace, member, note, private-note, and resource mutations are rejected; reads remain available. Pause reasons and decision reasons are AES-256-GCM encrypted in the tenant-scoped workspace document using `PROJECT_NOTES_ENCRYPTION_KEY` and its key id. Without a valid key, pause requests and reason reads fail closed. Workspace views expose `hasReason` / `hasDecisionReason` flags rather than text; only workspace owners can read the decrypted detail. Neither audit entries, activity events, logs, nor funding events contain reasons. Request, decision, and resume mutations use optimistic versions and payload fingerprints; a same-key/same-payload retry returns the saved state, while a changed payload returns `BIZ_IDEMPOTENCY_KEY_REUSED`.
+
 ### Shared notes
 
 - `POST /project-workspaces/:projectId/notes` — create a team-visible Markdown note.
@@ -61,3 +74,14 @@ Links must use HTTPS. Files and datasets require a 64-character hex SHA-256 chec
 - Unit specs: `src/project-workspace/support/*.spec.ts` and `src/project-workspace/services/*.spec.ts`.
 - Integration spec: `src/project-workspace/project-workspace.integration.spec.ts` uses `mongodb-memory-server` to verify real indexes, idempotent replay, tenant/role denials, version conflicts, private-note encryption at rest, and resource visibility.
 - Run with `npx jest --runInBand project-workspace`.
+
+Pause-specific unit coverage is in `src/project-workspace/services/project-workspace-pause.spec.ts`; the Mongo integration test also races duplicate approvals and checks idempotent replay.
+
+## CAPSTONE-053 dependencies, privacy and operations
+
+- **Dependencies:** existing `JwtAuthGuard`, explicit workspace-owner membership, global DTO validation, MongoDB, the existing Nest schedule module, audit service, workspace event bus, and a valid `PROJECT_NOTES_ENCRYPTION_KEY`. No separate deadline database or on-chain call is made.
+- **Privacy boundary:** pause and decision reasons are private workspace content. Keep them out of telemetry, event payloads, UI analytics, and audit metadata. The event carries only tenant/project/pause ids, dates, outcome, and a funding-impact enum.
+- **Funding integration:** consumers should treat `review_required` as a request to review funding policy, not as proof that funds were frozen. Do not release or reserve funds from this event alone; use a tenant-scoped, idempotent funding decision keyed by `eventId`. Events use the existing in-process event bus; external notification or funding side effects require a durable outbox/bridge and consumer deduplication before production reliance.
+- **Rollout:** additive nullable/defaulted Mongo fields require no backfill. Deploy the API and expiry worker together, then expose the endpoints to workspace owners. Monitor the `project-workspace-pause-expiry` job logs and the `project_workspace.pause_*` audit actions; investigate repeated expiry failures before relying on automatic resume.
+- **Rollback:** first resolve pending/active pauses through the API and verify there are no `on_hold` workspaces. Keep the new worker enabled until active pauses are closed; rolling back application code does not erase pause history and can strand an `on_hold` workspace. No funding ledger writes need compensation.
+- **Other repositories:** the frontend implementation is [Gen-x-academy/chainVerse-frontend#1479](https://github.com/Gen-x-academy/chainVerse-frontend/issues/1479) (CAPSTONE-053, closed); revalidate its current API contract before wiring. No on-chain CAPSTONE-053 work item was found during this implementation. Pause state and reasons remain backend-only; the adjacent on-chain completion work is [Gen-x-academy/chainVerse-onchain#1402](https://github.com/Gen-x-academy/chainVerse-onchain/issues/1402) (CAPSTONE-054) and must not be used to infer pause behavior.

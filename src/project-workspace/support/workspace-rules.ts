@@ -18,14 +18,10 @@ export const WORKSPACE_TRANSITIONS: Record<WorkspaceStatus, WorkspaceStatus[]> =
   {
     [WorkspaceStatus.DRAFT]: [WorkspaceStatus.ACTIVE, WorkspaceStatus.ARCHIVED],
     [WorkspaceStatus.ACTIVE]: [
-      WorkspaceStatus.ON_HOLD,
       WorkspaceStatus.COMPLETED,
       WorkspaceStatus.ARCHIVED,
     ],
-    [WorkspaceStatus.ON_HOLD]: [
-      WorkspaceStatus.ACTIVE,
-      WorkspaceStatus.ARCHIVED,
-    ],
+    [WorkspaceStatus.ON_HOLD]: [WorkspaceStatus.ARCHIVED],
     [WorkspaceStatus.COMPLETED]: [WorkspaceStatus.ARCHIVED],
     [WorkspaceStatus.ARCHIVED]: [],
   };

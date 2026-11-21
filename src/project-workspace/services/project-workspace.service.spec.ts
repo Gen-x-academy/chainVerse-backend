@@ -58,7 +58,7 @@ const createDto: CreateWorkspaceDto = {
 
 describe('ProjectWorkspaceService', () => {
   let workspaces: Record<string, jest.Mock>;
-  let access: { load: jest.Mock };
+  let access: { load: jest.Mock; loadForMutation: jest.Mock };
   let audit: { record: jest.Mock };
   let events: { emit: jest.Mock };
   let service: ProjectWorkspaceService;
@@ -71,7 +71,10 @@ describe('ProjectWorkspaceService', () => {
       find: jest.fn(),
       findOneAndUpdate: jest.fn(),
     };
-    access = { load: jest.fn().mockResolvedValue(workspace) };
+    access = {
+      load: jest.fn().mockResolvedValue(workspace),
+      loadForMutation: jest.fn().mockResolvedValue(workspace),
+    };
     audit = { record: jest.fn().mockResolvedValue(null) };
     events = { emit: jest.fn() };
     service = new ProjectWorkspaceService(
@@ -82,6 +85,7 @@ describe('ProjectWorkspaceService', () => {
       access as never,
       audit as never,
       events as never,
+      { encrypt: jest.fn(), decrypt: jest.fn() } as never,
     );
   });
 
@@ -99,6 +103,12 @@ describe('ProjectWorkspaceService', () => {
 
   it('denies updates to callers without an allowed role', async () => {
     access.load.mockRejectedValueOnce(
+      new ForbiddenDomainException(
+        'denied',
+        ErrorCode.AUTH_INSUFFICIENT_PERMISSIONS,
+      ),
+    );
+    access.loadForMutation.mockRejectedValueOnce(
       new ForbiddenDomainException(
         'denied',
         ErrorCode.AUTH_INSUFFICIENT_PERMISSIONS,
@@ -129,7 +139,7 @@ describe('ProjectWorkspaceService', () => {
   });
 
   it('rejects an invalid lifecycle transition before writing', async () => {
-    access.load.mockResolvedValueOnce({
+    access.loadForMutation.mockResolvedValueOnce({
       ...workspace,
       status: WorkspaceStatus.DRAFT,
     });

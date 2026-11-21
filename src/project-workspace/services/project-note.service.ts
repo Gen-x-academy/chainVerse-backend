@@ -68,7 +68,7 @@ export class ProjectNoteService {
     projectId: string,
     dto: CreateNoteDto,
   ): Promise<PlainRecord> {
-    const workspace = await this.access.load(projectId, actorId, [
+    const workspace = await this.access.loadForMutation(projectId, actorId, [
       WorkspaceRole.OWNER,
       WorkspaceRole.EDITOR,
     ]);
@@ -181,7 +181,7 @@ export class ProjectNoteService {
     noteId: string,
     dto: UpdateNoteDto,
   ): Promise<PlainRecord> {
-    const workspace = await this.access.load(projectId, actorId, [
+    const workspace = await this.access.loadForMutation(projectId, actorId, [
       WorkspaceRole.OWNER,
       WorkspaceRole.EDITOR,
     ]);

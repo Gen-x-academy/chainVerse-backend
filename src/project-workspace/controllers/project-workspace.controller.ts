@@ -16,6 +16,9 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import {
   AddMemberDto,
   CreateWorkspaceDto,
+  DecideWorkspacePauseDto,
+  RequestWorkspacePauseDto,
+  ResumeWorkspaceDto,
   UpdateWorkspaceDto,
   WorkspaceStatusDto,
 } from '../dto/project-workspace.dto';
@@ -83,6 +86,58 @@ export class ProjectWorkspaceController {
     @Body() dto: WorkspaceStatusDto,
   ) {
     return this.service.changeStatus(actorId, audit, id, dto);
+  }
+
+  @Post(':id/pause-requests')
+  @ApiOperation({
+    summary: 'Request a time-bounded project pause for a second-owner decision',
+  })
+  requestPause(
+    @CurrentUser('sub') actorId: string,
+    @AuditActor() audit: AuditContext,
+    @Param('id') id: string,
+    @Body() dto: RequestWorkspacePauseDto,
+  ) {
+    return this.service.requestPause(actorId, audit, id, dto);
+  }
+
+  @Get(':id/pause-requests/:pauseId')
+  @ApiOperation({
+    summary: 'Get a pause request and its reason as a workspace owner',
+  })
+  getPause(
+    @CurrentUser('sub') actorId: string,
+    @Param('id') id: string,
+    @Param('pauseId') pauseId: string,
+  ) {
+    return this.service.getPause(actorId, id, pauseId);
+  }
+
+  @Post(':id/pause-requests/:pauseId/decision')
+  @ApiOperation({
+    summary: 'Approve or reject a pause request as a different workspace owner',
+  })
+  decidePause(
+    @CurrentUser('sub') actorId: string,
+    @AuditActor() audit: AuditContext,
+    @Param('id') id: string,
+    @Param('pauseId') pauseId: string,
+    @Body() dto: DecideWorkspacePauseDto,
+  ) {
+    return this.service.decidePause(actorId, audit, id, pauseId, dto);
+  }
+
+  @Post(':id/resume')
+  @ApiOperation({
+    summary: 'Resume an approved pause and shift project dates by its duration',
+  })
+  resume(
+    @CurrentUser('sub') actorId: string,
+    @AuditActor() audit: AuditContext,
+    @Param('id') id: string,
+    @Body() dto: ResumeWorkspaceDto,
+  ) {
+    return this.service.resume(actorId, audit, id, dto);
   }
 
   @Post(':id/members')

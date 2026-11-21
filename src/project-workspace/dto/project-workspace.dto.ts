@@ -4,8 +4,10 @@ import {
   ArrayMaxSize,
   IsArray,
   IsBoolean,
+  IsDateString,
   IsEnum,
   IsInt,
+  IsNotEmpty,
   IsOptional,
   IsString,
   IsUrl,
@@ -24,6 +26,7 @@ import {
 import {
   ObjectiveStatus,
   WorkspaceRole,
+  WorkspaceFundingImpact,
   WorkspaceStatus,
 } from '../schemas/project-workspace.schema';
 
@@ -54,6 +57,11 @@ export class CreateWorkspaceDto {
   @IsString()
   @MaxLength(2000)
   summary?: string;
+
+  @ApiPropertyOptional({ type: String, format: 'date-time' })
+  @IsOptional()
+  @IsDateString()
+  deadlineAt?: string;
 
   @ApiPropertyOptional({ pattern: IDEMPOTENCY.source })
   @IsOptional()
@@ -115,6 +123,11 @@ export class UpdateWorkspaceDto {
   @Min(1)
   expectedVersion!: number;
 
+  @ApiPropertyOptional({ type: String, format: 'date-time', nullable: true })
+  @IsOptional()
+  @IsDateString()
+  deadlineAt?: string;
+
   @ApiPropertyOptional({ maxLength: 200 })
   @IsOptional()
   @IsString()
@@ -162,6 +175,71 @@ export class WorkspaceStatusDto {
   @IsInt()
   @Min(1)
   expectedVersion!: number;
+}
+
+export class RequestWorkspacePauseDto {
+  @ApiProperty({ maxLength: 500 })
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/\S/, { message: 'reason must contain a non-whitespace character' })
+  @MaxLength(500)
+  reason!: string;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  @IsDateString()
+  expiresAt!: string;
+
+  @ApiPropertyOptional({
+    enum: WorkspaceFundingImpact,
+    default: WorkspaceFundingImpact.REVIEW_REQUIRED,
+  })
+  @IsOptional()
+  @IsEnum(WorkspaceFundingImpact)
+  fundingImpact?: WorkspaceFundingImpact;
+
+  @ApiProperty()
+  @IsInt()
+  @Min(1)
+  expectedVersion!: number;
+
+  @ApiProperty({ pattern: IDEMPOTENCY.source })
+  @Matches(IDEMPOTENCY)
+  idempotencyKey!: string;
+}
+
+export class DecideWorkspacePauseDto {
+  @ApiProperty({ description: 'Approve or reject the requested pause' })
+  @IsBoolean()
+  approved!: boolean;
+
+  @ApiPropertyOptional({ maxLength: 500 })
+  @IsOptional()
+  @IsString()
+  @Matches(/\S/, {
+    message: 'decisionReason must contain a non-whitespace character',
+  })
+  @MaxLength(500)
+  decisionReason?: string;
+
+  @ApiProperty()
+  @IsInt()
+  @Min(1)
+  expectedVersion!: number;
+
+  @ApiProperty({ pattern: IDEMPOTENCY.source })
+  @Matches(IDEMPOTENCY)
+  idempotencyKey!: string;
+}
+
+export class ResumeWorkspaceDto {
+  @ApiProperty()
+  @IsInt()
+  @Min(1)
+  expectedVersion!: number;
+
+  @ApiProperty({ pattern: IDEMPOTENCY.source })
+  @Matches(IDEMPOTENCY)
+  idempotencyKey!: string;
 }
 
 export class AddMemberDto {
