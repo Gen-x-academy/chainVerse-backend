@@ -8,17 +8,25 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AuditActor } from '../../common/audit';
 import type { AuditContext } from '../../common/audit';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import {
   AddMemberDto,
+  CloseProjectDto,
   CreateWorkspaceDto,
+  ProjectClosureConsentDto,
   UpdateWorkspaceDto,
   WorkspaceStatusDto,
 } from '../dto/project-workspace.dto';
+import { ProjectClosureService } from '../services/project-closure.service';
 import { ProjectWorkspaceService } from '../services/project-workspace.service';
 
 @ApiTags('Project Workspace')
@@ -26,7 +34,10 @@ import { ProjectWorkspaceService } from '../services/project-workspace.service';
 @UseGuards(JwtAuthGuard)
 @Controller('project-workspaces')
 export class ProjectWorkspaceController {
-  constructor(private readonly service: ProjectWorkspaceService) {}
+  constructor(
+    private readonly service: ProjectWorkspaceService,
+    private readonly closures: ProjectClosureService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a scoped project collaboration workspace' })
@@ -83,6 +94,65 @@ export class ProjectWorkspaceController {
     @Body() dto: WorkspaceStatusDto,
   ) {
     return this.service.changeStatus(actorId, audit, id, dto);
+  }
+
+  @Post(':id/closure')
+  @ApiOperation({
+    summary: 'Complete or terminate a project with a structured outcome',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Project closed or mutual-termination proposal created',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'AUTH_INSUFFICIENT_PERMISSIONS',
+  })
+  @ApiResponse({
+    status: 409,
+    description:
+      'BIZ_IDEMPOTENCY_KEY_REUSED or BIZ_WORKSPACE_ALREADY_CLOSED',
+  })
+  @ApiResponse({
+    status: 422,
+    description:
+      'BIZ_WORKSPACE_STALE_VERSION, BIZ_WORKSPACE_INVALID_TRANSITION, or BIZ_WORKSPACE_COMPLETION_INCOMPLETE',
+  })
+  close(
+    @CurrentUser('sub') actorId: string,
+    @CurrentUser('role') actorRole: string,
+    @AuditActor() audit: AuditContext,
+    @Param('id') id: string,
+    @Body() dto: CloseProjectDto,
+  ) {
+    return this.closures.close(actorId, actorRole, audit, id, dto);
+  }
+
+  @Post(':id/closure-consents')
+  @ApiOperation({
+    summary: 'Record a member consent for a mutual project termination',
+  })
+  @ApiResponse({ status: 201, description: 'Consent recorded or replayed' })
+  @ApiResponse({
+    status: 403,
+    description: 'AUTH_INSUFFICIENT_PERMISSIONS',
+  })
+  @ApiResponse({
+    status: 409,
+    description:
+      'BIZ_WORKSPACE_CONSENT_EXISTS, BIZ_IDEMPOTENCY_KEY_REUSED, or BIZ_WORKSPACE_ALREADY_CLOSED',
+  })
+  @ApiResponse({
+    status: 422,
+    description: 'BIZ_WORKSPACE_STALE_VERSION',
+  })
+  consentToClosure(
+    @CurrentUser('sub') actorId: string,
+    @AuditActor() audit: AuditContext,
+    @Param('id') id: string,
+    @Body() dto: ProjectClosureConsentDto,
+  ) {
+    return this.closures.consent(actorId, audit, id, dto);
   }
 
   @Post(':id/members')

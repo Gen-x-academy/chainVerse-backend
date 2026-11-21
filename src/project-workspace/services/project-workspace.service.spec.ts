@@ -58,7 +58,7 @@ const createDto: CreateWorkspaceDto = {
 
 describe('ProjectWorkspaceService', () => {
   let workspaces: Record<string, jest.Mock>;
-  let access: { load: jest.Mock };
+  let access: { load: jest.Mock; loadForMutation: jest.Mock };
   let audit: { record: jest.Mock };
   let events: { emit: jest.Mock };
   let service: ProjectWorkspaceService;
@@ -71,7 +71,12 @@ describe('ProjectWorkspaceService', () => {
       find: jest.fn(),
       findOneAndUpdate: jest.fn(),
     };
-    access = { load: jest.fn().mockResolvedValue(workspace) };
+    access = {
+      load: jest.fn().mockResolvedValue(workspace),
+      loadForMutation: jest
+        .fn()
+        .mockImplementation(() => access.load()),
+    };
     audit = { record: jest.fn().mockResolvedValue(null) };
     events = { emit: jest.fn() };
     service = new ProjectWorkspaceService(
@@ -129,7 +134,7 @@ describe('ProjectWorkspaceService', () => {
   });
 
   it('rejects an invalid lifecycle transition before writing', async () => {
-    access.load.mockResolvedValueOnce({
+    access.loadForMutation.mockResolvedValueOnce({
       ...workspace,
       status: WorkspaceStatus.DRAFT,
     });
@@ -140,7 +145,7 @@ describe('ProjectWorkspaceService', () => {
         expectedVersion: 3,
       }),
     ).rejects.toMatchObject({
-      errorCode: ErrorCode.BIZ_WORKSPACE_INVALID_TRANSITION,
+      errorCode: ErrorCode.BIZ_WORKSPACE_CLOSURE_REQUIRED,
     });
     expect(workspaces.findOneAndUpdate).not.toHaveBeenCalled();
   });

@@ -59,7 +59,7 @@ const resource = (overrides: Record<string, unknown> = {}) => ({
 
 describe('ResourceLibraryService', () => {
   let resources: Record<string, jest.Mock>;
-  let access: { load: jest.Mock };
+  let access: { load: jest.Mock; loadForMutation: jest.Mock };
   let audit: { record: jest.Mock };
   let service: ResourceLibraryService;
 
@@ -70,7 +70,10 @@ describe('ResourceLibraryService', () => {
       find: jest.fn(),
       findOneAndUpdate: jest.fn(),
     };
-    access = { load: jest.fn().mockResolvedValue(workspace) };
+    access = {
+      load: jest.fn().mockResolvedValue(workspace),
+      loadForMutation: jest.fn().mockResolvedValue(workspace),
+    };
     audit = { record: jest.fn().mockResolvedValue(null) };
     service = new ResourceLibraryService(
       resources as never,

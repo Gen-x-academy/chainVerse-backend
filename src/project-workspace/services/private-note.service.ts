@@ -80,7 +80,7 @@ export class PrivateNoteService {
     projectId: string,
     dto: CreatePrivateNoteDto,
   ): Promise<PlainRecord> {
-    const workspace = await this.access.load(projectId, actorId, [
+    const workspace = await this.access.loadForMutation(projectId, actorId, [
       WorkspaceRole.OWNER,
       WorkspaceRole.EDITOR,
       WorkspaceRole.VIEWER,
@@ -147,7 +147,7 @@ export class PrivateNoteService {
   }
 
   async list(actorId: string, projectId: string): Promise<PlainRecord[]> {
-    const workspace = await this.access.load(projectId, actorId, [
+    const workspace = await this.access.loadForMutation(projectId, actorId, [
       WorkspaceRole.OWNER,
       WorkspaceRole.EDITOR,
       WorkspaceRole.VIEWER,
@@ -169,7 +169,7 @@ export class PrivateNoteService {
     projectId: string,
     noteId: string,
   ): Promise<PlainRecord> {
-    const workspace = await this.access.load(projectId, actorId, [
+    const workspace = await this.access.loadForMutation(projectId, actorId, [
       WorkspaceRole.OWNER,
       WorkspaceRole.EDITOR,
       WorkspaceRole.VIEWER,

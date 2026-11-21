@@ -136,6 +136,12 @@ export function assertNotArchived(
       ErrorCode.BIZ_WORKSPACE_ARCHIVED,
     );
   }
+  if (workspace.status === WorkspaceStatus.COMPLETED) {
+    throw new BusinessRuleException(
+      'Completed workspaces are immutable',
+      ErrorCode.BIZ_WORKSPACE_CLOSED,
+    );
+  }
 }
 
 /** Rejects stale optimistic-lock writes before a database round trip. */
