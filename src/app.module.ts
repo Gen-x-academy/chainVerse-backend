@@ -121,6 +121,8 @@ import { MentorshipOperationsModule } from './mentorship/operations/mentorship-o
 import { ReviewOutcomesModule } from './review-outcomes/review-outcomes.module';
 // Project workspace (CAPSTONE-065/066/067/068)
 import { ProjectWorkspaceModule } from './project-workspace/project-workspace.module';
+// Work Breakdown Structures (CAPSTONE-058)
+import { WorkBreakdownModule } from './work-breakdown/work-breakdown.module';
 
 @Module({
   imports: [
@@ -265,6 +267,7 @@ import { ProjectWorkspaceModule } from './project-workspace/project-workspace.mo
     ProjectFundingModule,
     MentorshipOperationsModule,
     ProjectWorkspaceModule,
+    WorkBreakdownModule,
   ],
   controllers: [AppController],
   providers: [
