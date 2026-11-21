@@ -26,6 +26,7 @@ import { SessionModule } from './session/session.module';
 import { SessionService } from './session/session.service';
 import { StreakModule } from './session/streak.module';
 import { ProjectFundingModule } from './project-funding/project-funding.module';
+import { ProjectMilestonesModule } from './project-milestones/project-milestones.module';
 
 // Auth modules
 import { StudentAuthModule } from './student-auth/student-auth.module';
@@ -270,6 +271,7 @@ import { WorkBreakdownModule } from './work-breakdown/work-breakdown.module';
     MentorshipGoalsModule,
     MentorshipConsentModule,
     ProjectFundingModule,
+    ProjectMilestonesModule,
     MentorshipOperationsModule,
     ProjectWorkspaceModule,
     WorkBreakdownModule,

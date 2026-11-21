@@ -486,6 +486,33 @@ export enum ErrorCode {
   BIZ_WORKSPACE_PRIVATE_NOTE_DECRYPT_FAILED = 'BIZ_WORKSPACE_PRIVATE_NOTE_DECRYPT_FAILED',
   VAL_WORKSPACE_UNSAFE_MARKUP = 'VAL_WORKSPACE_UNSAFE_MARKUP',
 
+  // ── Project Milestones (CAPSTONE-060) ────────────────────────────────────
+  /** The requested milestone was not found in the addressed tenant. */
+  RES_MILESTONE_NOT_FOUND = 'RES_MILESTONE_NOT_FOUND',
+  /**
+   * The requested status transition is not permitted from the milestone's
+   * current status (e.g. COMPLETED → ACTIVE, or any transition from a terminal
+   * state).
+   */
+  BIZ_MILESTONE_INVALID_TRANSITION = 'BIZ_MILESTONE_INVALID_TRANSITION',
+  /**
+   * The operation requires the milestone to be in a non-terminal state, but it
+   * is COMPLETED or CANCELLED.
+   */
+  BIZ_MILESTONE_ALREADY_COMPLETED = 'BIZ_MILESTONE_ALREADY_COMPLETED',
+  /**
+   * One or more predecessor milestones listed in `dependsOn` have not yet
+   * reached COMPLETED status; the milestone cannot become ACTIVE.
+   */
+  BIZ_MILESTONE_DEPENDENCY_NOT_MET = 'BIZ_MILESTONE_DEPENDENCY_NOT_MET',
+  /**
+   * The supplied dependency list would create a directed cycle in the
+   * project's milestone dependency graph.
+   */
+  BIZ_MILESTONE_CYCLE_DETECTED = 'BIZ_MILESTONE_CYCLE_DETECTED',
+  /** The dueDate value is not a valid ISO-8601 date or datetime string. */
+  VAL_MILESTONE_DATE_INVALID = 'VAL_MILESTONE_DATE_INVALID',
+
   // ── System ────────────────────────────────────────────────────────────────
   SYS_INTERNAL_ERROR = 'SYS_INTERNAL_ERROR',
   SYS_SERVICE_UNAVAILABLE = 'SYS_SERVICE_UNAVAILABLE',
