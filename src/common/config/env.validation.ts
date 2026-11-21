@@ -223,6 +223,9 @@ export const envValidationSchema = Joi.object({
   MENTORSHIP_OPS_FRESHNESS_MINUTES: Joi.number().integer().min(1).default(30),
   MENTORSHIP_OPS_CRON: Joi.string().default('*/15 * * * *'),
   MENTORSHIP_OPS_JOBS_DISABLED: Joi.boolean().default(false),
+  // Project workspace private-note encryption (CAPSTONE-067)
+  PROJECT_NOTES_ENCRYPTION_KEY: Joi.string().min(32).optional(),
+  PROJECT_NOTES_ENCRYPTION_KEY_ID: Joi.string().max(64).default('v1'),
 });
 
 /**
@@ -232,15 +235,15 @@ export const envValidationSchema = Joi.object({
 export function validateEnv(
   env: Record<string, unknown>,
 ): Record<string, unknown> {
-  const { error, value } = envValidationSchema.validate(env, {
+  const result = envValidationSchema.validate(env, {
     abortEarly: true,
     allowUnknown: true,
     stripUnknown: false,
   }) as { error?: Error; value: Record<string, unknown> };
 
-  if (error) {
-    throw new Error(`Environment validation failed: ${error.message}`);
+  if (result.error) {
+    throw new Error(`Environment validation failed: ${result.error.message}`);
   }
 
-  return value;
+  return result.value as Record<string, unknown>;
 }

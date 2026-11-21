@@ -22,5 +22,6 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false
   },
-  "exclude": ["node_modules", "src copy"]
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.spec.ts", "src copy", "flex"]
 }
