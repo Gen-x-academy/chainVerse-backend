@@ -4,8 +4,10 @@ import {
   ArrayMaxSize,
   IsArray,
   IsBoolean,
+  IsDateString,
   IsEnum,
   IsInt,
+  IsNotEmpty,
   IsOptional,
   IsString,
   IsUrl,
@@ -26,6 +28,7 @@ import {
   ObjectiveStatus,
   ProjectClosureReason,
   WorkspaceRole,
+  WorkspaceFundingImpact,
   WorkspaceStatus,
 } from '../schemas/project-workspace.schema';
 
@@ -56,6 +59,11 @@ export class CreateWorkspaceDto {
   @IsString()
   @MaxLength(2000)
   summary?: string;
+
+  @ApiPropertyOptional({ type: String, format: 'date-time' })
+  @IsOptional()
+  @IsDateString()
+  deadlineAt?: string;
 
   @ApiPropertyOptional({ pattern: IDEMPOTENCY.source })
   @IsOptional()
@@ -116,6 +124,11 @@ export class UpdateWorkspaceDto {
   @IsInt()
   @Min(1)
   expectedVersion!: number;
+
+  @ApiPropertyOptional({ type: String, format: 'date-time', nullable: true })
+  @IsOptional()
+  @IsDateString()
+  deadlineAt?: string;
 
   @ApiPropertyOptional({ maxLength: 200 })
   @IsOptional()

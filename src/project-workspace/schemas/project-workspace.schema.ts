@@ -169,6 +169,106 @@ export class WorkspaceMilestone {
 export const WorkspaceMilestoneSchema =
   SchemaFactory.createForClass(WorkspaceMilestone);
 
+export enum WorkspacePauseStatus {
+  PENDING = 'pending',
+  ACTIVE = 'active',
+  REJECTED = 'rejected',
+  RESUMED = 'resumed',
+  EXPIRED = 'expired',
+}
+
+export enum WorkspaceFundingImpact {
+  NONE = 'none',
+  REVIEW_REQUIRED = 'review_required',
+}
+
+@Schema({ _id: false })
+export class WorkspacePrivateReason {
+  @Prop({ required: true })
+  ciphertext!: string;
+
+  @Prop({ required: true })
+  iv!: string;
+
+  @Prop({ required: true })
+  authTag!: string;
+
+  @Prop({ required: true })
+  keyId!: string;
+
+  @Prop({ required: true })
+  algorithm!: string;
+}
+
+export const WorkspacePrivateReasonSchema =
+  SchemaFactory.createForClass(WorkspacePrivateReason);
+
+@Schema({ _id: false })
+export class WorkspacePause {
+  @Prop({ required: true })
+  pauseId!: string;
+
+  @Prop({ required: true, enum: WorkspacePauseStatus })
+  status!: WorkspacePauseStatus;
+
+  @Prop({ required: true })
+  requestedBy!: string;
+
+  @Prop({ type: WorkspacePrivateReasonSchema, required: true })
+  reason!: WorkspacePrivateReason;
+
+  @Prop({ type: Date, required: true })
+  requestedAt!: Date;
+
+  @Prop({ type: Date, required: true })
+  expiresAt!: Date;
+
+  @Prop({ required: true, enum: WorkspaceFundingImpact })
+  fundingImpact!: WorkspaceFundingImpact;
+
+  @Prop({ type: String, default: null })
+  requestKey!: string | null;
+
+  @Prop({ type: String, default: null })
+  requestFingerprint!: string | null;
+
+  @Prop({ type: String, default: null })
+  decidedBy!: string | null;
+
+  @Prop({ type: WorkspacePrivateReasonSchema, default: null })
+  decisionReason!: WorkspacePrivateReason | null;
+
+  @Prop({ type: String, default: null })
+  decisionKey!: string | null;
+
+  @Prop({ type: String, default: null })
+  decisionFingerprint!: string | null;
+
+  @Prop({ type: Date, default: null })
+  decidedAt!: Date | null;
+
+  @Prop({ type: Date, default: null })
+  pausedAt!: Date | null;
+
+  @Prop({ type: Date, default: null })
+  resumedAt!: Date | null;
+
+  @Prop({ type: Date, default: null })
+  expiredAt!: Date | null;
+
+  @Prop({ type: String, default: null })
+  resumeKey!: string | null;
+
+  @Prop({ type: String, default: null })
+  resumeFingerprint!: string | null;
+
+  @Prop({ type: Number, default: 0 })
+  deadlineShiftMs!: number;
+}
+
+export const WorkspacePauseSchema =
+  SchemaFactory.createForClass(WorkspacePause);
+
 @Schema({ timestamps: true, collection: 'project_workspaces' })
 export class ProjectWorkspace {
   @Prop({ required: true, index: true })
@@ -183,6 +283,9 @@ export class ProjectWorkspace {
 
   @Prop({ type: String, default: null })
   summary!: string | null;
+
+  @Prop({ type: Date, default: null })
+  deadlineAt!: Date | null;
 
   @Prop({
     required: true,
@@ -200,6 +303,9 @@ export class ProjectWorkspace {
 
   @Prop({ type: [WorkspaceMilestoneSchema], default: [] })
   milestones!: WorkspaceMilestone[];
+
+  @Prop({ type: [WorkspacePauseSchema], default: [] })
+  pauseHistory!: WorkspacePause[];
 
   @Prop({ type: [String], default: [] })
   nextActions!: string[];

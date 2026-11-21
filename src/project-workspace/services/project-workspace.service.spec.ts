@@ -87,6 +87,7 @@ describe('ProjectWorkspaceService', () => {
       access as never,
       audit as never,
       events as never,
+      { encrypt: jest.fn(), decrypt: jest.fn() } as never,
     );
   });
 
@@ -104,6 +105,12 @@ describe('ProjectWorkspaceService', () => {
 
   it('denies updates to callers without an allowed role', async () => {
     access.load.mockRejectedValueOnce(
+      new ForbiddenDomainException(
+        'denied',
+        ErrorCode.AUTH_INSUFFICIENT_PERMISSIONS,
+      ),
+    );
+    access.loadForMutation.mockRejectedValueOnce(
       new ForbiddenDomainException(
         'denied',
         ErrorCode.AUTH_INSUFFICIENT_PERMISSIONS,

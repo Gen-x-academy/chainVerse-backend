@@ -199,7 +199,7 @@ export class PrivateNoteService {
     noteId: string,
     dto: UpdatePrivateNoteDto,
   ): Promise<PlainRecord> {
-    const workspace = await this.access.load(projectId, actorId, [
+    const workspace = await this.access.loadForMutation(projectId, actorId, [
       WorkspaceRole.OWNER,
       WorkspaceRole.EDITOR,
       WorkspaceRole.VIEWER,
@@ -283,7 +283,7 @@ export class PrivateNoteService {
     noteId: string,
     dto: NoteVersionDto,
   ): Promise<PlainRecord> {
-    const workspace = await this.access.load(projectId, actorId, [
+    const workspace = await this.access.loadForMutation(projectId, actorId, [
       WorkspaceRole.OWNER,
       WorkspaceRole.EDITOR,
       WorkspaceRole.VIEWER,

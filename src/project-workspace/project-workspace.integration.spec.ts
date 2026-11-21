@@ -172,6 +172,93 @@ describe('project workspace integration (mongodb-memory-server)', () => {
     });
   });
 
+  it('serializes concurrent pause decisions and makes decision retries idempotent', async () => {
+    const workspace = await createWorkspace('pause-concurrency-ws');
+    await workspaces.addMember('owner-1', audit, workspace.id, {
+      userId: 'owner-2',
+      role: WorkspaceRole.OWNER,
+    });
+    await workspaces.changeStatus('owner-1', audit, workspace.id, {
+      status: WorkspaceStatus.ACTIVE,
+      expectedVersion: 2,
+    });
+    const active = (await workspaces.findOne('owner-1', workspace.id)) as {
+      version: number;
+    };
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    const request = (await workspaces.requestPause(
+      'owner-1',
+      audit,
+      workspace.id,
+      {
+        reason: 'Scheduled research interruption',
+        expiresAt,
+        expectedVersion: active.version,
+        idempotencyKey: 'pause-create-idempotent',
+      },
+    )) as { version: number; pause: { pauseId: string } };
+
+    const decision = {
+      approved: true,
+      expectedVersion: request.version,
+      idempotencyKey: 'pause-approval-idempotent',
+    };
+    const results = await Promise.all([
+      workspaces.decidePause(
+        'owner-2',
+        audit,
+        workspace.id,
+        request.pause.pauseId,
+        decision,
+      ),
+      workspaces.decidePause(
+        'owner-2',
+        audit,
+        workspace.id,
+        request.pause.pauseId,
+        decision,
+      ),
+    ]);
+
+    const stored = await workspaceModel.findById(workspace.id).lean().exec();
+    expect(results[0]).toMatchObject({ status: WorkspaceStatus.ON_HOLD });
+    expect(results[1]).toMatchObject({ status: WorkspaceStatus.ON_HOLD });
+    expect(stored?.version).toBe(request.version + 1);
+    expect(stored?.status).toBe(WorkspaceStatus.ON_HOLD);
+    expect(JSON.stringify(stored)).not.toContain(
+      'Scheduled research interruption',
+    );
+    await expect(
+      workspaces.update('owner-1', audit, workspace.id, {
+        expectedVersion: request.version + 1,
+        title: 'Update while paused',
+      }),
+    ).rejects.toMatchObject({
+      errorCode: ErrorCode.BIZ_WORKSPACE_PAUSE_INVALID,
+    });
+    await expect(
+      workspaces.getPause('owner-2', workspace.id, request.pause.pauseId),
+    ).resolves.toMatchObject({
+      reason: 'Scheduled research interruption',
+    });
+    const emit = moduleRef.get<EventEmitter2>(EventEmitter2).emit as jest.Mock;
+    const emitted = emit.mock.calls.filter(
+      (call: unknown[]) => call[0] === 'project-workspace.pause.approved',
+    );
+    expect(emitted).toHaveLength(1);
+
+    await expect(
+      workspaces.requestPause('owner-1', audit, workspace.id, {
+        reason: 'Different payload',
+        expiresAt,
+        expectedVersion: active.version,
+        idempotencyKey: 'pause-create-idempotent',
+      }),
+    ).rejects.toMatchObject({
+      errorCode: ErrorCode.BIZ_IDEMPOTENCY_KEY_REUSED,
+    });
+  });
+
   it('keeps private notes out of shared views and stores no plaintext', async () => {
     const workspace = await createWorkspace('notes-ws');
     await workspaces.addMember('owner-1', audit, workspace.id, {

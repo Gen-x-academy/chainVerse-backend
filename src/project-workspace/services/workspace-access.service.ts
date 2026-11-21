@@ -10,6 +10,7 @@ import {
   ProjectWorkspace,
   ProjectWorkspaceDocument,
   WorkspaceRole,
+  WorkspaceStatus,
 } from '../schemas/project-workspace.schema';
 import { assertNotArchived, requireMember } from '../support/workspace-rules';
 
