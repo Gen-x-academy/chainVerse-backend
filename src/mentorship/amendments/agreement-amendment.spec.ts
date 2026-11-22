@@ -1,8 +1,8 @@
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { Types } from 'mongoose';
-import { Role } from '../../../common/enums/role.enum';
-import { ErrorCode, ForbiddenDomainException } from '../../../common/errors';
+import { Role } from '../../common/enums/role.enum';
+import { ErrorCode, ForbiddenDomainException } from '../../common/errors';
 import {
   ActivateAmendmentDto,
   ApproveAmendmentDto,
