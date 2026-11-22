@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Role } from '../../../common/enums/role.enum';
+import { Role } from '../../common/enums/role.enum';
 import {
   ErrorCode,
   ForbiddenDomainException,
   ResourceNotFoundException,
-} from '../../../common/errors';
+} from '../../common/errors';
 import { MentorshipTelemetry } from '../shared/mentorship-telemetry.service';
 import {
   CancelRematchDto,
