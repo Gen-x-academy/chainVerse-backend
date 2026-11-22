@@ -589,4 +589,16 @@ export enum ErrorCode {
   VAL_WBS_ORDER_MISMATCH = 'VAL_WBS_ORDER_MISMATCH',
   /** A package in a terminal state cannot be modified. */
   BIZ_WBS_PACKAGE_TERMINAL = 'BIZ_WBS_PACKAGE_TERMINAL',
+  /** The governance export has passed its retention window. */
+  BIZ_GOVERNANCE_EXPORT_EXPIRED = 'BIZ_GOVERNANCE_EXPORT_EXPIRED',
+  /** The requester already holds the maximum number of active governance exports. */
+  BIZ_GOVERNANCE_EXPORT_LIMIT = 'BIZ_GOVERNANCE_EXPORT_LIMIT',
+  /** The governance export is already revoked or otherwise not in a revocable state. */
+  BIZ_GOVERNANCE_EXPORT_INVALID_TRANSITION = 'BIZ_GOVERNANCE_EXPORT_INVALID_TRANSITION',
+  /** A governance record references terms or an amendment that does not exist. */
+  BIZ_GOVERNANCE_TARGET_MISSING = 'BIZ_GOVERNANCE_TARGET_MISSING',
+  /** The governance record has already been recorded for this project. */
+  BIZ_GOVERNANCE_RECORD_DUPLICATE = 'BIZ_GOVERNANCE_RECORD_DUPLICATE',
+  /** The requested governance export was not found. */
+  RES_GOVERNANCE_EXPORT_NOT_FOUND = 'RES_GOVERNANCE_EXPORT_NOT_FOUND',
 }
