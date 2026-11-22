@@ -115,6 +115,7 @@ import { MentorshipTimelineModule } from './mentorship-timeline/mentorship-timel
 import { MentorshipGoalsModule } from './mentorship-goals/mentorship-goals.module';
 import { MentorshipConsentModule } from './mentorship-consent/mentorship-consent.module';
 import { GuardianConsentModule } from './mentorship/guardian-consent/guardian-consent.module';
+import { AgreementModule } from './mentorship/agreements/agreement.module';
 import { ProjectPlanningModule } from './project-planning/project-planning.module';
 
 // Mentorship
@@ -216,6 +217,7 @@ import { WorkBreakdownModule } from './work-breakdown/work-breakdown.module';
     MentorshipGoalsModule,
     MentorshipConsentModule,
     GuardianConsentModule,
+    AgreementModule,
     EventsModule,
     LibraryCirculationModule,
     // Scholarship finance
