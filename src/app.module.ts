@@ -26,7 +26,7 @@ import { SessionModule } from './session/session.module';
 import { SessionService } from './session/session.service';
 import { StreakModule } from './session/streak.module';
 import { ProjectFundingModule } from './project-funding/project-funding.module';
-import { ProjectScheduleRiskModule } from './project-schedule-risk/project-schedule-risk.module';
+import { CapstoneConductModule } from './capstone-conduct/capstone-conduct.module';
 import { ProjectMilestonesModule } from './project-milestones/project-milestones.module';
 
 // Auth modules
@@ -273,7 +273,7 @@ import { WorkBreakdownModule } from './work-breakdown/work-breakdown.module';
     MentorshipConsentModule,
     ProjectFundingModule,
     ProjectMilestonesModule,
-    ProjectScheduleRiskModule,
+    CapstoneConductModule,
     MentorshipOperationsModule,
     ProjectWorkspaceModule,
     WorkBreakdownModule,

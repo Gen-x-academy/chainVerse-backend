@@ -589,23 +589,16 @@ export enum ErrorCode {
   VAL_WBS_ORDER_MISMATCH = 'VAL_WBS_ORDER_MISMATCH',
   /** A package in a terminal state cannot be modified. */
   BIZ_WBS_PACKAGE_TERMINAL = 'BIZ_WBS_PACKAGE_TERMINAL',
-
-  /** The requested dependency would create a cycle in the task graph. */
-  BIZ_SCHEDULE_DEPENDENCY_CYCLE = 'BIZ_SCHEDULE_DEPENDENCY_CYCLE',
-  /** A dependency refers to a task that does not exist in this project. */
-  BIZ_SCHEDULE_DEPENDENCY_UNKNOWN = 'BIZ_SCHEDULE_DEPENDENCY_UNKNOWN',
-  /** The requested task status transition is not allowed from the current status. */
-  BIZ_SCHEDULE_INVALID_TRANSITION = 'BIZ_SCHEDULE_INVALID_TRANSITION',
-  /** The request was based on an outdated task version; reload and retry. */
-  BIZ_SCHEDULE_STALE_VERSION = 'BIZ_SCHEDULE_STALE_VERSION',
-  /** Done or cancelled tasks can no longer be edited. */
-  BIZ_SCHEDULE_TASK_CLOSED = 'BIZ_SCHEDULE_TASK_CLOSED',
-  /** Predecessor tasks must be done (or cancelled) before this task can start or finish. */
-  BIZ_SCHEDULE_PREDECESSORS_OPEN = 'BIZ_SCHEDULE_PREDECESSORS_OPEN',
-  /** A schedule size limit (tasks per project, dependencies per task) was exceeded. */
-  BIZ_SCHEDULE_LIMIT_EXCEEDED = 'BIZ_SCHEDULE_LIMIT_EXCEEDED',
-  /** A task end date must not be before its start date. */
-  VAL_SCHEDULE_DATES_INVALID = 'VAL_SCHEDULE_DATES_INVALID',
-  /** The requested schedule task was not found. */
-  RES_SCHEDULE_TASK_NOT_FOUND = 'RES_SCHEDULE_TASK_NOT_FOUND',
+  /** A conduct policy acknowledgement targeted a version that is no longer current. */
+  BIZ_CONDUCT_POLICY_STALE = 'BIZ_CONDUCT_POLICY_STALE',
+  /** The conduct policy does not apply to the requested capstone track. */
+  BIZ_CONDUCT_POLICY_NOT_APPLICABLE = 'BIZ_CONDUCT_POLICY_NOT_APPLICABLE',
+  /** The caller must acknowledge the current conduct policy before proceeding. */
+  BIZ_CONDUCT_ACK_REQUIRED = 'BIZ_CONDUCT_ACK_REQUIRED',
+  /** The breach reference status transition is not permitted from the current state. */
+  BIZ_CONDUCT_BREACH_INVALID_TRANSITION = 'BIZ_CONDUCT_BREACH_INVALID_TRANSITION',
+  /** The requested conduct policy was not found. */
+  RES_CONDUCT_POLICY_NOT_FOUND = 'RES_CONDUCT_POLICY_NOT_FOUND',
+  /** The requested conduct breach reference was not found. */
+  RES_CONDUCT_BREACH_NOT_FOUND = 'RES_CONDUCT_BREACH_NOT_FOUND',
 }
