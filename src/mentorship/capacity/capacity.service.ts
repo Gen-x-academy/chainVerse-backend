@@ -116,7 +116,13 @@ export class CapacityService {
       maxCohortsPerProgram: dto.maxCohortsPerProgram,
       reservedProposalCapacity: dto.reservedProposalCapacity,
     };
-    const contentHash = this.hash(limits);
+    // Include pause state so a pause/unpause is a new version, not a silent edit.
+    const contentHash = this.hash({
+      ...limits,
+      paused: dto.paused ?? false,
+      pauseReason: dto.pauseReason ?? null,
+      pauseExpiresAt: dto.pauseExpiresAt ?? null,
+    });
 
     const current = await this.policyModel
       .findOne({ scopeKey })
