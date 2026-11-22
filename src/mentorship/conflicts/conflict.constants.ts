@@ -24,6 +24,14 @@ export enum WaiverStatus {
   REJECTED = 'rejected',
 }
 
+/** Public-safe finding: a code, a category and a generic explanation. */
+export interface ConflictFinding {
+  code: string;
+  category: ConflictCategory;
+  severity: ConflictSeverity;
+  publicMessage: string;
+}
+
 /** Version of the conflict rules used by the evaluator; bumped when rules change. */
 export const CONFLICT_RULES_VERSION = 1;
 

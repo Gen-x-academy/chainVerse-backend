@@ -2,19 +2,11 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema } from 'mongoose';
 import {
   CheckOutcome,
-  ConflictCategory,
-  ConflictSeverity,
+  ConflictFinding,
 } from '../conflict.constants';
 
 export type ConflictCheckDocument = HydratedDocument<ConflictCheck>;
-
-/** Public-safe finding: a code, a category and a generic explanation. */
-export interface ConflictFinding {
-  code: string;
-  category: ConflictCategory;
-  severity: ConflictSeverity;
-  publicMessage: string;
-}
+export type { ConflictFinding } from '../conflict.constants';
 
 /**
  * Immutable, versioned result of a conflict evaluation (MENTOR-040).
