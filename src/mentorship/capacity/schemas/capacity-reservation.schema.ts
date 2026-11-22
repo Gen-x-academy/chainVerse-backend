@@ -31,6 +31,10 @@ export class CapacityReservation {
   @Prop({ required: true })
   fingerprint: string;
 
+  /** Weekly hours held by this reservation, released with the slot. */
+  @Prop({ required: true, type: Number })
+  weeklyHours: number;
+
   @Prop({
     required: true,
     enum: Object.values(ReservationStatus),
