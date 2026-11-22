@@ -589,4 +589,16 @@ export enum ErrorCode {
   VAL_WBS_ORDER_MISMATCH = 'VAL_WBS_ORDER_MISMATCH',
   /** A package in a terminal state cannot be modified. */
   BIZ_WBS_PACKAGE_TERMINAL = 'BIZ_WBS_PACKAGE_TERMINAL',
+  /** A conduct policy acknowledgement targeted a version that is no longer current. */
+  BIZ_CONDUCT_POLICY_STALE = 'BIZ_CONDUCT_POLICY_STALE',
+  /** The conduct policy does not apply to the requested capstone track. */
+  BIZ_CONDUCT_POLICY_NOT_APPLICABLE = 'BIZ_CONDUCT_POLICY_NOT_APPLICABLE',
+  /** The caller must acknowledge the current conduct policy before proceeding. */
+  BIZ_CONDUCT_ACK_REQUIRED = 'BIZ_CONDUCT_ACK_REQUIRED',
+  /** The breach reference status transition is not permitted from the current state. */
+  BIZ_CONDUCT_BREACH_INVALID_TRANSITION = 'BIZ_CONDUCT_BREACH_INVALID_TRANSITION',
+  /** The requested conduct policy was not found. */
+  RES_CONDUCT_POLICY_NOT_FOUND = 'RES_CONDUCT_POLICY_NOT_FOUND',
+  /** The requested conduct breach reference was not found. */
+  RES_CONDUCT_BREACH_NOT_FOUND = 'RES_CONDUCT_BREACH_NOT_FOUND',
 }
