@@ -1,8 +1,8 @@
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { Types } from 'mongoose';
-import { Role } from '../../../common/enums/role.enum';
-import { ErrorCode, ForbiddenDomainException } from '../../../common/errors';
+import { Role } from '../../common/enums/role.enum';
+import { ErrorCode, ForbiddenDomainException } from '../../common/errors';
 import { AcceptAgreementDto, PublishAgreementTermsDto } from './dto/agreement-acceptance.dto';
 import {
   AgreementAcceptanceService,
@@ -188,7 +188,7 @@ describe('AgreementAcceptanceService acceptance', () => {
 
     expect(proof.actorId).toBe(ALICE);
     expect(proof.termsHash).toBe(hash);
-    expect(proof.intent).toBeUndefined();
+    expect(proof).not.toHaveProperty('intent');
     expect(proof).not.toHaveProperty('terms');
     expect(acceptances.rows).toHaveLength(1);
   });
