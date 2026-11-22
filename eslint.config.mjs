@@ -19,7 +19,9 @@ export default tseslint.config(
       },
       sourceType: 'commonjs',
       parserOptions: {
-        projectService: true,
+        projectService: {
+          allowDefaultProject: ['src/mentorship/feedback/mentorship-feedback.service.spec.ts'],
+        },
         tsconfigRootDir: import.meta.dirname,
       },
     },
