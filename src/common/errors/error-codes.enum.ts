@@ -589,24 +589,16 @@ export enum ErrorCode {
   VAL_WBS_ORDER_MISMATCH = 'VAL_WBS_ORDER_MISMATCH',
   /** A package in a terminal state cannot be modified. */
   BIZ_WBS_PACKAGE_TERMINAL = 'BIZ_WBS_PACKAGE_TERMINAL',
-  /** The objective status transition is not permitted from the current state. */
-  BIZ_OBJECTIVE_INVALID_TRANSITION = 'BIZ_OBJECTIVE_INVALID_TRANSITION',
-  /** The request was based on an outdated objective version; reload and retry. */
-  BIZ_OBJECTIVE_STALE_VERSION = 'BIZ_OBJECTIVE_STALE_VERSION',
-  /** Objective definitions can only be edited while the objective is a draft. */
-  BIZ_OBJECTIVE_NOT_EDITABLE = 'BIZ_OBJECTIVE_NOT_EDITABLE',
-  /** An objective needs a charter reference before it can be activated. */
-  BIZ_OBJECTIVE_CHARTER_REQUIRED = 'BIZ_OBJECTIVE_CHARTER_REQUIRED',
-  /** An objective needs at least one success criterion before it can be activated. */
-  BIZ_OBJECTIVE_CRITERIA_REQUIRED = 'BIZ_OBJECTIVE_CRITERIA_REQUIRED',
-  /** Required success criteria are not yet met, so the objective cannot be marked achieved. */
-  BIZ_OBJECTIVE_CRITERIA_UNMET = 'BIZ_OBJECTIVE_CRITERIA_UNMET',
-  /** The objective owner must be a member of the project. */
-  BIZ_OBJECTIVE_OWNER_NOT_MEMBER = 'BIZ_OBJECTIVE_OWNER_NOT_MEMBER',
-  /** Baseline, target or criterion thresholds are inconsistent with the objective direction. */
-  VAL_OBJECTIVE_TARGET_INVALID = 'VAL_OBJECTIVE_TARGET_INVALID',
-  /** The objective start date must be before its target date. */
-  VAL_OBJECTIVE_DATES_INVALID = 'VAL_OBJECTIVE_DATES_INVALID',
-  /** The requested objective was not found. */
-  RES_OBJECTIVE_NOT_FOUND = 'RES_OBJECTIVE_NOT_FOUND',
+  /** A conduct policy acknowledgement targeted a version that is no longer current. */
+  BIZ_CONDUCT_POLICY_STALE = 'BIZ_CONDUCT_POLICY_STALE',
+  /** The conduct policy does not apply to the requested capstone track. */
+  BIZ_CONDUCT_POLICY_NOT_APPLICABLE = 'BIZ_CONDUCT_POLICY_NOT_APPLICABLE',
+  /** The caller must acknowledge the current conduct policy before proceeding. */
+  BIZ_CONDUCT_ACK_REQUIRED = 'BIZ_CONDUCT_ACK_REQUIRED',
+  /** The breach reference status transition is not permitted from the current state. */
+  BIZ_CONDUCT_BREACH_INVALID_TRANSITION = 'BIZ_CONDUCT_BREACH_INVALID_TRANSITION',
+  /** The requested conduct policy was not found. */
+  RES_CONDUCT_POLICY_NOT_FOUND = 'RES_CONDUCT_POLICY_NOT_FOUND',
+  /** The requested conduct breach reference was not found. */
+  RES_CONDUCT_BREACH_NOT_FOUND = 'RES_CONDUCT_BREACH_NOT_FOUND',
 }
