@@ -11,6 +11,7 @@ const MENTOR = 'a'.repeat(24);
 
 function build() {
   const rows: any[] = [];
+  const scheduleRows: any[] = [];
   const query = (result: () => unknown) => {
     const q: any = {
       sort: () => q,
@@ -37,8 +38,28 @@ function build() {
       return doc;
     }),
   };
+  const scheduleModel: any = {
+    findOneAndUpdate: jest.fn((filter: any, update: any) =>
+      query(() => {
+        const idx = scheduleRows.findIndex((r) => r.mentorId === filter.mentorId);
+        const doc = { ...(idx >= 0 ? scheduleRows[idx] : {}), ...(update.$set ?? {}) };
+        if (idx >= 0) scheduleRows[idx] = doc;
+        else scheduleRows.push(doc);
+        return doc;
+      }),
+    ),
+    findOne: jest.fn((filter: any) =>
+      query(() => scheduleRows.find((r) => r.mentorId === filter.mentorId) ?? null),
+    ),
+  };
   const events = { emit: jest.fn() } as unknown as EventEmitter2;
-  return { service: new MentorAvailabilityService(model, events), model, events, rows };
+  return {
+    service: new MentorAvailabilityService(model, scheduleModel, events),
+    model,
+    scheduleModel,
+    events,
+    rows,
+  };
 }
 
 const dto = (over: Record<string, unknown> = {}) =>
@@ -137,5 +158,85 @@ describe('MentorAvailabilityService', () => {
     await expect(service.assertAcceptsApplications(MENTOR)).rejects.toMatchObject({
       errorCode: ErrorCode.BIZ_MENTOR_NOT_ACCEPTING,
     });
+  });
+});
+
+describe('MentorAvailabilityService schedule (MENTOR-053)', () => {
+  const scheduleDto = (over: Record<string, unknown> = {}) => ({
+    timeZone: 'Africa/Lagos',
+    leadTimeMinutes: 60,
+    bufferMinutes: 15,
+    bookingHorizonDays: 30,
+    weeklyWindows: [{ dayOfWeek: 1, startMinute: 540, endMinute: 720 }],
+    exceptions: [],
+    ...over,
+  });
+
+  it('upserts and returns a recurring schedule', async () => {
+    const { service } = build();
+    const saved = await service.setSchedule(MENTOR, scheduleDto() as any, MENTOR);
+    expect(saved).toMatchObject({
+      mentorId: MENTOR,
+      timeZone: 'Africa/Lagos',
+      leadTimeMinutes: 60,
+      bufferMinutes: 15,
+      bookingHorizonDays: 30,
+    });
+    const got = await service.getSchedule(MENTOR);
+    expect(got).toMatchObject({ mentorId: MENTOR, timeZone: 'Africa/Lagos' });
+  });
+
+  it('rejects overlapping weekly windows', async () => {
+    const { service } = build();
+    await expect(
+      service.setSchedule(
+        MENTOR,
+        scheduleDto({
+          weeklyWindows: [
+            { dayOfWeek: 1, startMinute: 540, endMinute: 720 },
+            { dayOfWeek: 1, startMinute: 600, endMinute: 780 },
+          ],
+        }) as any,
+        MENTOR,
+      ),
+    ).rejects.toMatchObject({ errorCode: ErrorCode.VAL_MENTOR_AVAILABILITY_INVALID });
+  });
+
+  it('rejects invalid time zone and invalid ranges', async () => {
+    const { service } = build();
+    await expect(
+      service.setSchedule(MENTOR, scheduleDto({ timeZone: 'Mars/Olympus' }) as any, MENTOR),
+    ).rejects.toMatchObject({ errorCode: ErrorCode.VAL_MENTOR_AVAILABILITY_INVALID });
+
+    await expect(
+      service.setSchedule(
+        MENTOR,
+        scheduleDto({
+          weeklyWindows: [{ dayOfWeek: 1, startMinute: 720, endMinute: 720 }],
+        }) as any,
+        MENTOR,
+      ),
+    ).rejects.toMatchObject({ errorCode: ErrorCode.VAL_MENTOR_AVAILABILITY_INVALID });
+  });
+
+  it('rejects invalid effective range and invalid exception range', async () => {
+    const { service } = build();
+    await expect(
+      service.setSchedule(
+        MENTOR,
+        scheduleDto({ effectiveFrom: '2026-06-10', effectiveTo: '2026-06-01' }) as any,
+        MENTOR,
+      ),
+    ).rejects.toMatchObject({ errorCode: ErrorCode.VAL_MENTOR_AVAILABILITY_INVALID });
+
+    await expect(
+      service.setSchedule(
+        MENTOR,
+        scheduleDto({
+          exceptions: [{ date: '2026-06-10', available: false, startMinute: 600 }],
+        }) as any,
+        MENTOR,
+      ),
+    ).rejects.toMatchObject({ errorCode: ErrorCode.VAL_MENTOR_AVAILABILITY_INVALID });
   });
 });

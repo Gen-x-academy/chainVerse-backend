@@ -19,10 +19,15 @@ import {
   resolveUpcomingEntries,
 } from './availability.machine';
 import { SetAvailabilityDto } from './dto/set-availability.dto';
+import { SetAvailabilityScheduleDto } from './dto/set-availability-schedule.dto';
 import {
   MentorAvailabilityChange,
   MentorAvailabilityChangeDocument,
 } from './schemas/mentor-availability-change.schema';
+import {
+  MentorAvailabilitySchedule,
+  MentorAvailabilityScheduleDocument,
+} from './schemas/mentor-availability-schedule.schema';
 
 export const AVAILABILITY_CHANGED_EVENT = 'mentorship.availability.changed';
 
@@ -45,6 +50,8 @@ export class MentorAvailabilityService {
   constructor(
     @InjectModel(MentorAvailabilityChange.name)
     private readonly changes: Model<MentorAvailabilityChangeDocument>,
+    @InjectModel(MentorAvailabilitySchedule.name)
+    private readonly schedules: Model<MentorAvailabilityScheduleDocument>,
     private readonly events: EventEmitter2,
   ) {}
 
@@ -234,5 +241,115 @@ export class MentorAvailabilityService {
       );
     }
     return view.applications;
+  }
+
+  private assertValidTimeZone(timeZone: string): void {
+    try {
+      Intl.DateTimeFormat('en-US', { timeZone }).format(new Date());
+    } catch {
+      throw new ValidationDomainException(
+        'timeZone must be a valid IANA time zone',
+        ErrorCode.VAL_MENTOR_AVAILABILITY_INVALID,
+      );
+    }
+  }
+
+  private validateSchedule(dto: SetAvailabilityScheduleDto): void {
+    this.assertValidTimeZone(dto.timeZone);
+
+    if (dto.effectiveFrom && dto.effectiveTo) {
+      const from = new Date(dto.effectiveFrom).getTime();
+      const to = new Date(dto.effectiveTo).getTime();
+      if (Number.isNaN(from) || Number.isNaN(to) || from >= to) {
+        throw new ValidationDomainException(
+          'effectiveFrom must be before effectiveTo',
+          ErrorCode.VAL_MENTOR_AVAILABILITY_INVALID,
+        );
+      }
+    }
+
+    const byDay = new Map<
+      number,
+      { startMinute: number; endMinute: number }[]
+    >();
+    for (const window of dto.weeklyWindows) {
+      if (window.startMinute >= window.endMinute) {
+        throw new ValidationDomainException(
+          'weekly window startMinute must be before endMinute',
+          ErrorCode.VAL_MENTOR_AVAILABILITY_INVALID,
+        );
+      }
+      const list = byDay.get(window.dayOfWeek) ?? [];
+      for (const existing of list) {
+        const overlaps =
+          window.startMinute < existing.endMinute &&
+          window.endMinute > existing.startMinute;
+        if (overlaps) {
+          throw new ValidationDomainException(
+            'weekly windows must not overlap',
+            ErrorCode.VAL_MENTOR_AVAILABILITY_INVALID,
+          );
+        }
+      }
+      list.push(window);
+      byDay.set(window.dayOfWeek, list);
+    }
+
+    for (const exception of dto.exceptions ?? []) {
+      if (exception.startMinute != null || exception.endMinute != null) {
+        if (
+          exception.startMinute == null ||
+          exception.endMinute == null ||
+          exception.startMinute >= exception.endMinute
+        ) {
+          throw new ValidationDomainException(
+            'exception startMinute/endMinute must form a valid range',
+            ErrorCode.VAL_MENTOR_AVAILABILITY_INVALID,
+          );
+        }
+      }
+    }
+  }
+
+  async setSchedule(
+    mentorId: string,
+    dto: SetAvailabilityScheduleDto,
+    changedBy: string,
+  ) {
+    this.validateSchedule(dto);
+    const payload = {
+      mentorId,
+      timeZone: dto.timeZone,
+      leadTimeMinutes: dto.leadTimeMinutes,
+      bufferMinutes: dto.bufferMinutes,
+      bookingHorizonDays: dto.bookingHorizonDays,
+      effectiveFrom: dto.effectiveFrom ? new Date(dto.effectiveFrom) : null,
+      effectiveTo: dto.effectiveTo ? new Date(dto.effectiveTo) : null,
+      weeklyWindows: dto.weeklyWindows.map((w) => ({ ...w })),
+      exceptions: (dto.exceptions ?? []).map((e) => ({
+        date: e.date,
+        available: e.available,
+        startMinute: e.startMinute ?? null,
+        endMinute: e.endMinute ?? null,
+      })),
+      updatedBy: changedBy,
+    };
+
+    const saved = await this.schedules
+      .findOneAndUpdate(
+        { mentorId },
+        { $set: payload },
+        { upsert: true, new: true },
+      )
+      .exec();
+
+    this.logger.log(
+      `mentor ${mentorId} availability schedule updated by ${changedBy}`,
+    );
+    return saved;
+  }
+
+  async getSchedule(mentorId: string) {
+    return this.schedules.findOne({ mentorId }).lean().exec();
   }
 }
