@@ -1,4 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsArray, IsOptional, IsString, MaxLength } from 'class-validator';
 
 /**
  * Query parameters for the full-text course search endpoint.
@@ -13,6 +14,9 @@ export class SearchCourseDto {
       'Free-text keyword search across title, description and metadata',
     example: 'blockchain',
   })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
   query?: string;
 
   /**
@@ -23,6 +27,9 @@ export class SearchCourseDto {
     description: 'Filter by course category (metadata.category)',
     example: 'web3',
   })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
   category?: string;
 
   /**
@@ -33,6 +40,9 @@ export class SearchCourseDto {
     description: 'Filter by difficulty level (metadata.level)',
     example: 'beginner',
   })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
   level?: string;
 
   /**
@@ -45,5 +55,9 @@ export class SearchCourseDto {
     type: [String],
     example: ['defi', 'nft'],
   })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @MaxLength(120, { each: true })
   tags?: string[];
 }
