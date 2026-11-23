@@ -9,6 +9,7 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-object-id.pipe';
 import { MentorAvailabilityService } from './availability.service';
 import { SetAvailabilityDto } from './dto/set-availability.dto';
+import { SetAvailabilityScheduleDto } from './dto/set-availability-schedule.dto';
 
 @ApiTags('Mentor Availability')
 @ApiBearerAuth('access-token')
@@ -22,10 +23,7 @@ export class MentorAvailabilityController {
   @ApiOperation({
     summary: 'Set (or schedule) the calling mentor’s availability status',
   })
-  setMine(
-    @Body() dto: SetAvailabilityDto,
-    @CurrentUser('sub') userId: string,
-  ) {
+  setMine(@Body() dto: SetAvailabilityDto, @CurrentUser('sub') userId: string) {
     return this.service.setAvailability(userId, dto, userId);
   }
 
@@ -52,5 +50,24 @@ export class MentorAvailabilityController {
   @ApiOperation({ summary: 'Availability audit trail (admin / moderator)' })
   history(@Param('mentorId', new ParseObjectIdPipe()) mentorId: string) {
     return this.service.history(mentorId);
+  }
+
+  @Put('me/schedule')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.TUTOR)
+  @ApiOperation({ summary: 'Set recurring mentor availability schedule' })
+  setMySchedule(
+    @Body() dto: SetAvailabilityScheduleDto,
+    @CurrentUser('sub') userId: string,
+  ) {
+    return this.service.setSchedule(userId, dto, userId);
+  }
+
+  @Get('me/schedule')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.TUTOR)
+  @ApiOperation({ summary: 'Get recurring mentor availability schedule' })
+  getMySchedule(@CurrentUser('sub') userId: string) {
+    return this.service.getSchedule(userId);
   }
 }
