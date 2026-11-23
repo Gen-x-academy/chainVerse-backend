@@ -1,5 +1,6 @@
-export class UpdateCoursePerformanceLeaderboardDto {
-  title?: string;
-  description?: string;
-  metadata?: Record<string, unknown>;
-}
+import { PartialType } from '@nestjs/swagger';
+import { CreateCoursePerformanceLeaderboardDto } from './create-course-performance-leaderboard.dto';
+
+export class UpdateCoursePerformanceLeaderboardDto extends PartialType(
+  CreateCoursePerformanceLeaderboardDto,
+) {}
