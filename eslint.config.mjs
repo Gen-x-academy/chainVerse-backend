@@ -20,7 +20,7 @@ export default tseslint.config(
       sourceType: 'commonjs',
       parserOptions: {
         projectService: {
-          allowDefaultProject: ['src/course-performance-leaderboard/dto/course-performance-leaderboard.dto.spec.ts'],
+          allowDefaultProject: ['src/notification/dto/notification.dto.spec.ts'],
         },
         tsconfigRootDir: import.meta.dirname,
       },
