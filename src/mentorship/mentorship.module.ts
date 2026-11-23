@@ -20,12 +20,12 @@ import {
 } from './programs/mentorship-program.schema';
 import { MentorDirectoryController } from './directory/mentor-directory.controller';
 import { MentorDirectoryService } from './directory/mentor-directory.service';
-import { MentorshipWorkspaceModule } from './workspace/mentorship-workspace.module';
+import { MentorshipSessionsModule } from './sessions/mentorship-sessions.module';
 
 @Module({
   imports: [
     MentorAvailabilityModule,
-    MentorshipWorkspaceModule,
+    MentorshipSessionsModule,
     MongooseModule.forFeature([
       { name: MentorTrustSignals.name, schema: MentorTrustSignalsSchema },
       { name: MentorProfile.name, schema: MentorProfileSchema },
@@ -47,7 +47,7 @@ import { MentorshipWorkspaceModule } from './workspace/mentorship-workspace.modu
   ],
   exports: [
     MentorAvailabilityModule,
-    MentorshipWorkspaceModule,
+    MentorshipSessionsModule,
     MentorTrustService,
     MentorProfileService,
   ],
