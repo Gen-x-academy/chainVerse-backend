@@ -6,6 +6,10 @@ import {
   MentorAvailabilityChange,
   MentorAvailabilityChangeSchema,
 } from './schemas/mentor-availability-change.schema';
+import {
+  MentorAvailabilitySchedule,
+  MentorAvailabilityScheduleSchema,
+} from './schemas/mentor-availability-schedule.schema';
 
 @Module({
   imports: [
@@ -13,6 +17,10 @@ import {
       {
         name: MentorAvailabilityChange.name,
         schema: MentorAvailabilityChangeSchema,
+      },
+      {
+        name: MentorAvailabilitySchedule.name,
+        schema: MentorAvailabilityScheduleSchema,
       },
     ]),
   ],
