@@ -20,7 +20,7 @@ export default tseslint.config(
       sourceType: 'commonjs',
       parserOptions: {
         projectService: {
-          allowDefaultProject: ['src/mentorship/sponsorship/mentorship-sponsorship.service.spec.ts'],
+          allowDefaultProject: ['src/notification/dto/notification.dto.spec.ts'],
         },
         tsconfigRootDir: import.meta.dirname,
       },
