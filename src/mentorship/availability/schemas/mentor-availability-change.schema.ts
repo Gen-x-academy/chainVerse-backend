@@ -12,7 +12,7 @@ export class MentorAvailabilityChange {
   @Prop({ required: true, index: true })
   mentorId: string;
 
-  @Prop({ required: true, enum: MentorAvailabilityStatus })
+  @Prop({ required: true, type: String, enum: MentorAvailabilityStatus })
   status: MentorAvailabilityStatus;
 
   @Prop({ required: true, type: Date })
