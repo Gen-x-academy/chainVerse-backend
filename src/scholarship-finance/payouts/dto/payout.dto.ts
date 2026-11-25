@@ -1,62 +1,177 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Length,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+  ValidateIf,
+  ValidateNested,
+} from 'class-validator';
 import * as Joi from 'joi';
 import { DECIMAL_AMOUNT_PATTERN } from '../../common/money';
 import { STELLAR_ACCOUNT_PATTERN } from '../../programs/dto/program.dto';
 import { TX_HASH_PATTERN } from '../../ledger/dto/ledger.dto';
 
+const ID_PATTERN = /^[A-Za-z0-9:_\-.]{1,128}$/;
+const ID_MESSAGE = 'must be 1-128 characters of letters, digits, : _ - .';
+const PAYOUT_STATUSES = [
+  'pending',
+  'submitted',
+  'failed',
+  'succeeded',
+  'cancelled',
+];
+
 export class CreatePayoutDto {
-  @ApiProperty() awardId!: string;
-  @ApiProperty() installmentId!: string;
+  @ApiProperty()
+  @IsString()
+  @Matches(ID_PATTERN, { message: `awardId ${ID_MESSAGE}` })
+  awardId!: string;
+
+  @ApiProperty()
+  @IsString()
+  @Matches(ID_PATTERN, { message: `installmentId ${ID_MESSAGE}` })
+  installmentId!: string;
+
   @ApiProperty({ description: 'User id of the scholarship recipient' })
+  @IsString()
+  @Matches(ID_PATTERN, { message: `recipientId ${ID_MESSAGE}` })
   recipientId!: string;
+
   @ApiProperty({ description: 'Recipient Stellar account (G...)' })
+  @IsString()
+  @Matches(STELLAR_ACCOUNT_PATTERN, {
+    message: 'destination must be a Stellar account (G...)',
+  })
   destination!: string;
-  @ApiProperty({ example: '500' }) amount!: string;
+
+  @ApiProperty({ example: '500' })
+  @IsString()
+  @Matches(DECIMAL_AMOUNT_PATTERN, {
+    message: 'amount must be a decimal with up to 7 places',
+  })
+  @Matches(/^(?!0$)/, { message: 'amount must not be zero' })
+  amount!: string;
 }
+
+/** Partial update of a pending payout; every create field is optional. */
+export class UpdatePayoutDto extends PartialType(CreatePayoutDto) {}
 
 export class RetryPayoutDto {
   @ApiPropertyOptional({
     description:
       'Corrected destination; required after a bad_destination failure',
   })
+  @IsOptional()
+  @IsString()
+  @Matches(STELLAR_ACCOUNT_PATTERN, {
+    message: 'destination must be a Stellar account (G...)',
+  })
   destination?: string;
+
   @ApiProperty({ description: 'Operator note describing the fix applied' })
+  @IsString()
+  @Length(5, 1000)
   note!: string;
 }
 
 export class CancelPayoutDto {
-  @ApiProperty() reason!: string;
+  @ApiProperty()
+  @IsString()
+  @Length(5, 1000)
+  reason!: string;
 }
 
 export class ListPayoutsQuery {
-  @ApiPropertyOptional({
-    enum: ['pending', 'submitted', 'failed', 'succeeded', 'cancelled'],
-  })
+  @ApiPropertyOptional({ enum: PAYOUT_STATUSES })
+  @IsOptional()
+  @IsIn(PAYOUT_STATUSES)
   status?: string;
-  @ApiPropertyOptional() awardId?: string;
-  @ApiPropertyOptional({ default: 50 }) limit?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @Matches(ID_PATTERN, { message: `awardId ${ID_MESSAGE}` })
+  awardId?: string;
+
+  @ApiPropertyOptional({ default: 50 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(200)
+  limit?: number;
 }
 
-class ResultCodesDto {
-  @ApiPropertyOptional({ example: 'tx_failed' }) transaction?: string;
-  @ApiPropertyOptional({ example: ['op_no_trust'] }) operations?: string[];
+export class ResultCodesDto {
+  @ApiPropertyOptional({ example: 'tx_failed' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  transaction?: string;
+
+  @ApiPropertyOptional({ example: ['op_no_trust'] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(100)
+  @IsString({ each: true })
+  @MaxLength(64, { each: true })
+  operations?: string[];
 }
 
 export class MarkAttemptSubmittedDto {
   @ApiProperty({ description: 'SHA-256 of the signed envelope XDR' })
+  @IsString()
+  @Matches(TX_HASH_PATTERN, {
+    message: 'envelopeHash must be 64 lowercase hex characters',
+  })
   envelopeHash!: string;
-  @ApiProperty() transactionHash!: string;
+
+  @ApiProperty()
+  @IsString()
+  @Matches(TX_HASH_PATTERN, {
+    message: 'transactionHash must be 64 lowercase hex characters',
+  })
+  transactionHash!: string;
 }
 
 export class ReportAttemptResultDto {
-  @ApiProperty({ enum: ['succeeded', 'failed'] }) outcome!:
-    | 'succeeded'
-    | 'failed';
-  @ApiPropertyOptional() transactionHash?: string;
-  @ApiPropertyOptional({ type: ResultCodesDto }) resultCodes?: ResultCodesDto;
+  @ApiProperty({ enum: ['succeeded', 'failed'] })
+  @IsIn(['succeeded', 'failed'])
+  outcome!: 'succeeded' | 'failed';
+
+  @ApiPropertyOptional()
+  // A succeeded attempt must name its transaction.
+  @ValidateIf(
+    (o: ReportAttemptResultDto) =>
+      o.outcome === 'succeeded' || o.transactionHash !== undefined,
+  )
+  @IsString()
+  @Matches(TX_HASH_PATTERN, {
+    message: 'transactionHash must be 64 lowercase hex characters',
+  })
+  transactionHash?: string;
+
+  @ApiPropertyOptional({ type: ResultCodesDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ResultCodesDto)
+  resultCodes?: ResultCodesDto;
+
   @ApiPropertyOptional({
     description: 'Signer-side error when no result codes exist',
   })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
   signerError?: string;
 }
 

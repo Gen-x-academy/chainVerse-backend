@@ -115,6 +115,9 @@ import { MentorshipTimelineModule } from './mentorship-timeline/mentorship-timel
 import { MentorshipGoalsModule } from './mentorship-goals/mentorship-goals.module';
 import { MentorshipConsentModule } from './mentorship-consent/mentorship-consent.module';
 import { MentorshipBlockingModule } from './mentorship/blocking/blocking.module';
+import { MentorshipReconciliationModule } from './mentorship/reconciliation/mentorship-reconciliation.module';
+import { MentorshipSafetyCenterModule } from './mentorship/safety-center/safety-center.module';
+import { MentorshipRefundModule } from './mentorship/refunds/mentorship-refund.module';
 import { ProjectPlanningModule } from './project-planning/project-planning.module';
 
 // Mentorship
@@ -216,6 +219,9 @@ import { WorkBreakdownModule } from './work-breakdown/work-breakdown.module';
     MentorshipGoalsModule,
     MentorshipConsentModule,
     MentorshipBlockingModule,
+    MentorshipRefundModule,
+    MentorshipSafetyCenterModule,
+    MentorshipReconciliationModule,
     EventsModule,
     LibraryCirculationModule,
     // Scholarship finance
